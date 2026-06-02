@@ -1,0 +1,6 @@
+{
+  "name": "Fióre - Cửa hàng hoa trực tuyến",
+  "description": "Fióre là một website thương mại điện tử chuyên kinh doanh hoa tươi nghệ thuật với trải nghiệm tìm kiếm thời gian thực, đặt hàng linh hoạt (COD/Visa) và hệ quản trị thống kê doanh mục toàn diện.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

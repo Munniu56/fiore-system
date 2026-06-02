@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Redefined Tailwind utility colors to perfectly match the design requirements of the new premium brand identity */
+  --color-pink-50: #FCFAF7;       /* Màu nền phụ: Hồng/kem pastel nhạt */
+  --color-pink-100: #E8E1D6;      /* Màu viền */
+  --color-pink-200: #E8E1D6;      /* Màu viền nén */
+  --color-pink-300: #D9C29C;      /* Màu vàng champagne nhấn/viền */
+  --color-pink-400: #D9C29C;
+  --color-pink-500: #C8A96B;      /* Màu nút chính: Vàng Gold */
+  --color-pink-600: #B28D49;      /* Màu nút hover */
+
+  --color-rose-50: #FCFAF7;       /* Nền phụ */
+  --color-rose-100: #E8E1D6;      /* Màu viền nhạt */
+  --color-rose-200: #E8E1D6;
+  --color-rose-350: #C8A96B;
+  --color-rose-500: #D9C29C;      /* Màu nhấn phụ */
+  --color-rose-600: #C8A96B;      /* Màu nút chính: Vàng Gold */
+  --color-rose-700: #B28D49;      /* Màu nút hover */
+  --color-rose-800: #1F3D2B;      /* Màu xanh lá đậm: Khớp màu tiêu đề */
+  --color-rose-900: #1F3D2B;
+
+  --color-slate-50: #F8F5EF;      /* Khớp màu nền chính: Kem sáng */
+  --color-slate-100: #E8E1D6;
+
+  --color-gray-300: #E8E1D6;
+  --color-gray-400: #4F4F4F;      /* Màu chữ phụ/nội dung */
+  --color-gray-500: #4F4F4F;      /* Màu chữ phụ/nội dung */
+  --color-gray-600: #4F4F4F;      /* Màu chữ phụ/nội dung */
+  --color-gray-700: #4F4F4F;      /* Màu chữ phụ/nội dung */
+  --color-gray-800: #4F4F4F;      /* Chữ phụ tối giản */
+  --color-gray-900: #1F3D2B;      /* Màu tiêu đề chính: Xanh lá đậm */
+
+  --color-neutral-300: #E8E1D6;
+  --color-neutral-400: #4F4F4F;
+  --color-neutral-500: #4F4F4F;   /* Màu chữ phụ neutral */
+  --color-neutral-600: #4F4F4F;
+  --color-neutral-700: #4F4F4F;
+  --color-neutral-800: #4F4F4F;
+  --color-neutral-900: #1F3D2B;   /* Màu tiêu đề neutral */
+}
+
+@layer base {
+  body {
+    background-color: #F8F5EF; /* Màu nền chính (Kem sáng) */
+    color: #4F4F4F; /* Màu chữ mặc định */
+    @apply font-sans scroll-smooth antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    color: #1F3D2B; /* Màu tiêu đề: Xanh lá đậm */
+  }
+}
+
+/* Custom fade ins */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.backdrop-blur-subtle {
+  backdrop-filter: blur(4px);
+}
