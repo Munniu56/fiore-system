@@ -42,7 +42,7 @@ export interface Order {
   note: string;
   items: CartItem[];
   totalAmount: number;
-  paymentMethod: 'COD' | 'VISA';
+  paymentMethod: 'COD' | 'VISA' | 'VNPAY';
   paymentStatus: 'Unpaid' | 'Paid';
   status: OrderStatus;
   createdAt: string;

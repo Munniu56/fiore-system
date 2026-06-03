@@ -73,12 +73,18 @@ export default function OrderTracker({ orders, onNavigate }: OrderTrackerProps) 
     }
 
     const isVisa = ordObj.paymentMethod === 'VISA';
+    const isVnpay = ordObj.paymentMethod === 'VNPAY';
+    const isPaidOnline = isVisa || isVnpay;
 
     const stepsList = [
       {
-        title: isVisa ? 'Đã thanh toán' : 'Đã xác nhận',
-        desc: isVisa ? 'Thanh toán thành công qua thẻ Visa' : 'Tổng đài đã duyệt & xác nhận đơn',
-        icon: isVisa ? CheckCircle2 : AlertCircle
+        title: isPaidOnline ? 'Đã thanh toán' : 'Đã xác nhận',
+        desc: isVnpay 
+          ? 'Thanh toán thành công qua VNPAY Sandbox' 
+          : isVisa 
+            ? 'Thanh toán thành công qua thẻ Visa' 
+            : 'Tổng đài đã duyệt & xác nhận đơn',
+        icon: isPaidOnline ? CheckCircle2 : AlertCircle
       },
       {
         title: 'Đang chuẩn bị hàng',
@@ -245,7 +251,11 @@ export default function OrderTracker({ orders, onNavigate }: OrderTrackerProps) 
                 <div className="sm:text-right">
                   <span className="text-xs text-gray-400 block font-bold uppercase mb-1">Phương thức thanh toán</span>
                   <span className="rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800">
-                    {displayOrder.paymentMethod === 'COD' ? 'Thanh toán COD khi giao hoa' : 'Thanh toán thẻ Visa trực tuyến'}
+                    {displayOrder.paymentMethod === 'COD' 
+                      ? 'Thanh toán COD khi giao hoa' 
+                      : displayOrder.paymentMethod === 'VNPAY'
+                        ? 'Thanh toán trực tuyến VNPAY Sandbox'
+                        : 'Thanh toán thẻ Visa trực tuyến'}
                   </span>
                 </div>
               </div>

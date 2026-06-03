@@ -15,7 +15,7 @@ interface CheckoutViewProps {
     recipientPhone: string;
     shippingAddress: string;
     note: string;
-    paymentMethod: 'COD' | 'VISA';
+    paymentMethod: 'COD' | 'VISA' | 'VNPAY';
     cardDetails?: {
       cardNumber: string;
       cardName: string;
@@ -38,7 +38,7 @@ export default function CheckoutView({
   const [recipientPhone, setRecipientPhone] = useState('');
   const [shippingAddress, setShippingAddress] = useState('');
   const [note, setNote] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'COD' | 'VISA'>('COD');
+  const [paymentMethod, setPaymentMethod] = useState<'COD' | 'VISA' | 'VNPAY'>('COD');
 
   // Visa card simulation details state
   const [cardNumber, setCardNumber] = useState('');
@@ -107,7 +107,9 @@ export default function CheckoutView({
         cardDetails: paymentMethod === 'VISA' ? { cardNumber, cardName, expiry, cvv } : undefined,
       });
       setIsSubmitting(false);
-      setIsSuccessScreen(true);
+      if (paymentMethod !== 'VNPAY') {
+        setIsSuccessScreen(true);
+      }
     }, 1800);
   };
 
@@ -128,7 +130,7 @@ export default function CheckoutView({
             <p><span className="text-gray-400 font-medium">Người nhận:</span> <span className="font-bold text-gray-800">{recipientName}</span></p>
             <p><span className="text-gray-400 font-medium">Số điện thoại:</span> <span className="font-bold text-gray-800">{recipientPhone}</span></p>
             <p><span className="text-gray-400 font-medium">Địa chỉ nhận:</span> <span className="font-semibold text-gray-700">{shippingAddress}</span></p>
-            <p><span className="text-gray-400 font-medium">Hình thức:</span> <span className="font-bold text-rose-600">{paymentMethod === 'COD' ? 'Thanh toán COD khi nhận hoa' : 'Đã thanh toán Visa (Mô phỏng)'}</span></p>
+            <p><span className="text-gray-400 font-medium">Hình thức:</span> <span className="font-bold text-rose-600">{paymentMethod === 'COD' ? 'Thanh toán COD khi nhận hoa' : paymentMethod === 'VNPAY' ? 'Thanh toán trực tuyến VNPAY Sandbox' : 'Đã thanh toán Visa (Mô phỏng)'}</span></p>
             <p><span className="text-gray-400 font-medium">Tổng số tiền:</span> <span className="font-extrabold text-rose-600 text-sm">{formatVND(totalAmount)}</span></p>
           </div>
 
@@ -257,7 +259,7 @@ export default function CheckoutView({
                 Phương Thức Thanh Toán
               </h3>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 
                 {/* COD option */}
                 <div
@@ -307,6 +309,41 @@ export default function CheckoutView({
                   <div>
                     <p className="text-sm font-bold text-gray-800">Thẻ Quốc Tế Visa / Mastercard (Demo)</p>
                     <p className="text-xs text-gray-400 mt-0.5 leading-snug">Kết nối tự động mạng thanh toán ảo. Tuyệt đối an toàn cho việc trải nghiệm chức năng.</p>
+                  </div>
+                </div>
+
+                {/* VNPAY option */}
+                <div
+                  onClick={() => {
+                    setPaymentMethod('VNPAY');
+                    setErrors({});
+                  }}
+                  className={`flex cursor-pointer items-start space-x-3.5 rounded-xl border p-4 transition-all duration-200 ${
+                    paymentMethod === 'VNPAY'
+                      ? 'border-rose-500 bg-pink-50/20 ring-1 ring-rose-500'
+                      : 'border-pink-50 hover:border-pink-100 hover:bg-neutral-50'
+                  }`}
+                  id="pay-opt-vnpay"
+                >
+                  <div className="flex h-5 items-center">
+                    <input
+                      type="radio"
+                      checked={paymentMethod === 'VNPAY'}
+                      onChange={() => {}}
+                      className="h-4 w-4 text-rose-600 focus:ring-rose-500 border-pink-300"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-bold text-gray-800">VNPAY Sandbox</p>
+                      <img 
+                        src="https://sandbox.vnpayment.vn/paymentv2/Images/brands/logo-vnpay.png" 
+                        alt="VNPAY" 
+                        className="h-4.5 object-contain ml-1 bg-white px-1.5 py-0.5 rounded border border-gray-100 shrink-0"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1 leading-snug">Cổng thanh toán chính thức ATM, Thẻ quốc tế hoặc quét QR. Được hỗ trợ chính thức Sandbox.</p>
                   </div>
                 </div>
 

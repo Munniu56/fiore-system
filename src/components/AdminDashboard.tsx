@@ -935,9 +935,11 @@ export default function AdminDashboard({
                     <td className="p-3 w-[13%] min-w-[110px] font-bold text-rose-600 whitespace-nowrap">{formatVND(ord.totalAmount)}</td>
                     <td className="p-3 w-[12%] min-w-[120px] whitespace-nowrap">
                       <span className={`px-2 py-0.5 text-[10px] font-bold rounded ${
-                        ord.paymentMethod === 'VISA' 
-                          ? 'bg-blue-50 text-blue-600 border border-blue-100' 
-                          : 'bg-amber-50 text-amber-700 border border-amber-100'
+                        ord.paymentMethod === 'VNPAY'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                          : ord.paymentMethod === 'VISA' 
+                            ? 'bg-blue-50 text-blue-600 border border-blue-100' 
+                            : 'bg-amber-50 text-amber-700 border border-amber-100'
                       }`}>
                         {ord.paymentMethod || 'COD'}
                       </span>
