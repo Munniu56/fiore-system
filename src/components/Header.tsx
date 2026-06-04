@@ -43,7 +43,7 @@ export default function Header({
           id="logo-brand"
         >
           <img 
-            src="/images/brand_logo_luxury_1780395269921.png" 
+            src="/src/assets/images/brand_logo_luxury_1780395269921.png" 
             alt="Fióre Boutique de Fleurs" 
             className="h-12 w-auto object-contain sm:h-14 md:h-16"
             referrerPolicy="no-referrer"

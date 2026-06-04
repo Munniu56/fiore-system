@@ -1139,7 +1139,7 @@ export default function App() {
               <div className="flex items-center">
                 <div className="p-2 rounded-xl border transition-all duration-300" style={{ backgroundColor: '#1F3D2B', borderColor: 'rgba(255,255,255,0.15)' }}>
                   <img 
-                    src="/images/brand_logo_footer_gold_1780396918842.png" 
+                    src="/src/assets/images/brand_logo_footer_gold_1780396918842.png" 
                     alt="Fióre Boutique de Fleurs" 
                     className="h-14 w-auto object-contain"
                     referrerPolicy="no-referrer"

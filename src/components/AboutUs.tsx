@@ -60,7 +60,7 @@ export default function AboutUs() {
         <div className="lg:col-span-7 relative">
           <div className="relative mx-auto rounded-3xl border-8 border-pink-50 bg-white p-2 shadow-lg overflow-hidden">
             <img
-              src="/images/regenerated_image_1780392911551.jpg"
+              src="/src/assets/images/regenerated_image_1780392911551.jpg"
               alt="Học nghệ thuật cắm hoa tại Fiore"
               className="h-[450px] w-full rounded-2xl object-cover hover:scale-[1.02] transition duration-500"
               referrerPolicy="no-referrer"
@@ -136,7 +136,7 @@ export default function AboutUs() {
       {/* Decorative Bottom Banner */}
       <div className="relative rounded-3xl overflow-hidden bg-neutral-900 py-16 px-6 sm:px-12 text-center text-white shadow-xl">
         <div className="absolute inset-0 bg-rose-950/80 mix-blend-multiply"></div>
-        <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: "url('/images/regenerated_image_1780392914223.jpg')" }}></div>
+        <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: "url('/src/assets/images/regenerated_image_1780392914223.jpg')" }}></div>
         <div className="relative max-w-2xl mx-auto space-y-4">
           <h3 className="font-serif text-3xl font-semibold" style={{ color: '#C8A96B' }}>Từng Đoá Hoa Đi, Trọn Vẹn Tâm Tình Gửi</h3>
           <p className="text-sm text-pink-100 font-sans leading-relaxed max-w-lg mx-auto">
