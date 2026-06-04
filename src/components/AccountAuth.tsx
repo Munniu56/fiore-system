@@ -215,7 +215,43 @@ export default function AccountAuth({
               )}
             </div>
 
-            <div className="mt-8 border-t border-pink-50 pt-6">
+            <div className="mt-6 border-t border-pink-50 pt-5">
+              <h4 className="text-[10px] font-bold uppercase text-gray-400 tracking-wider text-left mb-2 flex items-center justify-between">
+                <span>Đồng bộ Google Workspace</span>
+              </h4>
+              {localStorage.getItem('fiore_gmail_access_token') ? (
+                <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-left">
+                  <div className="flex items-center space-x-1.5 text-emerald-800 font-bold text-xs">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Đã kích hoạt đồng bộ Gmail!</span>
+                  </div>
+                  <p className="text-[9.5px] text-emerald-600 mt-1 leading-normal">
+                    Hóa đơn mua hoa sẽ tự động được gửi về Gmail của bạn sau khi thanh toán thành công.
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-pink-50/50 border border-pink-100 rounded-xl p-3 text-left">
+                  <p className="text-[9.5px] text-gray-500 leading-normal mb-2">
+                    Nhận ngay hóa đơn điện tử & trạng thái chuẩn bị hoa trực tiếp qua Gmail bằng cách tích hợp tài khoản.
+                  </p>
+                  <button
+                    onClick={() => {
+                      if (currentUser.isAdmin) {
+                        onNavigate('admin');
+                      } else {
+                        // Let admin connect it, show a friendly status info
+                        alert("Hệ thống gửi email tự động đang chờ Quản trị viên kết nối tài khoản gửi thư Google Gmail. Khi Admin kết nối, đơn hàng của bạn sẽ tự động gửi đi!");
+                      }
+                    }}
+                    className="w-full rounded-lg bg-rose-600 text-white py-1.5 text-center text-[10px] font-bold shadow-xs hover:bg-rose-700 transition cursor-pointer"
+                  >
+                    {currentUser.isAdmin ? "🔗 Kết nối Gmail của Tiệm" : "ℹ️ Xem chi tiết đồng bộ"}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 border-t border-pink-50 pt-5">
               <button
                 onClick={onLogout}
                 className="w-full rounded-full border border-red-100 bg-white py-2 text-xs font-bold text-red-500 hover:bg-red-50 transition cursor-pointer"

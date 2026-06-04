@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Lock, User, ShieldAlert, Flower } from 'lucide-react';
+import { Lock, User, ShieldAlert, Flower, Eye, EyeOff } from 'lucide-react';
 import brandLogoHeader from '../assets/images/logo_white_bg_1780554592404.png';
 
 interface AdminLoginProps {
@@ -14,16 +14,19 @@ interface AdminLoginProps {
 export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
-    if (username === 'admin' && password === '123456') {
+    const storedAdminPassword = localStorage.getItem('fiore_admin_password') || '123456';
+
+    if (username === 'admin' && password === storedAdminPassword) {
       onLoginSuccess();
     } else {
-      setErrorMsg('Sai tên đăng nhập hoặc mật khẩu');
+      setErrorMsg('Sai tên đăng nhập hoặc mật khẩu quản trị');
     }
   };
 
@@ -87,16 +90,32 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
                   <Lock className="h-4 w-4" />
                 </span>
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Nhập mật khẩu"
-                  className="w-full rounded-lg border border-pink-100 bg-neutral-50/50 py-2.5 pl-10 pr-4 text-xs font-medium outline-none transition focus:border-rose-400 focus:bg-white"
+                  className="w-full rounded-lg border border-pink-100 bg-neutral-50/50 py-2.5 pl-10 pr-10 text-xs font-medium outline-none transition focus:border-rose-400 focus:bg-white"
                   autoComplete="current-password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-rose-500 cursor-pointer"
+                  title={showPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
+          </div>
+
+          <div className="rounded-lg bg-pink-50/50 p-3 text-pink-700/80 text-[10.5px] border border-pink-100/50 space-y-1">
+            <p className="font-bold flex items-center gap-1">
+              <span>💡 Gợi ý truy cập mẫu:</span>
+            </p>
+            <p>Tên đăng nhập: <strong className="text-rose-600">admin</strong></p>
+            <p>Mật khẩu mặc định: <strong className="text-rose-600">123456</strong> (hoặc mật khẩu do bạn đổi)</p>
           </div>
 
           <div className="pt-2">

@@ -20,10 +20,11 @@ import SupportChat from './components/SupportChat';
 import brandLogoFooter from './assets/images/logo_footer_green_bg_1780554739638.png';
 
 import { verifyVnpayCallback } from './vnpayConfig';
+import { initGmailAuth, subscribeToGmailAuth, googleSignIn, googleSignOut, sendOrderNotificationEmail } from './gmailService';
 
 import { Product, Category, CartItem, Order, User, OrderStatus } from './types';
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES } from './data';
-import { Sparkles, Flower, Phone, Mail, Clock, MapPin, Heart, ArrowRight, Facebook, Instagram, Calendar, Star, FileText } from 'lucide-react';
+import { Sparkles, Flower, Phone, Mail, Clock, MapPin, Heart, ArrowRight, Facebook, Instagram, Calendar, Star, FileText, Lock } from 'lucide-react';
 
 export default function App() {
   
@@ -187,12 +188,54 @@ export default function App() {
   });
 
   // --- COMPONENT ACTIVE VIEW ROLES CONTROL ---
-  const [currentRole, setCurrentRole] = useState<'customer' | 'admin'>('customer');
-  const [currentView, setCurrentView] = useState<string>('home'); // 'home', 'catalog', 'detail', 'cart', 'checkout', 'auth', 'orders', 'admin'
+  const [currentRole, setCurrentRole] = useState<'customer' | 'admin'>(() => {
+    if (typeof window !== 'undefined' && window.location.pathname.endsWith('/admin')) {
+      return 'admin';
+    }
+    return 'customer';
+  });
+  const [currentView, setCurrentView] = useState<string>(() => {
+    if (typeof window !== 'undefined' && window.location.pathname.endsWith('/admin')) {
+      return 'admin';
+    }
+    return 'home';
+  });
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     return localStorage.getItem('fiore_admin_authenticated') === 'true';
   });
+
+  const [gmailUser, setGmailUser] = useState<any>(null);
+  const [gmailToken, setGmailToken] = useState<string | null>(() => {
+    return typeof window !== 'undefined' ? localStorage.getItem('fiore_gmail_access_token') : null;
+  });
+
+  useEffect(() => {
+    const unsubAuth = initGmailAuth();
+    const unsubSub = subscribeToGmailAuth((gUser, gToken) => {
+      setGmailUser(gUser);
+      setGmailToken(gToken);
+    });
+    return () => {
+      unsubAuth();
+      unsubSub();
+    };
+  }, []);
+
+  // Listen for navigation events and synchronize with path URL
+  useEffect(() => {
+    const handleLocationChange = () => {
+      if (typeof window !== 'undefined' && window.location.pathname.endsWith('/admin')) {
+        setCurrentRole('admin');
+        setCurrentView('admin');
+      }
+    };
+    window.addEventListener('popstate', handleLocationChange);
+    handleLocationChange();
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+    };
+  }, []);
   
   // Filtering & Realtime Search States
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
@@ -431,6 +474,23 @@ export default function App() {
 
     setOrders((prev) => [...prev, newOrder]);
     setCartItems([]); // Clear cart items on purchase completion!
+
+    // Auto-send order confirmation email if Gmail is connected
+    const currentToken = localStorage.getItem('fiore_gmail_access_token') || gmailToken;
+    if (currentToken) {
+      const emailRecipient = currentUser ? currentUser.email : 'thuyvanngo35@gmail.com';
+      sendOrderNotificationEmail(newOrder, emailRecipient)
+        .then((success) => {
+          if (success) {
+            console.log(`Email hóa đơn đơn hàng ${newOrder.id} đã được gửi tự động qua Gmail!`);
+          } else {
+            console.warn('Gửi email tự động không thành công qua Gmail.');
+          }
+        })
+        .catch((err) => {
+          console.error('Lỗi khi gửi email tự động:', err);
+        });
+    }
   };
 
   // --- ACCOUNT AUTHENTICATION ACTIONS ---
@@ -1254,6 +1314,17 @@ export default function App() {
                     onMouseLeave={(e) => e.currentTarget.style.color = '#F8F5EF'}
                   >
                     Cam kết tươi mới 24h
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => { setCurrentRole('admin'); setCurrentView('admin'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
+                    className="transition-colors duration-200 text-left cursor-pointer opacity-75 hover:opacity-100 flex items-center gap-1"
+                    style={{ color: '#F8F5EF' }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = '#C8A96B'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = '#F8F5EF'}
+                  >
+                    <Lock className="h-3 w-3" /> <span>Hệ Thống Quản Trị</span>
                   </button>
                 </li>
               </ul>

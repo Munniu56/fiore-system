@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { 
   BarChart2, Gift, DollarSign, Package, Users, Plus, Edit2, 
-  Trash2, Layers, Check, ShoppingBag, Eye, X, RefreshCw, Star, Info, TrendingUp, Search, LogOut, Mail 
+  Trash2, Layers, Check, ShoppingBag, Eye, X, RefreshCw, Star, Info, TrendingUp, Search, LogOut, Mail, Lock, ShieldAlert
 } from 'lucide-react';
 import { Product, Category, Order, User, OrderStatus } from '../types';
 import GmailManager from './GmailManager';
@@ -44,8 +44,44 @@ export default function AdminDashboard({
   onAdminLogout,
 }: AdminDashboardProps) {
   
-  const [activeTab, setActiveTab] = useState<'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'gmail'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'gmail' | 'security'>('stats');
   const [prepopulatedEmail, setPrepopulatedEmail] = useState<{ to: string; subject: string; body: string } | null>(null);
+
+  // Security password change states
+  const [currentPw, setCurrentPw] = useState('');
+  const [newPw, setNewPw] = useState('');
+  const [confirmNewPw, setConfirmNewPw] = useState('');
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [pwSuccess, setPwSuccess] = useState<string | null>(null);
+
+  const handlePasswordChange = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwError(null);
+    setPwSuccess(null);
+
+    const actualCurrentPw = localStorage.getItem('fiore_admin_password') || '123456';
+    if (currentPw !== actualCurrentPw) {
+      setPwError('Mật khẩu hiện tại không trùng khớp với hệ thống!');
+      return;
+    }
+
+    if (newPw.length < 4) {
+      setPwError('Mật khẩu mới quá ngắn! Vui lòng cài đặt từ 4 ký tự trở lên.');
+      return;
+    }
+
+    if (newPw !== confirmNewPw) {
+      setPwError('Xác nhận mật khẩu mới chưa đúng với mật khẩu đã nhập.');
+      return;
+    }
+
+    // Save configuration
+    localStorage.setItem('fiore_admin_password', newPw);
+    setPwSuccess('🎉 Thay đổi mật khẩu đăng nhập Admin thành công!');
+    setCurrentPw('');
+    setNewPw('');
+    setConfirmNewPw('');
+  };
 
   // Modal / Form Management States
   const [showProductModal, setShowProductModal] = useState(false);
@@ -399,6 +435,15 @@ export default function AdminDashboard({
               }`}
             >
               <Mail className="mr-1.5 h-4 w-4" /> Thư điện tử / Gmail
+            </button>
+            <button
+              onClick={() => setActiveTab('security')}
+              className={`rounded-lg px-3.5 py-2 flex items-center transition ${
+                activeTab === 'security' ? 'bg-rose-600 text-white shadow-xs' : 'text-gray-600 hover:text-rose-600'
+              }`}
+              id="admin-security-tab"
+            >
+              <Lock className="mr-1.5 h-4 w-4" /> Bảo mật & Mật khẩu
             </button>
           </div>
 
@@ -1106,6 +1151,75 @@ export default function AdminDashboard({
           onClearPrepopulatedEmail={() => setPrepopulatedEmail(null)}
           onBackToStats={() => setActiveTab('stats')}
         />
+      )}
+
+      {activeTab === 'security' && (
+        <div className="mx-auto max-w-xl rounded-2xl border border-pink-100 bg-white p-6 shadow-sm md:p-8 animate-fade-in space-y-6">
+          <div className="border-b border-pink-50 pb-4">
+            <h3 className="font-serif text-xl font-bold text-gray-900 flex items-center gap-2">
+              <Lock className="text-rose-600 h-5 w-5 shrink-0" />
+              <span>Đổi Mật Khẩu Đăng Nhập Quản Trị</span>
+            </h3>
+            <p className="text-xs text-gray-400 mt-1">Cập nhật mật khẩu bảo mật riêng để điều hành cửa hàng Fióre</p>
+          </div>
+
+          <form onSubmit={handlePasswordChange} className="space-y-4">
+            {pwError && (
+              <div className="p-3 bg-red-50 border border-red-100 text-red-700 text-xs rounded-xl font-medium animate-pulse flex items-center space-x-2">
+                <ShieldAlert className="h-4 w-4 shrink-0 text-red-500" />
+                <span>Mã lỗi: {pwError}</span>
+              </div>
+            )}
+            {pwSuccess && (
+              <div className="p-3 bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs rounded-xl font-semibold">
+                {pwSuccess}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Mật khẩu hiện tại</label>
+              <input
+                type="password"
+                required
+                value={currentPw}
+                onChange={(e) => setCurrentPw(e.target.value)}
+                placeholder="Nhập mật khẩu quản trị hiện tại"
+                className="w-full rounded-xl border border-pink-100 bg-neutral-50/50 p-3 text-xs outline-none transition focus:border-rose-400 focus:bg-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Mật khẩu mới</label>
+              <input
+                type="password"
+                required
+                value={newPw}
+                onChange={(e) => setNewPw(e.target.value)}
+                placeholder="Nhập mật khẩu mới (tối thiểu 4 ký tự)"
+                className="w-full rounded-xl border border-pink-100 bg-neutral-50/50 p-3 text-xs outline-none transition focus:border-rose-400 focus:bg-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Xác nhận mật khẩu mới</label>
+              <input
+                type="password"
+                required
+                value={confirmNewPw}
+                onChange={(e) => setConfirmNewPw(e.target.value)}
+                placeholder="Xác nhận lại mật khẩu mới"
+                className="w-full rounded-xl border border-pink-100 bg-neutral-50/50 p-3 text-xs outline-none transition focus:border-rose-400 focus:bg-white"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition active:scale-98 cursor-pointer shadow-md mt-2 flex justify-center items-center gap-1.5"
+            >
+              <Check className="h-4 w-4" /> Cập nhật mật khẩu quản trị
+            </button>
+          </form>
+        </div>
       )}
 
       {/* --- ADD / EDIT PRODUCT POPUP DIA LOG --- */}
