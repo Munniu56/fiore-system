@@ -32,12 +32,14 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
         
         {/* Header Visual */}
         <div className="text-center flex flex-col items-center">
-          <img 
-            src="/src/assets/images/brand_logo_luxury_1780395269921.png" 
-            alt="Fióre Boutique de Fleurs logo" 
-            className="mx-auto h-24 w-auto object-contain mb-2"
-            referrerPolicy="no-referrer"
-          />
+          <div className="flex flex-col items-center justify-center mb-4 select-none text-center">
+            <span className="font-serif text-3xl font-bold tracking-wider text-[#1F3D2B]">
+              Fióre
+            </span>
+            <span className="text-[10px] font-sans font-semibold tracking-[0.2em] text-[#C8A96B] uppercase mt-0.5 block">
+              Boutique de Fleurs
+            </span>
+          </div>
           <h2 className="mt-2 font-serif text-2xl font-bold tracking-tight text-gray-900">
             Đăng nhập Quản trị viên
           </h2>

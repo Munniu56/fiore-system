@@ -1137,9 +1137,13 @@ export default function App() {
             {/* Branding Column */}
             <div className="space-y-4">
               <div className="flex items-center">
-                <div className="p-2 rounded-xl border transition-all duration-300" style={{ backgroundColor: '#1F3D2B', borderColor: 'rgba(255,255,255,0.15)' }}>
+                <div 
+                  onClick={() => setCurrentView('home')}
+                  className="p-2 rounded-xl border transition-all duration-300 cursor-pointer" 
+                  style={{ backgroundColor: '#1F3D2B', borderColor: 'rgba(255,255,255,0.15)' }}
+                >
                   <img 
-                    src="/src/assets/images/brand_logo_footer_gold_1780396918842.png" 
+                    src="/images/brand_logo_luxury_1780395269921.png" 
                     alt="Fióre Boutique de Fleurs" 
                     className="h-14 w-auto object-contain"
                     referrerPolicy="no-referrer"

@@ -39,15 +39,15 @@ export default function Header({
         {/* Brand Logo - Fiore */}
         <div 
           onClick={() => onNavigate('home')} 
-          className="flex cursor-pointer items-center transition hover:opacity-85"
+          className="flex cursor-pointer flex-col items-start justify-center transition hover:opacity-85 select-none"
           id="logo-brand"
         >
-          <img 
-            src="/src/assets/images/brand_logo_luxury_1780395269921.png" 
-            alt="Fióre Boutique de Fleurs" 
-            className="h-12 w-auto object-contain sm:h-14 md:h-16"
-            referrerPolicy="no-referrer"
-          />
+          <span className="font-serif text-2xl font-bold tracking-wider text-[#1F3D2B]">
+            Fióre
+          </span>
+          <span className="text-[10px] font-sans font-semibold tracking-[0.2em] text-[#C8A96B] uppercase -mt-0.5 block">
+            Boutique de Fleurs
+          </span>
         </div>
 
         {/* Realtime Search Bar (Only shown for customer storefront view types) */}
