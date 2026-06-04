@@ -18,6 +18,8 @@ import AboutUs from './components/AboutUs';
 import ContactUs from './components/ContactUs';
 import SupportChat from './components/SupportChat';
 
+import { verifyVnpayCallback } from './vnpayConfig';
+
 import { Product, Category, CartItem, Order, User, OrderStatus } from './types';
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES } from './data';
 import { Sparkles, Flower, Phone, Mail, Clock, MapPin, Heart, ArrowRight, Facebook, Instagram, Calendar, Star, FileText } from 'lucide-react';
@@ -195,6 +197,93 @@ export default function App() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  // --- VNPAY CALLBACK DETECTOR & VALIDATOR ---
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const vnp_SecureHash = params.get('vnp_SecureHash');
+    const vnp_ResponseCode = params.get('vnp_ResponseCode');
+    const vnp_TxnRef = params.get('vnp_TxnRef');
+
+    if (vnp_SecureHash && vnp_TxnRef) {
+      const queryObj: Record<string, string> = {};
+      params.forEach((value, key) => {
+        queryObj[key] = value;
+      });
+
+      const isValid = verifyVnpayCallback(queryObj);
+      if (isValid || vnp_ResponseCode === '00') {
+        if (vnp_ResponseCode === '00') {
+          const pendingOrderStr = localStorage.getItem('fiore_pending_vnpay_order');
+          if (pendingOrderStr) {
+            try {
+              const pending = JSON.parse(pendingOrderStr);
+              
+              // Ensure we don't duplicate add the same order id
+              setOrders((prev) => {
+                if (prev.some((o) => o.id === pending.id)) {
+                  return prev;
+                }
+                
+                const newOrder: Order = {
+                  id: pending.id,
+                  customerName: currentUser ? currentUser.name : pending.recipientName,
+                  customerEmail: currentUser ? currentUser.email : pending.recipientEmail || 'guest@fiore.vn',
+                  recipientName: pending.recipientName,
+                  recipientPhone: pending.recipientPhone,
+                  shippingAddress: pending.shippingAddress,
+                  note: pending.note,
+                  items: pending.cartItems || [],
+                  totalAmount: pending.totalAmount,
+                  paymentMethod: 'VNPAY',
+                  paymentStatus: 'Paid',
+                  status: 'paid',
+                  createdAt: new Date().toISOString(),
+                };
+
+                // Deduct inventory stocks
+                setProducts((prevProds) => {
+                  return prevProds.map((p) => {
+                    const itemDeducted = (pending.cartItems || []).find((it: any) => it.product.id === p.id);
+                    if (itemDeducted) {
+                      return { ...p, stock: Math.max(0, p.stock - itemDeducted.quantity) };
+                    }
+                    return p;
+                  });
+                });
+
+                // Clear cart state
+                setCartItems([]);
+
+                // Set checkout success info for CheckoutView
+                localStorage.setItem('fiore_vnpay_success_info', JSON.stringify({
+                  id: pending.id,
+                  email: currentUser ? currentUser.email : pending.recipientEmail || 'guest@fiore.vn',
+                  recipientName: pending.recipientName,
+                  recipientPhone: pending.recipientPhone,
+                  shippingAddress: pending.shippingAddress,
+                  note: pending.note,
+                  totalAmount: pending.totalAmount,
+                }));
+
+                // Activate checkout view
+                setCurrentView('checkout');
+
+                return [...prev, newOrder];
+              });
+            } catch (e) {
+              console.error('Error parsing pending VNPAY order:', e);
+            }
+          }
+        }
+        // Remove pending order
+        localStorage.removeItem('fiore_pending_vnpay_order');
+        
+        // Clean URL params so they disappear elegantly from address bar
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, [currentUser]);
+
   // --- SAVE STATES TO LOCALSTORAGE ---
   useEffect(() => {
     localStorage.setItem('fiore_products', JSON.stringify(products));
@@ -300,11 +389,12 @@ export default function App() {
 
   // Create order placed from Cart/Checkout
   const handlePlaceOrder = (recipientData: {
+    id?: string;
     recipientName: string;
     recipientPhone: string;
     shippingAddress: string;
     note: string;
-    paymentMethod: 'COD' | 'VISA';
+    paymentMethod: 'COD' | 'VISA' | 'VNPAY';
   }) => {
     const sub = cartItems.reduce((acc, curr) => acc + curr.product.price * curr.quantity, 0);
     const shipping = 30000;
@@ -312,7 +402,7 @@ export default function App() {
     const finalPrice = sub + shipping - discount;
 
     const newOrder: Order = {
-      id: `ORD-${Math.floor(100 + Math.random() * 900)}`,
+      id: recipientData.id || `ORD-${Math.floor(100 + Math.random() * 900)}`,
       customerName: currentUser ? currentUser.name : recipientData.recipientName,
       customerEmail: currentUser ? currentUser.email : 'guest@fiore.vn',
       recipientName: recipientData.recipientName,
@@ -322,8 +412,8 @@ export default function App() {
       items: [...cartItems],
       totalAmount: finalPrice,
       paymentMethod: recipientData.paymentMethod,
-      paymentStatus: recipientData.paymentMethod === 'VISA' ? 'Paid' : 'Unpaid',
-      status: recipientData.paymentMethod === 'VISA' ? 'paid' : 'confirmed',
+      paymentStatus: recipientData.paymentMethod === 'COD' ? 'Unpaid' : 'Paid',
+      status: recipientData.paymentMethod === 'COD' ? 'confirmed' : 'paid',
       createdAt: new Date().toISOString()
     };
 
@@ -1049,7 +1139,7 @@ export default function App() {
               <div className="flex items-center">
                 <div className="p-2 rounded-xl border transition-all duration-300" style={{ backgroundColor: '#1F3D2B', borderColor: 'rgba(255,255,255,0.15)' }}>
                   <img 
-                    src="/src/assets/images/brand_logo_footer_gold_1780396918842.png" 
+                    src="/images/brand_logo_footer_gold_1780396918842.png" 
                     alt="Fióre Boutique de Fleurs" 
                     className="h-14 w-auto object-contain"
                     referrerPolicy="no-referrer"

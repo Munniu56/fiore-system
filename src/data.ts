@@ -10,31 +10,31 @@ export const INITIAL_CATEGORIES: Category[] = [
     id: 'tinh-yeu',
     name: 'Hoa tình yêu',
     description: 'Bó hoa lãng mạn hâm nóng tình cảm đôi lứa',
-    image: '/src/assets/images/regenerated_image_1780392914223.jpg'
+    image: '/images/regenerated_image_1780392914223.jpg'
   },
   {
     id: 'sinh-nhat',
     name: 'Hoa sinh nhật',
     description: 'Món quà ý nghĩa chúc tuổi mới thêm hạnh phúc, thành công',
-    image: '/src/assets/images/regenerated_image_1780392901636.jpg'
+    image: '/images/regenerated_image_1780392901636.jpg'
   },
   {
     id: 'khai-truong',
     name: 'Hoa khai trương',
     description: 'Kệ hoa sang trọng thay lời chúc mã đáo thành công, hồng phát',
-    image: '/src/assets/images/regenerated_image_1780392908021.webp'
+    image: '/images/regenerated_image_1780392908021.webp'
   },
   {
     id: 'chuc-mung',
     name: 'Hoa chúc mừng',
     description: 'Chúc mừng thăng chức, tốt nghiệp, sự kiện đáng nhớ',
-    image: '/src/assets/images/regenerated_image_1780392909111.jpg'
+    image: '/images/regenerated_image_1780392909111.jpg'
   },
   {
     id: 'chia-buon',
     name: 'Hoa chia buồn',
     description: 'Kính viếng thành kính phân ưu, gửi lời chia buồn sâu sắc',
-    image: '/src/assets/images/regenerated_image_1780392910373.jpg'
+    image: '/images/regenerated_image_1780392910373.jpg'
   },
   {
     id: 'hoa-cuoi',
@@ -46,7 +46,7 @@ export const INITIAL_CATEGORIES: Category[] = [
     id: 'theo-mua',
     name: 'Hoa theo mùa',
     description: 'Những đóa hoa tinh túy đặc sắc đón chào từng mùa trong năm',
-    image: '/src/assets/images/regenerated_image_1780392911551.jpg'
+    image: '/images/regenerated_image_1780392911551.jpg'
   }
 ];
 

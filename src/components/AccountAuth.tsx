@@ -282,7 +282,7 @@ export default function AccountAuth({
         <div className="mx-auto max-w-md rounded-3xl border border-pink-100 bg-white p-6 shadow-md sm:p-8 flex flex-col items-center animate-fade-in">
           
           <img 
-            src="/src/assets/images/brand_logo_luxury_1780395269921.png" 
+            src="/images/brand_logo_luxury_1780395269921.png" 
             alt="Fióre Boutique de Fleurs logo" 
             className="h-24 w-auto object-contain mb-4"
             referrerPolicy="no-referrer"

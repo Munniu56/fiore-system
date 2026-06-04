@@ -33,7 +33,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
         {/* Header Visual */}
         <div className="text-center flex flex-col items-center">
           <img 
-            src="/src/assets/images/brand_logo_luxury_1780395269921.png" 
+            src="/images/brand_logo_luxury_1780395269921.png" 
             alt="Fióre Boutique de Fleurs logo" 
             className="mx-auto h-24 w-auto object-contain mb-2"
             referrerPolicy="no-referrer"

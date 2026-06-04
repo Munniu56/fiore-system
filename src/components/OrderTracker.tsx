@@ -254,7 +254,7 @@ export default function OrderTracker({ orders, onNavigate }: OrderTrackerProps) 
                     {displayOrder.paymentMethod === 'COD' 
                       ? 'Thanh toán COD khi giao hoa' 
                       : displayOrder.paymentMethod === 'VNPAY'
-                        ? 'Thanh toán trực tuyến VNPAY Sandbox'
+                        ? 'Đã thanh toán VNPAY SandBox'
                         : 'Thanh toán thẻ Visa trực tuyến'}
                   </span>
                 </div>

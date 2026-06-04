@@ -43,7 +43,7 @@ export default function Header({
           id="logo-brand"
         >
           <img 
-            src="/src/assets/images/brand_logo_luxury_1780395269921.png" 
+            src="/images/brand_logo_luxury_1780395269921.png" 
             alt="Fióre Boutique de Fleurs" 
             className="h-12 w-auto object-contain sm:h-14 md:h-16"
             referrerPolicy="no-referrer"
@@ -146,38 +146,7 @@ export default function Header({
             )}
           </nav>
 
-          {/* Role Demarcation Switcher */}
-          <div className="flex items-center rounded-lg bg-pink-50 p-1">
-            <button
-              onClick={() => {
-                onSwitchRole('customer');
-                onNavigate('home');
-              }}
-              className={`rounded-md px-2.5 py-1 text-xs font-semibold tracking-wide transition-all ${
-                currentRole === 'customer'
-                  ? 'bg-white text-rose-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-800'
-              }`}
-              title="Xem vai trò khách hàng"
-            >
-              Khách Hàng
-            </button>
-            <button
-              onClick={() => {
-                onSwitchRole('admin');
-                onNavigate('admin');
-              }}
-              className={`rounded-md px-2.5 py-1 text-xs font-semibold tracking-wide transition-all ${
-                currentRole === 'admin'
-                  ? 'bg-rose-600 text-white shadow-sm'
-                  : 'text-gray-500 hover:text-gray-800'
-              }`}
-              title="Vào trang quản trị Admin"
-              id="admin-switch"
-            >
-              Admin
-            </button>
-          </div>
+          {/* Role Demarcation Switcher hidden but preserved functionality if needed internally */}
 
           {/* Cart Icon Bar */}
           {currentRole === 'customer' && (

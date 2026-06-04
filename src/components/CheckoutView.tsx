@@ -3,14 +3,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CreditCard, Truck, ClipboardList, ShieldAlert, BadgeCheck, CheckCircle2 } from 'lucide-react';
 import { CartItem } from '../types';
+import { createVnpayPaymentUrl } from '../vnpayConfig';
 
 interface CheckoutViewProps {
   cartItems: CartItem[];
   defaultUserEmail: string;
   onPlaceOrder: (recipientData: {
+    id?: string;
     recipientName: string;
     recipientPhone: string;
     shippingAddress: string;
@@ -50,6 +52,40 @@ export default function CheckoutView({
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccessScreen, setIsSuccessScreen] = useState(false);
+
+  // Visa validation messages
+  const [visaSuccessMsg, setVisaSuccessMsg] = useState<string | null>(null);
+  const [visaErrorMsg, setVisaErrorMsg] = useState<string | null>(null);
+
+  // Placed order success info capture states
+  const [placedOrderCode, setPlacedOrderCode] = useState('');
+  const [placedTotalAmount, setPlacedTotalAmount] = useState(0);
+  const [placedEmail, setPlacedEmail] = useState('');
+  const [placedNote, setPlacedNote] = useState('');
+
+  // Auto-detect and populate success screens if returning from VNPAY sandbox
+  useEffect(() => {
+    const vnpaySuccessInfoStr = localStorage.getItem('fiore_vnpay_success_info');
+    if (vnpaySuccessInfoStr) {
+      try {
+        const info = JSON.parse(vnpaySuccessInfoStr);
+        setPlacedOrderCode(info.id);
+        setPlacedTotalAmount(info.totalAmount);
+        setPlacedEmail(info.email);
+        setPlacedNote(info.note);
+
+        setRecipientName(info.recipientName || '');
+        setRecipientPhone(info.recipientPhone || '');
+        setShippingAddress(info.shippingAddress || '');
+        setPaymentMethod('VNPAY');
+
+        setIsSuccessScreen(true);
+        localStorage.removeItem('fiore_vnpay_success_info');
+      } catch (err) {
+        console.error('Error handling VNPAY success info in CheckoutView:', err);
+      }
+    }
+  }, []);
 
   const calculateSubtotal = () => {
     return cartItems.reduce((acc, curr) => acc + curr.product.price * curr.quantity, 0);
@@ -92,13 +128,64 @@ export default function CheckoutView({
 
   const handleSubmitOrder = (e: React.FormEvent) => {
     e.preventDefault();
+    setVisaErrorMsg(null);
+    setVisaSuccessMsg(null);
     if (!validateForm()) return;
 
     setIsSubmitting(true);
 
+    const generatedId = `ORD-${Math.floor(100 + Math.random() * 900)}`;
+    setPlacedOrderCode(generatedId);
+    setPlacedTotalAmount(totalAmount);
+    setPlacedEmail(defaultUserEmail || 'guest@fiore.vn');
+    setPlacedNote(note.trim());
+
+    if (paymentMethod === 'VISA') {
+      const formattedCardNum = cardNumber.replace(/\s/g, '');
+      const formattedCardName = cardName.trim().toUpperCase();
+      const formattedExpiry = expiry.trim();
+      const formattedCvv = cvv.trim();
+
+      if (
+        formattedCardNum !== '4111111111111111' ||
+        formattedCardName !== 'NGUYEN VAN A' ||
+        formattedExpiry !== '12/30' ||
+        formattedCvv !== '123'
+      ) {
+        setIsSubmitting(false);
+        setVisaErrorMsg('Thông tin thẻ không hợp lệ.');
+        return;
+      } else {
+        setVisaSuccessMsg('Thanh toán thành công (Demo).');
+      }
+    }
+
+    if (paymentMethod === 'VNPAY') {
+      // Store all critical checkout attributes for callback restoration
+      const pendingOrder = {
+        id: generatedId,
+        recipientName,
+        recipientPhone,
+        shippingAddress,
+        note,
+        paymentMethod,
+        cartItems,
+        totalAmount,
+        recipientEmail: defaultUserEmail || 'guest@fiore.vn'
+      };
+      localStorage.setItem('fiore_pending_vnpay_order', JSON.stringify(pendingOrder));
+      
+      // We do not do an automatic redirect because loading VNPAY inside an iframe is blocked
+      // by 'X-Frame-Options: DENY'. Also, attempting 'window.top.location.href' crashes the 
+      // Google AI Studio environment or redirects to a 404.
+      // Keeping isSubmitting = true renders our interactive VNPAY hub modal so the user can control it.
+      return;
+    }
+
     // Simulate standard card processing network delay
     setTimeout(() => {
       onPlaceOrder({
+        id: generatedId,
         recipientName,
         recipientPhone,
         shippingAddress,
@@ -116,6 +203,58 @@ export default function CheckoutView({
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       
+      {/* VNPAY Redirect Modal Overlay with Click Safeguard */}
+      {isSubmitting && paymentMethod === 'VNPAY' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fade-in">
+          <div className="w-full max-w-md rounded-3xl border border-pink-100 bg-white p-8 text-center shadow-2xl space-y-6">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-rose-50 text-rose-500">
+              <svg className="animate-spin h-8 w-8 text-rose-600" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+            </div>
+            
+            <div>
+              <h3 className="font-serif text-xl font-bold text-gray-900">Đang chuyển hướng VNPAY</h3>
+              <p className="mt-3 text-xs text-gray-500 leading-relaxed animate-pulse">
+                Hệ thống đang khởi tạo giao dịch cho đơn hàng <span className="font-bold text-rose-600 font-mono">{placedOrderCode}</span> với số tiền <span className="font-extrabold text-gray-800">{formatVND(placedTotalAmount)}</span>.
+              </p>
+            </div>
+
+            <div className="bg-rose-50/50 rounded-2xl p-4 border border-rose-100/50 text-[11px] text-gray-600 text-left space-y-1.55">
+              <p className="font-bold text-rose-800">⚠️ Lưu ý hiển thị môi trường thử nghiệm:</p>
+              <p>Môi trường bảo mật VNPAY Sandbox ngăn chặn hiển thị trực tiếp bên trong iFrame xem thử.</p>
+              <p className="font-semibold text-rose-700">Vui lòng chọn tiếp tục mở liên kết thanh toán sang Tab mới để thanh toán an toàn:</p>
+            </div>
+
+            <div className="flex flex-col gap-2.5">
+              <a
+                href={createVnpayPaymentUrl(placedOrderCode, placedTotalAmount)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex w-full items-center justify-center rounded-full bg-rose-600 py-3.5 text-xs font-bold text-white shadow-md hover:bg-rose-700 transition cursor-pointer"
+              >
+                💳 Tiếp tục đến VNPAY Sandbox ↗
+              </a>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSubmitting(false);
+                }}
+                className="text-[11px] text-gray-400 hover:text-rose-500 font-medium transition cursor-pointer pt-1"
+              >
+                Quay lại điền thông tin đơn hàng
+              </button>
+            </div>
+
+            <p className="text-[9px] text-gray-400">
+              * Sau khi thanh toán thành công trên VNPAY Sandbox, bạn sẽ được tự động chuyển hướng quay lại đây để nhận thông báo Đơn hàng thành công.
+            </p>
+          </div>
+        </div>
+      )}
+
       {isSuccessScreen ? (
         <div className="mx-auto max-w-lg rounded-3xl border border-emerald-100 bg-white p-8 text-center shadow-xl">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 mb-6">
@@ -127,11 +266,16 @@ export default function CheckoutView({
           </p>
 
           <div className="mt-6 rounded-2xl bg-neutral-50 p-5 text-left border border-gray-100 space-y-2 text-xs">
+            <p><span className="text-gray-400 font-medium">Mã số đơn hàng:</span> <span className="font-bold text-rose-600">{placedOrderCode}</span></p>
+            <p><span className="text-gray-400 font-medium">Email:</span> <span className="font-bold text-gray-800">{placedEmail}</span></p>
             <p><span className="text-gray-400 font-medium">Người nhận:</span> <span className="font-bold text-gray-800">{recipientName}</span></p>
             <p><span className="text-gray-400 font-medium">Số điện thoại:</span> <span className="font-bold text-gray-800">{recipientPhone}</span></p>
             <p><span className="text-gray-400 font-medium">Địa chỉ nhận:</span> <span className="font-semibold text-gray-700">{shippingAddress}</span></p>
-            <p><span className="text-gray-400 font-medium">Hình thức:</span> <span className="font-bold text-rose-600">{paymentMethod === 'COD' ? 'Thanh toán COD khi nhận hoa' : paymentMethod === 'VNPAY' ? 'Thanh toán trực tuyến VNPAY Sandbox' : 'Đã thanh toán Visa (Mô phỏng)'}</span></p>
-            <p><span className="text-gray-400 font-medium">Tổng số tiền:</span> <span className="font-extrabold text-rose-600 text-sm">{formatVND(totalAmount)}</span></p>
+            <p><span className="text-gray-400 font-medium">Hình thức:</span> <span className="font-bold text-rose-600">{paymentMethod === 'COD' ? 'Thanh toán COD khi nhận hoa' : paymentMethod === 'VNPAY' ? 'Đã thanh toán VNPAY SandBox' : 'Đã thanh toán Visa (Mô phỏng)'}</span></p>
+            {placedNote && (
+              <p><span className="text-gray-400 font-medium">Ghi chú đơn hàng & Viết thiệp miễn phí:</span> <span className="font-semibold text-gray-700 italic">"{placedNote}"</span></p>
+            )}
+            <p className="border-t border-gray-150 pt-2 mt-2"><span className="text-gray-400 font-medium">Tổng số tiền:</span> <span className="font-extrabold text-rose-600 text-sm">{formatVND(placedTotalAmount)}</span></p>
           </div>
 
           <div className="mt-8 flex flex-col gap-3">
@@ -205,7 +349,7 @@ export default function CheckoutView({
 
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-                      Email người gửi hàng (mặc định)
+                      Email người nhận hàng (mặc định)
                     </label>
                     <input
                       type="text"
@@ -266,6 +410,8 @@ export default function CheckoutView({
                   onClick={() => {
                     setPaymentMethod('COD');
                     setErrors({});
+                    setVisaErrorMsg(null);
+                    setVisaSuccessMsg(null);
                   }}
                   className={`flex cursor-pointer items-start space-x-3.5 rounded-xl border p-4 transition-all duration-200 ${
                     paymentMethod === 'COD'
@@ -290,7 +436,12 @@ export default function CheckoutView({
 
                 {/* VISA option */}
                 <div
-                  onClick={() => setPaymentMethod('VISA')}
+                  onClick={() => {
+                    setPaymentMethod('VISA');
+                    setErrors({});
+                    setVisaErrorMsg(null);
+                    setVisaSuccessMsg(null);
+                  }}
                   className={`flex cursor-pointer items-start space-x-3.5 rounded-xl border p-4 transition-all duration-200 ${
                     paymentMethod === 'VISA'
                       ? 'border-rose-500 bg-pink-50/20 ring-1 ring-rose-500'
@@ -317,6 +468,8 @@ export default function CheckoutView({
                   onClick={() => {
                     setPaymentMethod('VNPAY');
                     setErrors({});
+                    setVisaErrorMsg(null);
+                    setVisaSuccessMsg(null);
                   }}
                   className={`flex cursor-pointer items-start space-x-3.5 rounded-xl border p-4 transition-all duration-200 ${
                     paymentMethod === 'VNPAY'
@@ -358,6 +511,21 @@ export default function CheckoutView({
                     <p className="text-xs font-semibold leading-snug uppercase tracking-wider">Môi Trường Thanh Toán Giả Định An Toàn</p>
                   </div>
 
+                  {/* Visa verification messages */}
+                  {visaErrorMsg && (
+                    <div className="rounded-xl bg-red-50 border border-red-200 p-3.5 text-red-800 text-xs font-bold flex items-center shadow-xs animate-pulse">
+                      <ShieldAlert className="w-5 h-5 mr-1.5 shrink-0 text-red-600" />
+                      <span>{visaErrorMsg}</span>
+                    </div>
+                  )}
+
+                  {visaSuccessMsg && (
+                    <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3.5 text-emerald-800 text-xs font-bold flex items-center shadow-xs">
+                      <CheckCircle2 className="w-5 h-5 mr-1.5 shrink-0 text-emerald-600" />
+                      <span>{visaSuccessMsg}</span>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                     
                     {/* Simulated Visa Interactive Card Graphic */}
@@ -378,7 +546,7 @@ export default function CheckoutView({
                         <div>
                           <p className="uppercase opacity-60">Chủ Thẻ</p>
                           <p className="font-bold tracking-wide uppercase truncate max-w-[120px]">
-                            {cardName ? cardName : 'NGUYEN VAN A'}
+                            {cardName ? cardName : 'TEN CHU THE'}
                           </p>
                         </div>
                         <div className="text-right">
@@ -397,7 +565,7 @@ export default function CheckoutView({
                           maxLength={16}
                           value={cardNumber}
                           onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, ''))}
-                          placeholder="4129 0000 1234 5678"
+                          placeholder="4111..."
                           className="w-full rounded-lg border border-pink-100 bg-white px-3 py-2 text-xs outline-none focus:border-rose-400"
                         />
                         {errors.cardNumber && <span className="text-[10px] text-red-500 font-semibold">{errors.cardNumber}</span>}
@@ -409,7 +577,7 @@ export default function CheckoutView({
                           type="text"
                           value={cardName}
                           onChange={(e) => setCardName(e.target.value)}
-                          placeholder="NGUYEN VAN A"
+                          placeholder="NGUYEN VAN A..."
                           className="w-full rounded-lg border border-pink-100 bg-white px-3 py-2 text-xs outline-none focus:border-rose-400 uppercase"
                         />
                         {errors.cardName && <span className="text-[10px] text-red-500 font-semibold">{errors.cardName}</span>}
@@ -429,7 +597,7 @@ export default function CheckoutView({
                               }
                               setExpiry(val);
                             }}
-                            placeholder="12/28"
+                            placeholder="12/30"
                             className="w-full rounded-lg border border-pink-100 bg-white px-3 py-2 text-xs outline-none focus:border-rose-400"
                           />
                           {errors.expiry && <span className="text-[10px] text-red-500 font-semibold">{errors.expiry}</span>}
@@ -441,7 +609,7 @@ export default function CheckoutView({
                             maxLength={3}
                             value={cvv}
                             onChange={(e) => setCvv(e.target.value.replace(/\D/g, ''))}
-                            placeholder="•••"
+                            placeholder="123"
                             className="w-full rounded-lg border border-pink-100 bg-white px-3 py-2 text-xs outline-none focus:border-rose-400"
                           />
                           {errors.cvv && <span className="text-[10px] text-red-500 font-semibold">{errors.cvv}</span>}
