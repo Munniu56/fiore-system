@@ -110,13 +110,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
             </div>
           </div>
 
-          <div className="rounded-lg bg-amber-50 p-3 text-amber-900/80 text-[10.5px] border border-amber-200/60 space-y-1">
-            <p className="font-bold flex items-center gap-1">
-              <span>💡 Gợi ý truy cập mẫu:</span>
-            </p>
-            <p>Tên đăng nhập: <strong className="text-emerald-850 font-bold">admin</strong></p>
-            <p>Mật khẩu mặc định: <strong className="text-emerald-850 font-bold">123456</strong> (hoặc mật khẩu do bạn đổi)</p>
-          </div>
+
 
           <div className="pt-2">
             <button
