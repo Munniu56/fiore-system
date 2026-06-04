@@ -154,9 +154,7 @@ export default function AdminApp() {
     return sampleOrders;
   });
 
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem('fiore_admin_authenticated') === 'true';
-  });
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
 
   // --- SAVE STATES TO LOCAL STORAGE ---
   useEffect(() => {
@@ -230,12 +228,10 @@ export default function AdminApp() {
 
   const handleLoginSuccess = () => {
     setIsAdminAuthenticated(true);
-    localStorage.setItem('fiore_admin_authenticated', 'true');
   };
 
   const handleAdminLogout = () => {
     setIsAdminAuthenticated(false);
-    localStorage.removeItem('fiore_admin_authenticated');
   };
 
   return (
