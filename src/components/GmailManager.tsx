@@ -10,7 +10,13 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User as ShopUser, Order } from '../types';
-import { googleSignIn as googleFirebaseSignIn, googleSignOut as googleFirebaseSignOut } from '../gmailService';
+import { 
+  googleSignIn as googleFirebaseSignIn, 
+  googleSignOut as googleFirebaseSignOut,
+  subscribeToGmailAuth,
+  getGmailAccessToken,
+  handleUnauthorized
+} from '../gmailService';
 
 interface GmailManagerProps {
   users: ShopUser[];
@@ -49,7 +55,7 @@ export default function GmailManager({
     return localStorage.getItem('fiore_gmail_client_id') || (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || '';
   });
   const [accessToken, setAccessToken] = useState<string | null>(() => {
-    return localStorage.getItem('fiore_gmail_access_token') || null;
+    return getGmailAccessToken() || localStorage.getItem('fiore_gmail_access_token') || null;
   });
   const [userProfile, setUserProfile] = useState<{ emailAddress: string; messagesTotal: number } | null>(null);
   
@@ -221,12 +227,19 @@ export default function GmailManager({
     }
   }, []);
 
-  // Check on load if we already have an accessToken saved in localStorage
+  // Keep state synced with gmailService.ts global subscription
   useEffect(() => {
-    const savedToken = localStorage.getItem('fiore_gmail_access_token');
-    if (savedToken && !userProfile) {
-      fetchUserProfile(savedToken, true);
-    }
+    const unsub = subscribeToGmailAuth((firebaseUser, token) => {
+      setAccessToken(token);
+      if (token) {
+        if (!userProfile) {
+          fetchUserProfile(token, true);
+        }
+      } else {
+        setUserProfile(null);
+      }
+    });
+    return unsub;
   }, [fetchUserProfile, userProfile]);
 
   const handleConnectFirebaseGoogle = async () => {
@@ -278,6 +291,10 @@ export default function GmailManager({
       });
       
       if (!listRes.ok) {
+        if (listRes.status === 401) {
+          handleUnauthorized();
+          throw new Error('Liên kết tài khoản Google đã hết hạn. Vui lòng kết nối lại tài khoản.');
+        }
         let errorDetails = '';
         try {
           const errData = await listRes.json();
@@ -397,6 +414,10 @@ export default function GmailManager({
       });
 
       if (!res.ok) {
+        if (res.status === 401) {
+          handleUnauthorized();
+          throw new Error('Tài khoản Google đã hết hạn phiên làm việc. Vui lòng kết nối lại.');
+        }
         let errorDetails = '';
         try {
           const errData = await res.json();

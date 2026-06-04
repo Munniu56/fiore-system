@@ -39,6 +39,14 @@ const notifyListeners = () => {
   listeners.forEach(cb => cb(cachedUser, cachedAccessToken));
 };
 
+export const handleUnauthorized = () => {
+  cachedAccessToken = null;
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('fiore_gmail_access_token');
+  }
+  notifyListeners();
+};
+
 // Initialize auth listener
 export const initGmailAuth = () => {
   return onAuthStateChanged(auth, async (user) => {
@@ -237,6 +245,9 @@ export const sendOrderNotificationEmail = async (order: Order, recipientEmail: s
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        handleUnauthorized();
+      }
       const errTxt = await response.text();
       console.error('Lỗi khi gửi email qua Gmail API:', errTxt);
       return false;
@@ -264,6 +275,9 @@ export const fetchRecentGmailLogs = async () => {
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        handleUnauthorized();
+      }
       console.error('Lỗi fetch messages:', await response.text());
       return [];
     }

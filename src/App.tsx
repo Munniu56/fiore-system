@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import LandingHero from './components/LandingHero';
 import ProductCard from './components/ProductCard';
@@ -187,19 +188,13 @@ export default function App() {
     return sampleOrders;
   });
 
+  // --- PROGRAMMATIC ROUTER HOOKS ---
+  const navigate = useNavigate();
+  const location = useLocation();
+
   // --- COMPONENT ACTIVE VIEW ROLES CONTROL ---
-  const [currentRole, setCurrentRole] = useState<'customer' | 'admin'>(() => {
-    if (typeof window !== 'undefined' && window.location.pathname.endsWith('/admin')) {
-      return 'admin';
-    }
-    return 'customer';
-  });
-  const [currentView, setCurrentView] = useState<string>(() => {
-    if (typeof window !== 'undefined' && window.location.pathname.endsWith('/admin')) {
-      return 'admin';
-    }
-    return 'home';
-  });
+  const [currentRole, setCurrentRole] = useState<'customer' | 'admin'>('customer');
+  const [currentView, setCurrentView] = useState<string>('home');
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     return localStorage.getItem('fiore_admin_authenticated') === 'true';
@@ -224,22 +219,34 @@ export default function App() {
 
   // Listen for navigation events and synchronize with path URL
   useEffect(() => {
-    const handleLocationChange = () => {
-      if (typeof window !== 'undefined' && window.location.pathname.endsWith('/admin')) {
-        setCurrentRole('admin');
-        setCurrentView('admin');
+    const p = location.pathname;
+    if (p === '/admin' || p === '/admin/login' || p.startsWith('/admin/') || p === '/admin.html') {
+      setCurrentRole('admin');
+      setCurrentView('admin');
+    } else {
+      setCurrentRole('customer');
+      if (currentView === 'admin') {
+         setCurrentView('home');
       }
-    };
-    window.addEventListener('popstate', handleLocationChange);
-    handleLocationChange();
-    return () => {
-      window.removeEventListener('popstate', handleLocationChange);
-    };
-  }, []);
+    }
+  }, [location.pathname, currentView]);
   
   // Filtering & Realtime Search States
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const [sentEmailOrderIds, setSentEmailOrderIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('fiore_sent_email_orders');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('fiore_sent_email_orders', JSON.stringify(sentEmailOrderIds));
+  }, [sentEmailOrderIds]);
 
   // --- VNPAY CALLBACK DETECTOR & VALIDATOR ---
   useEffect(() => {
@@ -263,11 +270,8 @@ export default function App() {
               const pending = JSON.parse(pendingOrderStr);
               
               // Ensure we don't duplicate add the same order id
-              setOrders((prev) => {
-                if (prev.some((o) => o.id === pending.id)) {
-                  return prev;
-                }
-                
+              const alreadyExists = orders.some((o) => o.id === pending.id);
+              if (!alreadyExists) {
                 const newOrder: Order = {
                   id: pending.id,
                   customerName: currentUser ? currentUser.name : pending.recipientName,
@@ -312,8 +316,29 @@ export default function App() {
                 // Activate checkout view
                 setCurrentView('checkout');
 
-                return [...prev, newOrder];
-              });
+                setOrders((prev) => [...prev, newOrder]);
+
+                // Auto-send order confirmation email if Gmail is connected
+                const currentToken = localStorage.getItem('fiore_gmail_access_token') || gmailToken;
+                if (currentToken) {
+                  const emailRecipient = newOrder.customerEmail;
+                  sendOrderNotificationEmail(newOrder, emailRecipient)
+                    .then((success) => {
+                      if (success) {
+                        console.log(`Email hóa đơn đơn hàng VNPAY ${newOrder.id} đã được gửi tự động qua Gmail!`);
+                        setSentEmailOrderIds((prev) => {
+                          if (prev.includes(newOrder.id)) return prev;
+                          return [...prev, newOrder.id];
+                        });
+                      } else {
+                        console.warn('Gửi email tự động không thành công qua Gmail.');
+                      }
+                    })
+                    .catch((err) => {
+                      console.error('Lỗi khi gửi email tự động VNPAY:', err);
+                    });
+                }
+              }
             } catch (e) {
               console.error('Error parsing pending VNPAY order:', e);
             }
@@ -326,7 +351,7 @@ export default function App() {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
-  }, [currentUser]);
+  }, [currentUser, orders, gmailToken]);
 
   // --- SAVE STATES TO LOCALSTORAGE ---
   useEffect(() => {
@@ -436,6 +461,7 @@ export default function App() {
     id?: string;
     recipientName: string;
     recipientPhone: string;
+    recipientEmail?: string;
     shippingAddress: string;
     note: string;
     paymentMethod: 'COD' | 'VISA' | 'VNPAY';
@@ -448,7 +474,7 @@ export default function App() {
     const newOrder: Order = {
       id: recipientData.id || `ORD-${Math.floor(100 + Math.random() * 900)}`,
       customerName: currentUser ? currentUser.name : recipientData.recipientName,
-      customerEmail: currentUser ? currentUser.email : 'guest@fiore.vn',
+      customerEmail: currentUser ? currentUser.email : (recipientData.recipientEmail || 'guest@fiore.vn'),
       recipientName: recipientData.recipientName,
       recipientPhone: recipientData.recipientPhone,
       shippingAddress: recipientData.shippingAddress,
@@ -475,14 +501,18 @@ export default function App() {
     setOrders((prev) => [...prev, newOrder]);
     setCartItems([]); // Clear cart items on purchase completion!
 
-    // Auto-send order confirmation email if Gmail is connected
+    // Auto-send order confirmation email if Gmail is connected for all orders
     const currentToken = localStorage.getItem('fiore_gmail_access_token') || gmailToken;
     if (currentToken) {
-      const emailRecipient = currentUser ? currentUser.email : 'thuyvanngo35@gmail.com';
+      const emailRecipient = newOrder.customerEmail;
       sendOrderNotificationEmail(newOrder, emailRecipient)
         .then((success) => {
           if (success) {
             console.log(`Email hóa đơn đơn hàng ${newOrder.id} đã được gửi tự động qua Gmail!`);
+            setSentEmailOrderIds((prev) => {
+              if (prev.includes(newOrder.id)) return prev;
+              return [...prev, newOrder.id];
+            });
           } else {
             console.warn('Gửi email tự động không thành công qua Gmail.');
           }
@@ -563,18 +593,49 @@ export default function App() {
   };
 
   const handleUpdateOrderStatus = (orderId: string, status: OrderStatus) => {
-    setOrders((prev) =>
-      prev.map((o) => {
+    setOrders((prev) => {
+      let orderToEmail: Order | null = null;
+      const updated = prev.map((o) => {
         if (o.id === orderId) {
-          return {
+          const oldPaymentStatus = o.paymentStatus;
+          const oldStatus = o.status;
+          const newPaymentStatus = (status === 'completed' || status === 'paid') ? 'Paid' : o.paymentStatus;
+          const updatedOrder: Order = {
             ...o,
             status,
-            paymentStatus: status === 'completed' ? 'Paid' : o.paymentStatus
+            paymentStatus: newPaymentStatus
           };
+          
+          if (
+            (oldPaymentStatus !== 'Paid' && newPaymentStatus === 'Paid') ||
+            (oldStatus !== 'paid' && status === 'paid')
+          ) {
+            orderToEmail = updatedOrder;
+          }
+          return updatedOrder;
         }
         return o;
-      })
-    );
+      });
+
+      if (orderToEmail) {
+        const orderObj: Order = orderToEmail;
+        const currentToken = localStorage.getItem('fiore_gmail_access_token') || gmailToken;
+        if (currentToken) {
+          sendOrderNotificationEmail(orderObj, orderObj.customerEmail)
+            .then((success) => {
+              if (success) {
+                console.log(`Email hóa đơn đơn hàng ${orderObj.id} đã được gửi tự động khi chuyển sang Đã thanh toán!`);
+              } else {
+                console.warn('Gửi email tự động từ dashboard không thành công.');
+              }
+            })
+            .catch((err) => {
+              console.error('Lỗi khi gửi email tự động:', err);
+            });
+        }
+      }
+      return updated;
+    });
   };
 
   // Common VND price formatting assistant
@@ -591,11 +652,25 @@ export default function App() {
         currentRole={currentRole}
         cartCount={cartItems.reduce((acc, curr) => acc + curr.quantity, 0)}
         onNavigate={(v) => {
-          setCurrentView(v);
-          window.scrollTo({ top: 0, behavior: 'instant' });
+          if (v === 'admin') {
+            navigate('/admin');
+          } else {
+            setCurrentView(v);
+            if (location.pathname !== '/') {
+              navigate('/');
+            }
+            window.scrollTo({ top: 0, behavior: 'instant' });
+          }
         }}
         onLogout={handleUserLogout}
-        onSwitchRole={handleSwitchRole}
+        onSwitchRole={(role) => {
+          handleSwitchRole(role);
+          if (role === 'admin') {
+            navigate('/admin');
+          } else {
+            navigate('/');
+          }
+        }}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         currentView={currentView}
@@ -603,6 +678,53 @@ export default function App() {
 
       {/* MAIN VIEWPORT BODY */}
       <main className="flex-grow">
+        <Routes>
+          <Route path="/admin.html" element={<Navigate to="/admin" replace />} />
+          <Route path="/admin/login" element={
+            isAdminAuthenticated ? (
+              <Navigate to="/admin" replace />
+            ) : (
+              <div className="animate-fade-in animate-once">
+                <AdminLogin
+                  onLoginSuccess={() => {
+                    setIsAdminAuthenticated(true);
+                    localStorage.setItem('fiore_admin_authenticated', 'true');
+                    navigate('/admin');
+                  }}
+                />
+              </div>
+            )
+          } />
+
+          <Route path="/admin" element={
+            isAdminAuthenticated ? (
+              <div className="animate-fade-in animate-once">
+                <AdminDashboard
+                  products={products}
+                  categories={categories}
+                  orders={orders}
+                  users={users}
+                  onAddProduct={handleAddProduct}
+                  onEditProduct={handleEditProduct}
+                  onDeleteProduct={handleDeleteProduct}
+                  onAddCategory={handleAddCategory}
+                  onEditCategory={handleEditCategory}
+                  onDeleteCategory={handleDeleteCategory}
+                  onUpdateOrderStatus={handleUpdateOrderStatus}
+                  onAdminLogout={() => {
+                    setIsAdminAuthenticated(false);
+                    localStorage.removeItem('fiore_admin_authenticated');
+                    navigate('/admin/login');
+                  }}
+                />
+              </div>
+            ) : (
+              <Navigate to="/admin/login" replace />
+            )
+          } />
+
+          <Route path="*" element={
+            <>
         
         {/* VIEW 1: HOME PAGE */}
         {currentView === 'home' && (
@@ -1108,6 +1230,7 @@ export default function App() {
                 setCurrentView(v);
                 window.scrollTo({ top: 0, behavior: 'instant' });
               }}
+              sentEmailOrderIds={sentEmailOrderIds}
             />
           </div>
         )}
@@ -1141,38 +1264,6 @@ export default function App() {
           </div>
         )}
 
-        {/* VIEW 8: EXECUTIVE MANAGEMENT ADMIN VIEW */}
-        {currentView === 'admin' && (
-          <div className="animate-fade-in">
-            {isAdminAuthenticated ? (
-              <AdminDashboard
-                products={products}
-                categories={categories}
-                orders={orders}
-                users={users}
-                onAddProduct={handleAddProduct}
-                onEditProduct={handleEditProduct}
-                onDeleteProduct={handleDeleteProduct}
-                onAddCategory={handleAddCategory}
-                onEditCategory={handleEditCategory}
-                onDeleteCategory={handleDeleteCategory}
-                onUpdateOrderStatus={handleUpdateOrderStatus}
-                onAdminLogout={() => {
-                  setIsAdminAuthenticated(false);
-                  localStorage.removeItem('fiore_admin_authenticated');
-                }}
-              />
-            ) : (
-              <AdminLogin
-                onLoginSuccess={() => {
-                  setIsAdminAuthenticated(true);
-                  localStorage.setItem('fiore_admin_authenticated', 'true');
-                }}
-              />
-            )}
-          </div>
-        )}
-
         {/* VIEW 9: ABOUT US SCREEN */}
         {currentView === 'about' && (
           <div className="animate-fade-in">
@@ -1187,6 +1278,9 @@ export default function App() {
           </div>
         )}
 
+            </>
+          } />
+        </Routes>
       </main>
 
       {/* LUXURY DESIGN FOOTER */}
@@ -1318,7 +1412,7 @@ export default function App() {
                 </li>
                 <li>
                   <button 
-                    onClick={() => { setCurrentRole('admin'); setCurrentView('admin'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
+                    onClick={() => { navigate('/admin'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
                     className="transition-colors duration-200 text-left cursor-pointer opacity-75 hover:opacity-100 flex items-center gap-1"
                     style={{ color: '#F8F5EF' }}
                     onMouseEnter={(e) => e.currentTarget.style.color = '#C8A96B'}

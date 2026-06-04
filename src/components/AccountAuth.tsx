@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Lock, Mail, User, Phone, MapPin, KeyRound, ShieldAlert, CheckCircle, Save } from 'lucide-react';
+import { Lock, Mail, User, Phone, MapPin, KeyRound, ShieldAlert, CheckCircle, Save, Eye, EyeOff, X } from 'lucide-react';
 import { User as UserType } from '../types';
 import brandLogoHeader from '../assets/images/logo_white_bg_1780554592404.png';
 
@@ -36,6 +36,12 @@ export default function AccountAuth({
   const [editName, setEditName] = useState(currentUser?.name || '');
   const [editPhone, setEditPhone] = useState(currentUser?.phone || '');
   const [editAddress, setEditAddress] = useState(currentUser?.address || '');
+
+  // Admin bypass password states
+  const [showAdminBypassPrompt, setShowAdminBypassPrompt] = useState(false);
+  const [adminBypassPasswordInput, setAdminBypassPasswordInput] = useState('');
+  const [showBypassPassword, setShowBypassPassword] = useState(false);
+  const [adminBypassError, setAdminBypassError] = useState<string | null>(null);
 
   const triggerNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
@@ -131,17 +137,9 @@ export default function AccountAuth({
   // Preset accounts bypass helpers
   const handleQuickBypass = (role: 'admin' | 'customer') => {
     if (role === 'admin') {
-      const adminUser: UserType = {
-        id: 'usr-admin',
-        email: 'admin@fiore.vn',
-        name: 'Nghệ Nhân Fiore Admin',
-        phone: '0988666333',
-        address: '15 Lý Tự Trọng, Quận 1, TP. HCM',
-        isAdmin: true,
-      };
-      onLogin(adminUser);
-      triggerNotification('success', 'Bypass vai trò quản trị viên thành công!');
-      onNavigate('admin');
+      setShowAdminBypassPrompt(true);
+      setAdminBypassPasswordInput('');
+      setAdminBypassError(null);
     } else {
       const customerUser: UserType = {
         id: 'usr-customer',
@@ -154,6 +152,30 @@ export default function AccountAuth({
       onLogin(customerUser);
       triggerNotification('success', 'Bypass vai trò khách hàng thường thành công!');
       onNavigate('home');
+    }
+  };
+
+  const handleAdminBypassSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdminBypassError(null);
+    const savedAdminPassword = localStorage.getItem('fiore_admin_password') || '123456';
+
+    if (adminBypassPasswordInput === savedAdminPassword) {
+      const adminUser: UserType = {
+        id: 'usr-admin',
+        email: 'admin@fiore.vn',
+        name: 'Nghệ Nhân Fiore Admin',
+        phone: '0988666333',
+        address: '15 Lý Tự Trọng, Quận 1, TP. HCM',
+        isAdmin: true,
+      };
+      onLogin(adminUser);
+      triggerNotification('success', '⚡ Đăng nhập vai trò Sếp Admin thành công!');
+      setShowAdminBypassPrompt(false);
+      setAdminBypassPasswordInput('');
+      onNavigate('admin');
+    } else {
+      setAdminBypassError('Mật khẩu Sếp Admin không khớp với cấu hình hệ thống!');
     }
   };
 
@@ -454,6 +476,92 @@ export default function AccountAuth({
             </div>
           </div>
 
+        </div>
+      )}
+
+      {/* Sếp Admin password bypass dialog */}
+      {showAdminBypassPrompt && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fade-in animate-once">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl border border-pink-100 relative max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => {
+                setShowAdminBypassPrompt(false);
+                setAdminBypassPasswordInput('');
+                setAdminBypassError(null);
+              }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-rose-500 hover:rotate-90 transition-transform duration-200 cursor-pointer"
+              title="Đóng"
+            >
+              <X className="h-4.5 w-4.5" />
+            </button>
+
+            <div className="text-center space-y-3">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                <Lock className="h-6 w-6 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="font-serif text-lg font-bold text-gray-900">Xác Thực Sếp Admin</h3>
+                <p className="text-[10.5px] text-gray-400 mt-1">Vui lòng cung cấp mật khẩu quản trị hiện tại để tiếp tục bypass đăng nhập chính thức</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleAdminBypassSubmit} className="mt-4 space-y-4">
+              {adminBypassError && (
+                <div className="p-3 bg-red-50 border border-red-100 text-red-700 text-[11px] rounded-xl font-medium animate-pulse flex items-center gap-1.5">
+                  <ShieldAlert className="h-4 w-4 shrink-0 text-red-500" />
+                  <span>{adminBypassError}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">Mật Khẩu Quản Trị Viên</label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-emerald-500">
+                    <Lock className="h-3.5 w-3.5" />
+                  </span>
+                  <input
+                    type={showBypassPassword ? 'text' : 'password'}
+                    required
+                    value={adminBypassPasswordInput}
+                    onChange={(e) => setAdminBypassPasswordInput(e.target.value)}
+                    placeholder="Mật khẩu của admin..."
+                    className="w-full rounded-xl border border-pink-100 bg-neutral-50/50 py-2.5 pl-9 pr-10 text-xs font-medium outline-none transition focus:border-emerald-400 focus:bg-white"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowBypassPassword(!showBypassPassword)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-emerald-600 cursor-pointer"
+                    title={showBypassPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showBypassPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+
+
+              <div className="flex gap-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAdminBypassPrompt(false);
+                    setAdminBypassPasswordInput('');
+                    setAdminBypassError(null);
+                  }}
+                  className="flex-1 rounded-xl border border-gray-200 bg-white py-2.5 text-xs font-bold text-gray-500 hover:bg-neutral-50 hover:text-gray-700 transition cursor-pointer"
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 rounded-xl bg-emerald-600 py-2.5 text-xs font-bold text-white shadow-md hover:bg-emerald-700 active:scale-98 transition duration-200 cursor-pointer"
+                >
+                  Xác Nhận
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

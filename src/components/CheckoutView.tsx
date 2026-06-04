@@ -15,6 +15,7 @@ interface CheckoutViewProps {
     id?: string;
     recipientName: string;
     recipientPhone: string;
+    recipientEmail?: string;
     shippingAddress: string;
     note: string;
     paymentMethod: 'COD' | 'VISA' | 'VNPAY';
@@ -26,6 +27,7 @@ interface CheckoutViewProps {
     }
   }) => void;
   onNavigate: (view: string) => void;
+  sentEmailOrderIds?: string[];
 }
 
 export default function CheckoutView({
@@ -33,14 +35,22 @@ export default function CheckoutView({
   defaultUserEmail,
   onPlaceOrder,
   onNavigate,
+  sentEmailOrderIds = [],
 }: CheckoutViewProps) {
   
   // Recipient details state
   const [recipientName, setRecipientName] = useState('');
   const [recipientPhone, setRecipientPhone] = useState('');
+  const [recipientEmail, setRecipientEmail] = useState(defaultUserEmail || '');
   const [shippingAddress, setShippingAddress] = useState('');
   const [note, setNote] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'COD' | 'VISA' | 'VNPAY'>('COD');
+
+  useEffect(() => {
+    if (defaultUserEmail) {
+      setRecipientEmail(defaultUserEmail);
+    }
+  }, [defaultUserEmail]);
 
   // Visa card simulation details state
   const [cardNumber, setCardNumber] = useState('');
@@ -77,6 +87,7 @@ export default function CheckoutView({
         setRecipientName(info.recipientName || '');
         setRecipientPhone(info.recipientPhone || '');
         setShippingAddress(info.shippingAddress || '');
+        setRecipientEmail(info.email || '');
         setPaymentMethod('VNPAY');
 
         setIsSuccessScreen(true);
@@ -106,6 +117,11 @@ export default function CheckoutView({
       newErrors.recipientPhone = 'Số điện thoại không được để trống';
     } else if (!/^[0-9]{10,11}$/.test(recipientPhone.trim())) {
       newErrors.recipientPhone = 'Số điện thoại không hợp lệ (yêu cầu 10-11 chữ số)';
+    }
+    if (!recipientEmail.trim()) {
+      newErrors.recipientEmail = 'Email không được để trống';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail.trim())) {
+      newErrors.recipientEmail = 'Địa chỉ email không đúng định dạng';
     }
     if (!shippingAddress.trim()) newErrors.shippingAddress = 'Địa chỉ giao hàng không được để trống';
 
@@ -137,7 +153,7 @@ export default function CheckoutView({
     const generatedId = `ORD-${Math.floor(100 + Math.random() * 900)}`;
     setPlacedOrderCode(generatedId);
     setPlacedTotalAmount(totalAmount);
-    setPlacedEmail(defaultUserEmail || 'guest@fiore.vn');
+    setPlacedEmail(recipientEmail || 'guest@fiore.vn');
     setPlacedNote(note.trim());
 
     if (paymentMethod === 'VISA') {
@@ -171,7 +187,7 @@ export default function CheckoutView({
         paymentMethod,
         cartItems,
         totalAmount,
-        recipientEmail: defaultUserEmail || 'guest@fiore.vn'
+        recipientEmail: recipientEmail || 'guest@fiore.vn'
       };
       localStorage.setItem('fiore_pending_vnpay_order', JSON.stringify(pendingOrder));
       
@@ -188,6 +204,7 @@ export default function CheckoutView({
         id: generatedId,
         recipientName,
         recipientPhone,
+        recipientEmail,
         shippingAddress,
         note,
         paymentMethod,
@@ -294,6 +311,14 @@ export default function CheckoutView({
               Quay lại trang chủ
             </button>
           </div>
+
+          {/* Email sending status indicator at the bottom */}
+          {sentEmailOrderIds.includes(placedOrderCode) && (
+            <div className="mt-5 flex items-center justify-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50/80 py-2.5 px-4 rounded-xl border border-emerald-100 animate-fade-in shadow-xs">
+              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-ping shrink-0" />
+              <span>Đã gửi mail xác nhận đơn hoa thành công!</span>
+            </div>
+          )}
         </div>
       ) : (
         <form onSubmit={handleSubmitOrder} className="grid grid-cols-1 gap-8 lg:grid-cols-12" id="checkout-form">
@@ -348,15 +373,22 @@ export default function CheckoutView({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">
-                      Email người nhận hàng (mặc định)
+                    <label htmlFor="recipientEmail" className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+                      Email nhận hóa đơn & thông tin <span className="text-red-500">*</span>
                     </label>
                     <input
-                      type="text"
-                      disabled
-                      value={defaultUserEmail || 'guest@fiore.vn'}
-                      className="w-full rounded-lg border border-gray-100 bg-gray-50 px-4 py-2.5 text-sm text-gray-400 cursor-not-allowed"
+                      type="email"
+                      id="recipientEmail"
+                      value={recipientEmail}
+                      onChange={(e) => setRecipientEmail(e.target.value)}
+                      placeholder="Nhập địa chỉ email lấy hóa đơn..."
+                      className={`w-full rounded-lg border bg-neutral-50/50 px-4 py-2.5 text-sm outline-none transition focus:bg-white focus:ring-1 ${
+                        errors.recipientEmail ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-pink-50 focus:border-rose-400 focus:ring-rose-400'
+                      }`}
                     />
+                    {errors.recipientEmail && (
+                      <p className="mt-1 text-xs text-red-500 font-semibold">{errors.recipientEmail}</p>
+                    )}
                   </div>
                 </div>
 
