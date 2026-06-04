@@ -10,7 +10,7 @@ import {
   Trash2, Layers, Check, ShoppingBag, Eye, X, RefreshCw, Star, Info, TrendingUp, Search, LogOut, Mail, Lock, ShieldAlert
 } from 'lucide-react';
 import { Product, Category, Order, User, OrderStatus } from '../types';
-import GmailManager from './GmailManager';
+// Gmail manager removed specifically for isolated admin portal
 
 interface AdminDashboardProps {
   products: Product[];
@@ -44,7 +44,7 @@ export default function AdminDashboard({
   onAdminLogout,
 }: AdminDashboardProps) {
   
-  const [activeTab, setActiveTab] = useState<'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'gmail' | 'security'>('stats');
+  const [activeTab, setActiveTab ] = useState<'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security'>('stats');
   const [prepopulatedEmail, setPrepopulatedEmail] = useState<{ to: string; subject: string; body: string } | null>(null);
 
   // Security password change states
@@ -374,19 +374,19 @@ export default function AdminDashboard({
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       
       {/* Title & Stats Navigation Tab control bar */}
-      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between border-b border-pink-100 pb-5 mb-8 gap-4">
+      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between border-b border-amber-200/60 pb-5 mb-8 gap-4">
         <div>
-          <h1 className="font-serif text-3xl font-bold text-gray-900" id="admin-dashboard-title">Hệ Thống Quản Trị Fióre</h1>
-          <p className="text-sm text-gray-500 mt-1">Quản lý hiệu suất, danh mục mẫu hoa, sổ chi tiêu và điều hành kho bãi</p>
+          <h1 className="font-serif text-3xl font-bold text-emerald-950" id="admin-dashboard-title">Hệ Thống Quản Trị Fióre</h1>
+          <p className="text-sm text-stone-600 mt-1 mr-2">Quản lý hiệu suất, danh mục mẫu hoa, sổ chi tiêu và điều hành kho bãi</p>
         </div>
 
         {/* Dynamic Admin Tabs navigation design with Logout button */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex flex-wrap gap-1.5 bg-pink-50 p-1 rounded-xl text-xs font-semibold">
+          <div className="flex flex-wrap gap-1.5 bg-amber-50/60 border border-amber-200/50 p-1 rounded-xl text-xs font-semibold">
             <button
               onClick={() => setActiveTab('stats')}
               className={`rounded-lg px-3.5 py-2 flex items-center transition ${
-                activeTab === 'stats' ? 'bg-rose-600 text-white shadow-xs' : 'text-gray-600 hover:text-rose-600'
+                activeTab === 'stats' ? 'bg-emerald-800 text-white shadow-xs' : 'text-stone-700 hover:text-emerald-800'
               }`}
             >
               <BarChart2 className="mr-1.5 h-4 w-4" /> Báo cáo thống kê
@@ -394,7 +394,7 @@ export default function AdminDashboard({
             <button
               onClick={() => setActiveTab('products')}
               className={`rounded-lg px-3.5 py-2 flex items-center transition ${
-                activeTab === 'products' ? 'bg-rose-600 text-white shadow-xs' : 'text-gray-600 hover:text-rose-600'
+                activeTab === 'products' ? 'bg-emerald-800 text-white shadow-xs' : 'text-stone-700 hover:text-emerald-800'
               }`}
             >
               <Package className="mr-1.5 h-4 w-4" /> Quản lý sản phẩm
@@ -402,7 +402,7 @@ export default function AdminDashboard({
             <button
               onClick={() => setActiveTab('categories')}
               className={`rounded-lg px-3.5 py-2 flex items-center transition ${
-                activeTab === 'categories' ? 'bg-rose-600 text-white shadow-xs' : 'text-gray-600 hover:text-rose-600'
+                activeTab === 'categories' ? 'bg-emerald-800 text-white shadow-xs' : 'text-stone-700 hover:text-emerald-800'
               }`}
             >
               <Layers className="mr-1.5 h-4 w-4" /> Quản lý danh mục
@@ -410,36 +410,29 @@ export default function AdminDashboard({
             <button
               onClick={() => setActiveTab('orders')}
               className={`rounded-lg px-3.5 py-2 flex items-center transition ${
-                activeTab === 'orders' ? 'bg-rose-600 text-white shadow-xs' : 'text-gray-600 hover:text-rose-600'
+                activeTab === 'orders' ? 'bg-emerald-800 text-white shadow-xs' : 'text-stone-700 hover:text-emerald-800'
               }`}
               id="admin-orders-tab"
             >
               <ShoppingBag className="mr-1.5 h-4 w-4" /> 
               Quản lý đơn hàng 
               {(confirmedOrdersCount + paidOrdersCount + preparingOrdersCount) > 0 && (
-                <span className="ml-1 px-1.5 py-0.2 md:py-0.5 text-[9px] bg-red-500 text-white rounded-full animate-pulse">{confirmedOrdersCount + paidOrdersCount + preparingOrdersCount}</span>
+                <span className="ml-1 px-1.5 py-0.2 md:py-0.5 text-[9px] bg-amber-500 text-emerald-950 rounded-full font-bold animate-pulse">{confirmedOrdersCount + paidOrdersCount + preparingOrdersCount}</span>
               )}
             </button>
             <button
               onClick={() => setActiveTab('customers')}
               className={`rounded-lg px-3.5 py-2 flex items-center transition ${
-                activeTab === 'customers' ? 'bg-rose-600 text-white shadow-xs' : 'text-gray-600 hover:text-rose-600'
+                activeTab === 'customers' ? 'bg-emerald-800 text-white shadow-xs' : 'text-stone-700 hover:text-emerald-800'
               }`}
             >
               <Users className="mr-1.5 h-4 w-4" /> Sổ khách hàng
             </button>
-            <button
-              onClick={() => setActiveTab('gmail')}
-              className={`rounded-lg px-3.5 py-2 flex items-center transition ${
-                activeTab === 'gmail' ? 'bg-rose-600 text-white shadow-xs' : 'text-gray-600 hover:text-rose-600'
-              }`}
-            >
-              <Mail className="mr-1.5 h-4 w-4" /> Thư điện tử / Gmail
-            </button>
+            {/* Thư điện tử / Gmail removed */}
             <button
               onClick={() => setActiveTab('security')}
               className={`rounded-lg px-3.5 py-2 flex items-center transition ${
-                activeTab === 'security' ? 'bg-rose-600 text-white shadow-xs' : 'text-gray-600 hover:text-rose-600'
+                activeTab === 'security' ? 'bg-emerald-800 text-white shadow-xs' : 'text-stone-700 hover:text-emerald-800'
               }`}
               id="admin-security-tab"
             >
@@ -467,43 +460,43 @@ export default function AdminDashboard({
           {/* Key Stat Cards Grid */}
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             
-            <div className="rounded-2xl border border-pink-100 bg-white p-5 shadow-xs flex items-center space-x-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-pink-100 text-rose-600 shrink-0">
-                <DollarSign className="h-6 w-6" />
+            <div className="rounded-2xl border border-amber-200/60 bg-white p-5 shadow-xs flex items-center space-x-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
+                <DollarSign className="h-6 w-6" strokeWidth={2.5} />
               </div>
               <div>
-                <p className="text-[10px] uppercase font-bold tracking-wider text-gray-400">Doanh thu tích lũy</p>
-                <p className="text-lg font-black text-gray-800 tracking-tight sm:text-xl md:text-2xl mt-0.5">{formatVND(totalRevenue)}</p>
+                <p className="text-[10px] uppercase font-bold tracking-wider text-stone-400">Doanh thu tích lũy</p>
+                <p className="text-lg font-black text-emerald-950 tracking-tight sm:text-xl md:text-2xl mt-0.5">{formatVND(totalRevenue)}</p>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-pink-100 bg-white p-5 shadow-xs flex items-center space-x-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-pink-100 text-rose-600 shrink-0">
-                <ShoppingBag className="h-6 w-6" />
+            <div className="rounded-2xl border border-amber-200/60 bg-white p-5 shadow-xs flex items-center space-x-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
+                <ShoppingBag className="h-6 w-6" strokeWidth={2.5} />
               </div>
               <div>
-                <p className="text-[10px] uppercase font-bold tracking-wider text-gray-400">Tổng số đơn hàng</p>
-                <p className="text-xl font-black text-gray-800 tracking-tight sm:text-2xl mt-0.5">{totalOrdersCount} Đơn</p>
+                <p className="text-[10px] uppercase font-bold tracking-wider text-stone-400">Tổng số đơn hàng</p>
+                <p className="text-xl font-black text-emerald-950 tracking-tight sm:text-2xl mt-0.5">{totalOrdersCount} Đơn</p>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-pink-100 bg-white p-5 shadow-xs flex items-center space-x-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-pink-100 text-rose-600 shrink-0">
-                <Users className="h-6 w-6" />
+            <div className="rounded-2xl border border-amber-200/60 bg-white p-5 shadow-xs flex items-center space-x-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
+                <Users className="h-6 w-6" strokeWidth={2.5} />
               </div>
               <div>
-                <p className="text-[10px] uppercase font-bold tracking-wider text-gray-400">Khách hàng tích cực</p>
-                <p className="text-xl font-black text-gray-800 tracking-tight sm:text-2xl mt-0.5">{activeCustomersCount} Người</p>
+                <p className="text-[10px] uppercase font-bold tracking-wider text-stone-400">Khách hàng tích cực</p>
+                <p className="text-xl font-black text-emerald-950 tracking-tight sm:text-2xl mt-0.5">{activeCustomersCount} Người</p>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-pink-100 bg-white p-5 shadow-xs flex items-center space-x-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-pink-100 text-rose-600 shrink-0">
-                <Gift className="h-6 w-6" />
+            <div className="rounded-2xl border border-amber-200/60 bg-white p-5 shadow-xs flex items-center space-x-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
+                <Gift className="h-6 w-6" strokeWidth={2.5} />
               </div>
               <div>
-                <p className="text-[10px] uppercase font-bold tracking-wider text-gray-400">Số lượng kiểu hoa</p>
-                <p className="text-xl font-black text-gray-800 tracking-tight sm:text-2xl mt-0.5">{products.length} Loại</p>
+                <p className="text-[10px] uppercase font-bold tracking-wider text-stone-400">Số lượng kiểu hoa</p>
+                <p className="text-xl font-black text-emerald-950 tracking-tight sm:text-2xl mt-0.5">{products.length} Loại</p>
               </div>
             </div>
 
@@ -513,13 +506,13 @@ export default function AdminDashboard({
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
             
             {/* Sales revenue over time */}
-            <div className="lg:col-span-8 rounded-2xl border border-pink-100 bg-white p-6 shadow-xs">
-              <div className="flex items-center justify-between border-b border-pink-50 pb-3 mb-6">
+            <div className="lg:col-span-8 rounded-2xl border border-amber-200/60 bg-white p-6 shadow-xs">
+              <div className="flex items-center justify-between border-b border-amber-100/60 pb-3 mb-6">
                 <div>
-                  <h3 className="font-serif text-base font-bold text-gray-900">Biểu đồ doanh thu thực tế theo tuần</h3>
-                  <p className="text-xs text-gray-400">Tổng quan thu nhập tích lũy lũy tiến</p>
+                  <h3 className="font-serif text-base font-bold text-emerald-950">Biểu đồ doanh thu thực tế theo tuần</h3>
+                  <p className="text-xs text-stone-400">Tổng quan thu nhập tích lũy lũy tiến</p>
                 </div>
-                <div className="flex items-center space-x-1.5 text-xs text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full font-bold">
+                <div className="flex items-center space-x-1.5 text-xs text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full font-bold">
                   <TrendingUp className="h-4 w-4" />
                   <span>+18.4% tăng trưởng</span>
                 </div>
@@ -677,8 +670,8 @@ export default function AdminDashboard({
             <div className="lg:col-span-4 space-y-6">
               
               {/* Status Visual distribution */}
-              <div className="rounded-2xl border border-pink-100 bg-white p-5 shadow-xs">
-                <h3 className="font-serif text-sm font-bold text-gray-900 border-b border-pink-50 pb-2.5 mb-4">
+              <div className="rounded-2xl border border-amber-200/60 bg-white p-5 shadow-xs">
+                <h3 className="font-serif text-sm font-bold text-emerald-950 border-b border-amber-100 pb-2.5 mb-4">
                   Phân phối trạng thái vận đơn
                 </h3>
 
@@ -747,23 +740,23 @@ export default function AdminDashboard({
               </div>
 
               {/* Best selling list */}
-              <div className="rounded-2xl border border-pink-100 bg-white p-5 shadow-xs">
-                <h3 className="font-serif text-sm font-bold text-gray-900 border-b border-pink-50 pb-2.5 mb-3.5">
+              <div className="rounded-2xl border border-amber-200/60 bg-white p-5 shadow-xs">
+                <h3 className="font-serif text-sm font-bold text-emerald-950 border-b border-amber-100 pb-2.5 mb-3.5">
                   Sản phẩm mẫu hoa bán chạy
                 </h3>
                 {bestSellersList.length > 0 ? (
                   <div className="space-y-3.5 text-xs">
                     {bestSellersList.map((bs, idx) => (
-                      <div key={idx} className="flex justify-between items-center bg-pink-50/10 p-2 rounded-lg border border-pink-50/20">
+                      <div key={idx} className="flex justify-between items-center bg-[#FAF7F0] p-2 rounded-lg border border-amber-200/40">
                         <div className="flex items-center space-x-2">
-                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 font-bold text-white text-[10px]">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-800 font-bold text-white text-[10px]">
                             {idx + 1}
                           </span>
-                          <span className="font-bold text-gray-800 line-clamp-1 max-w-[130px]">{bs.productName}</span>
+                          <span className="font-bold text-emerald-950 line-clamp-1 max-w-[130px]">{bs.productName}</span>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="font-bold text-rose-600">Đã bán {bs.quantitySold} bó</p>
-                          <p className="text-[10px] text-gray-400 font-medium">Thu về {formatVND(bs.revenue)}</p>
+                          <p className="font-bold text-emerald-800">Đã bán {bs.quantitySold} bó</p>
+                          <p className="text-[10px] text-stone-400 font-medium">Thu về {formatVND(bs.revenue)}</p>
                         </div>
                       </div>
                     ))}
@@ -782,12 +775,12 @@ export default function AdminDashboard({
 
       {/* --- TAB 2: PRODUCTS CATALOGUE ADMIN --- */}
       {activeTab === 'products' && (
-        <div className="rounded-2xl border border-pink-100 bg-white p-6 shadow-xs animate-fade-in">
+        <div className="rounded-2xl border border-amber-200/60 bg-white p-6 shadow-xs animate-fade-in">
           
           {/* Header Action Tools */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3.5">
             <div className="relative flex-1 max-w-sm">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-pink-300">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-emerald-700">
                 <Search className="h-4 w-4" />
               </span>
               <input
@@ -795,13 +788,13 @@ export default function AdminDashboard({
                 placeholder="Tìm hoa quản trị..."
                 value={prodSearch}
                 onChange={(e) => setProdSearch(e.target.value)}
-                className="w-full rounded-full border border-pink-100 bg-neutral-100/50 py-2 pl-9 pr-4 text-xs outline-none focus:bg-white focus:border-rose-400"
+                className="w-full rounded-full border border-amber-200 bg-neutral-100/50 py-2 pl-9 pr-4 text-xs outline-none focus:bg-white focus:border-emerald-700"
               />
             </div>
             
             <button
               onClick={openAddProduct}
-              className="inline-flex items-center justify-center rounded-full bg-rose-600 px-5  py-2 text-xs font-bold text-white shadow-sm hover:bg-rose-700 transition cursor-pointer"
+              className="inline-flex items-center justify-center rounded-full bg-emerald-800 px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-900 transition cursor-pointer"
               id="admin-btn-add-product"
             >
               <Plus className="mr-1.5 h-4 w-4" /> Thêm sản phẩm mới
@@ -810,9 +803,9 @@ export default function AdminDashboard({
 
           {/* Grid visual list for administration */}
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs divide-y divide-pink-50">
+            <table className="w-full text-left text-xs divide-y divide-amber-200/40">
               <thead>
-                <tr className="bg-pink-50/35 text-gray-500 font-bold uppercase tracking-wider">
+                <tr className="bg-amber-50/40 text-stone-500 font-bold uppercase tracking-wider">
                   <th className="p-3">Hình ảnh & Tên</th>
                   <th className="p-3">Danh mục</th>
                   <th className="p-3">Đơn Giá</th>
@@ -821,13 +814,13 @@ export default function AdminDashboard({
                   <th className="p-3 text-right">Điều khiển</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-pink-50 font-medium text-gray-700">
+              <tbody className="divide-y divide-amber-200/40 font-medium text-gray-700">
                 {filteredProducts.map((p) => (
-                  <tr key={p.id} className="hover:bg-pink-50/10 transition">
+                  <tr key={p.id} className="hover:bg-amber-50/20 transition">
                     <td className="p-3 flex items-center space-x-3 max-w-[240px]">
                       <img src={p.image} className="h-10 w-10 shrink-0 rounded-md object-cover border" referrerPolicy="no-referrer" />
                       <div className="truncate">
-                        <p className="font-bold text-gray-800 line-clamp-1">{p.name}</p>
+                        <p className="font-bold text-[#0F2C11] line-clamp-1">{p.name}</p>
                         <p className="text-[10px] text-gray-400">Mã: {p.id}</p>
                       </div>
                     </td>
@@ -838,7 +831,7 @@ export default function AdminDashboard({
                        p.categoryId === 'chuc-mung' ? 'Hoa chúc mừng' :
                        p.categoryId === 'chia-buon' ? 'Hoa chia buồn' : 'Hoa theo mùa'}
                     </td>
-                    <td className="p-3 font-bold text-rose-600">{formatVND(p.price)}</td>
+                    <td className="p-3 font-bold text-emerald-800">{formatVND(p.price)}</td>
                     <td className="p-3">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                         p.stock > 10 ? 'bg-emerald-50 text-emerald-700' :
@@ -848,7 +841,7 @@ export default function AdminDashboard({
                       </span>
                     </td>
                     <td className="p-3 text-center space-x-1.5">
-                      {p.isFeatured && <span className="p-1 rounded bg-rose-100 text-rose-700 text-[9px] font-bold">Featured</span>}
+                      {p.isFeatured && <span className="p-1 rounded bg-[#FAF7F0] text-emerald-800 border border-emerald-800/20 text-[9px] font-bold">Featured</span>}
                       {p.isNew && <span className="p-1 rounded bg-emerald-100 text-emerald-800 text-[9px] font-bold">NEW</span>}
                     </td>
                     <td className="p-3 text-right space-x-1">
@@ -882,13 +875,13 @@ export default function AdminDashboard({
 
       {/* --- TAB 3: CATEGORIES MANAGEMENT ADMIN --- */}
       {activeTab === 'categories' && (
-        <div className="rounded-2xl border border-pink-100 bg-white p-6 shadow-xs animate-fade-in animate-fade-in">
+        <div className="rounded-2xl border border-amber-200/60 bg-white p-6 shadow-xs animate-fade-in">
           
           <div className="flex justify-between items-center mb-6">
-            <h3 className="font-serif text-lg font-bold text-gray-900">Quản Lý Danh Mục Mẫu Hoa</h3>
+            <h3 className="font-serif text-lg font-bold text-emerald-950">Quản Lý Danh Mục Mẫu Hoa</h3>
             <button
               onClick={openAddCategory}
-              className="inline-flex items-center justify-center rounded-full bg-rose-600 px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-rose-700 transition cursor-pointer"
+              className="inline-flex items-center justify-center rounded-full bg-emerald-800 px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-900 transition cursor-pointer"
             >
               <Plus className="mr-1.5 h-4 w-4" /> Thêm danh mục mới
             </button>
@@ -896,13 +889,13 @@ export default function AdminDashboard({
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {categories.map((c) => (
-              <div key={c.id} className="rounded-xl border border-pink-100 p-4 bg-white flex items-center justify-between shadow-xs">
+              <div key={c.id} className="rounded-xl border border-amber-200/50 p-4 bg-white flex items-center justify-between shadow-xs">
                 <div className="flex items-center space-x-3.5">
                   <img src={c.image} className="h-12 w-12 rounded-full object-cover border" referrerPolicy="no-referrer" />
                   <div>
-                    <h4 className="font-bold text-sm text-gray-800">{c.name}</h4>
-                    <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">{c.description}</p>
-                    <p className="text-[9px] text-[#a8b898] font-black mt-0.5 uppercase tracking-wider">ID: {c.id}</p>
+                    <h4 className="font-bold text-sm text-[#0F2C11]">{c.name}</h4>
+                    <p className="text-[10px] text-stone-400 mt-0.5 line-clamp-1">{c.description}</p>
+                    <p className="text-[9px] text-[#8fa87a] font-black mt-0.5 uppercase tracking-wider">ID: {c.id}</p>
                   </div>
                 </div>
                 
@@ -910,6 +903,7 @@ export default function AdminDashboard({
                   <button
                     onClick={() => openEditCategory(c)}
                     className="p-1 rounded text-blue-500 hover:bg-blue-50"
+                    title="Sửa danh mục"
                   >
                     <Edit2 className="h-4 w-4" />
                   </button>
@@ -920,6 +914,7 @@ export default function AdminDashboard({
                       }
                     }}
                     className="p-1 rounded text-red-500 hover:bg-red-50"
+                    title="Xóa danh mục"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -933,12 +928,12 @@ export default function AdminDashboard({
 
       {/* --- TAB 4: ORDERS CONTROL BOARD --- */}
       {activeTab === 'orders' && (
-        <div className="rounded-2xl border border-pink-100 bg-white p-6 shadow-xs animate-fade-in animate-fade-in" id="admin-orders-board">
+        <div className="rounded-2xl border border-amber-200/60 bg-white p-6 shadow-xs animate-fade-in" id="admin-orders-board">
           
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3.5">
-            <h3 className="font-serif text-lg font-bold text-gray-900">Quản trị và Điều hành Đơn Hàng</h3>
+            <h3 className="font-serif text-lg font-bold text-emerald-950">Quản trị và Điều hành Đơn Hàng</h3>
             <div className="relative max-w-xs flex-1">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-pink-300">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-emerald-700">
                 <Search className="h-4 w-4" />
               </span>
               <input
@@ -946,15 +941,15 @@ export default function AdminDashboard({
                 placeholder="Tìm mã đơn hàng, tên khách..."
                 value={orderSearch}
                 onChange={(e) => setOrderSearch(e.target.value)}
-                className="w-full rounded-full border border-pink-100 bg-neutral-100/50 py-2 pl-9 pr-4 text-xs outline-none focus:bg-white focus:border-rose-400"
+                className="w-full rounded-full border border-amber-200 bg-neutral-100/50 py-2 pl-9 pr-4 text-xs outline-none focus:bg-white focus:border-emerald-700"
               />
             </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs divide-y divide-pink-50 table-fixed min-w-[900px] xl:min-w-full">
+            <table className="w-full text-left text-xs divide-y divide-amber-200/40 table-fixed min-w-[900px] xl:min-w-full">
               <thead>
-                <tr className="bg-pink-50/40 text-gray-400 font-bold uppercase tracking-wider text-center align-middle">
+                <tr className="bg-amber-50/40 text-stone-500 font-bold uppercase tracking-wider text-center align-middle">
                   <th className="p-3 w-[10%] min-w-[90px] text-center align-middle leading-normal">Mã đơn hàng</th>
                   <th className="p-3 w-[22%] min-w-[190px] text-center align-middle leading-normal">Khách hàng</th>
                   <th className="p-3 w-[15%] min-w-[130px] text-center align-middle leading-normal">Ngày đặt</th>
@@ -964,20 +959,20 @@ export default function AdminDashboard({
                   <th className="p-3 w-[13%] min-w-[125px] text-center align-middle leading-normal">Thao tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-pink-50 font-medium text-gray-700">
+              <tbody className="divide-y divide-amber-200/40 font-medium text-gray-700">
                 {filteredOrders.map((ord) => (
                   <tr key={ord.id} className="hover:bg-neutral-50/50 transition" id={`admin-order-row-${ord.id}`}>
                     <td className="p-3 w-[10%] min-w-[90px] font-mono font-bold text-gray-900">{ord.id}</td>
                     <td className="p-3 w-[22%] min-w-[190px]">
-                      <p className="font-bold text-gray-800">{ord.recipientName}</p>
-                      <p className="text-[10px] text-gray-400">SĐT: {ord.recipientPhone}</p>
-                      <p className="text-[10px] text-gray-500 line-clamp-1" title={ord.shippingAddress}>{ord.shippingAddress}</p>
-                      <div className="mt-1 text-[10px] text-gray-500 italic truncate" title={ord.items.map(it => `${it.product.name} (x${it.quantity})`).join(', ')}>
+                      <p className="font-bold text-[#0F2C11]">{ord.recipientName}</p>
+                      <p className="text-[10px] text-stone-400">SĐT: {ord.recipientPhone}</p>
+                      <p className="text-[10px] text-stone-500 line-clamp-1" title={ord.shippingAddress}>{ord.shippingAddress}</p>
+                      <div className="mt-1 text-[10px] text-stone-500 italic truncate" title={ord.items.map(it => `${it.product.name} (x${it.quantity})`).join(', ')}>
                         Sản phẩm: {ord.items.map(it => `${it.product.name} (x${it.quantity})`).join(', ')}
                       </div>
                     </td>
                     <td className="p-3 w-[15%] min-w-[130px] text-gray-500 whitespace-nowrap">{formatDateTime(ord.createdAt)}</td>
-                    <td className="p-3 w-[13%] min-w-[110px] font-bold text-rose-600 whitespace-nowrap">{formatVND(ord.totalAmount)}</td>
+                    <td className="p-3 w-[13%] min-w-[110px] font-bold text-emerald-800 whitespace-nowrap">{formatVND(ord.totalAmount)}</td>
                     <td className="p-3 w-[12%] min-w-[120px] whitespace-nowrap">
                       <span className={`px-2 py-0.5 text-[10px] font-bold rounded ${
                         ord.paymentMethod === 'VNPAY'
@@ -998,7 +993,7 @@ export default function AdminDashboard({
                       <select
                         value={ord.status}
                         onChange={(e) => onUpdateOrderStatus(ord.id, e.target.value as OrderStatus)}
-                        className="rounded border border-pink-100 bg-white p-1 text-[10.5px] outline-none text-gray-750 focus:border-rose-450 w-full cursor-pointer"
+                        className="rounded border border-amber-200 bg-white p-1 text-[10.5px] outline-none text-gray-700 focus:border-emerald-700 w-full cursor-pointer"
                         id={`update-status-select-${ord.id}`}
                       >
                         <option value="confirmed">Đã xác nhận</option>
@@ -1008,20 +1003,7 @@ export default function AdminDashboard({
                         <option value="completed">Hoàn tất</option>
                         <option value="cancelled">Đã hủy</option>
                       </select>
-                      <button
-                        onClick={() => {
-                          setPrepopulatedEmail({
-                            to: ord.customerEmail || 'thuyvanngo35@gmail.com',
-                            subject: `💐 [Fióre Boutique] Xác nhận đơn hàng thành công #${ord.id}`,
-                            body: ''
-                          });
-                          setActiveTab('gmail');
-                        }}
-                        className="mt-1.5 w-full inline-flex items-center justify-center space-x-1 rounded bg-rose-50 hover:bg-rose-100 font-bold text-rose-700 text-[10px] py-1 transition cursor-pointer text-center"
-                        title="Gửi Gmail xác nhận đơn cho khách hàng"
-                      >
-                        <span>📧 Gửi Mail</span>
-                      </button>
+                      {/* Gửi Mail button removed */}
                     </td>
                   </tr>
                 ))}
@@ -1034,8 +1016,8 @@ export default function AdminDashboard({
 
       {/* --- TAB 5: CUSTOMER DIRECTORY SỔ KHÁCH HÀNG --- */}
       {activeTab === 'customers' && (
-        <div className="rounded-2xl border border-pink-100 bg-white p-6 shadow-xs animate-fade-in animate-fade-in">
-          <h3 className="font-serif text-lg font-bold text-gray-900 border-b border-pink-50 pb-3 mb-5">
+        <div className="rounded-2xl border border-amber-200/60 bg-white p-6 shadow-xs animate-fade-in animate-fade-in">
+          <h3 className="font-serif text-lg font-bold text-emerald-950 border-b border-amber-100 pb-3 mb-5">
             Danh Sách Đăng Ký Hệ Thống Fiore
           </h3>
 
@@ -1046,32 +1028,19 @@ export default function AdminDashboard({
               const userOrders = orders.filter((o) => o.customerEmail === usr.email);
               const spent = userOrders.reduce((a,c) => a + c.totalAmount, 0);
               return (
-                <div key={usr.id} className="rounded-xl border border-pink-50 p-4 bg-white flex items-start space-x-4">
-                  <div className="h-10 w-10 rounded-full bg-pink-100 text-rose-600 flex items-center justify-center font-serif text-lg font-bold">
+                <div key={usr.id} className="rounded-xl border border-amber-200/50 p-4 bg-white flex items-start space-x-4">
+                  <div className="h-10 w-10 rounded-full bg-emerald-50 text-emerald-800 flex items-center justify-center font-serif text-lg font-bold">
                     {usr.name.charAt(0)}
                   </div>
                   <div className="space-y-1 text-xs">
-                    <p className="font-bold text-gray-900 text-sm">{usr.name}</p>
-                    <p className="text-gray-400">Email: {usr.email} (SĐT: {usr.phone || 'Chưa cung cấp'})</p>
-                    <p className="text-gray-500">Mặc định: {usr.address || 'Chưa thiết lập'}</p>
+                    <p className="font-bold text-emerald-950 text-sm">{usr.name}</p>
+                    <p className="text-stone-400">Email: {usr.email} (SĐT: {usr.phone || 'Chưa cung cấp'})</p>
+                    <p className="text-stone-500">Mặc định: {usr.address || 'Chưa thiết lập'}</p>
                     
                     <div className="flex flex-wrap gap-2 pt-2">
-                      <span className="p-1 rounded bg-pink-50 font-bold text-rose-700 text-[10px]">Đã mua: {userOrders.length} Đơn</span>
+                      <span className="p-1 rounded bg-amber-50 font-bold text-amber-900 text-[10px]">Đã mua: {userOrders.length} Đơn</span>
                       <span className="p-1 rounded bg-emerald-50 font-bold text-emerald-800 text-[10px]">Tích lũy: {formatVND(spent)}</span>
-                      <button
-                        onClick={() => {
-                          setPrepopulatedEmail({
-                            to: usr.email,
-                            subject: `💐 [Fióre Boutique] Lời tri ân gửi quý khách ${usr.name}`,
-                            body: ''
-                          });
-                          setActiveTab('gmail');
-                        }}
-                        className="p-1 rounded bg-rose-50 hover:bg-rose-100 font-bold text-rose-700 text-[10px] transition cursor-pointer flex items-center"
-                        title="Soạn thư Gmail gửi khách hàng"
-                      >
-                        📧 Gửi Gmail
-                      </button>
+                      {/* Gửi Gmail button removed */}
                     </div>
                   </div>
                 </div>
@@ -1079,62 +1048,36 @@ export default function AdminDashboard({
             })}
 
             {/* Static high-fidelity sample buyers representing system stats */}
-            <div className="rounded-xl border border-pink-50 p-4 bg-white flex items-start space-x-4 opacity-80">
-              <div className="h-10 w-10 rounded-full bg-pink-100 text-rose-600 flex items-center justify-center font-serif text-lg font-bold">
+            <div className="rounded-xl border border-amber-200/55 p-4 bg-white flex items-start space-x-4 opacity-80">
+              <div className="h-10 w-10 rounded-full bg-emerald-50 text-emerald-800 flex items-center justify-center font-serif text-lg font-bold">
                 T
               </div>
               <div className="space-y-1 text-xs">
-                <p className="font-bold text-gray-900 text-sm">Thùy Vân (Hà Nội)</p>
-                <p className="text-gray-400">Email: thuyvanngo35@gmail.com (SĐT: 0987654321)</p>
-                <p className="text-gray-500">Mặc định: 12 Hàng Khay, Quận Hoàn Kiếm, Hà Nội</p>
+                <p className="font-bold text-[#0F2C11] text-sm">Thùy Vân (Hà Nội)</p>
+                <p className="text-stone-400">Email: thuyvanngo35@gmail.com (SĐT: 0987654321)</p>
+                <p className="text-stone-500">Mặc định: 12 Hàng Khay, Quận Hoàn Kiếm, Hà Nội</p>
                 
                 <div className="flex flex-wrap gap-2 pt-2">
-                  <span className="p-1 rounded bg-pink-50 font-bold text-rose-700 text-[10px]">Đã mua: 4 Đơn</span>
+                  <span className="p-1 rounded bg-amber-50 font-bold text-amber-900 text-[10px]">Đã mua: 4 Đơn</span>
                   <span className="p-1 rounded bg-emerald-50 font-bold text-emerald-800 text-[10px]">Tích lũy: {formatVND(1850000)}</span>
-                  <button
-                    onClick={() => {
-                      setPrepopulatedEmail({
-                        to: 'thuyvanngo35@gmail.com',
-                        subject: `💐 [Fióre Boutique] Lời tri ân gửi tới chị Thùy Vân`,
-                        body: ''
-                      });
-                      setActiveTab('gmail');
-                    }}
-                    className="p-1 rounded bg-rose-50 hover:bg-rose-100 font-bold text-rose-700 text-[10px] transition cursor-pointer flex items-center"
-                    title="Gửi Gmail cho khách hàng"
-                  >
-                    📧 Gửi Gmail
-                  </button>
+                  {/* Gửi Gmail button removed */}
                 </div>
               </div>
             </div>
 
-            <div className="rounded-xl border border-pink-50 p-4 bg-white flex items-start space-x-4 opacity-80">
-              <div className="h-10 w-10 rounded-full bg-pink-100 text-rose-600 flex items-center justify-center font-serif text-lg font-bold">
+            <div className="rounded-xl border border-amber-200/55 p-4 bg-white flex items-start space-x-4 opacity-80">
+              <div className="h-10 w-10 rounded-full bg-emerald-50 text-emerald-800 flex items-center justify-center font-serif text-lg font-bold">
                 A
               </div>
               <div className="space-y-1 text-xs">
-                <p className="font-bold text-gray-900 text-sm">An Bình (Gia Định)</p>
-                <p className="text-gray-400">Email: anbinh@gmail.com (SĐT: 0914253648)</p>
-                <p className="text-gray-500">Mặc định: 34 Nguyễn Bỉnh Khiêm, Quận 1, TP. HCM</p>
+                <p className="font-bold text-[#0F2C11] text-sm">An Bình (Gia Định)</p>
+                <p className="text-stone-400">Email: anbinh@gmail.com (SĐT: 0914253648)</p>
+                <p className="text-stone-500">Mặc định: 34 Nguyễn Bỉnh Khiêm, Quận 1, TP. HCM</p>
                 
                 <div className="flex flex-wrap gap-2 pt-2">
-                  <span className="p-1 rounded bg-pink-50 font-bold text-rose-700 text-[10px]">Đã mua: 2 Đơn</span>
+                  <span className="p-1 rounded bg-amber-50 font-bold text-amber-900 text-[10px]">Đã mua: 2 Đơn</span>
                   <span className="p-1 rounded bg-emerald-50 font-bold text-emerald-800 text-[10px]">Tích lũy: {formatVND(890000)}</span>
-                  <button
-                    onClick={() => {
-                      setPrepopulatedEmail({
-                        to: 'anbinh@gmail.com',
-                        subject: `💐 [Fióre Boutique] Lời tri ân gửi tới anh An Bình`,
-                        body: ''
-                      });
-                      setActiveTab('gmail');
-                    }}
-                    className="p-1 rounded bg-rose-50 hover:bg-rose-100 font-bold text-rose-700 text-[10px] transition cursor-pointer flex items-center"
-                    title="Gửi Gmail cho khách hàng"
-                  >
-                    📧 Gửi Gmail
-                  </button>
+                  {/* Gửi Gmail button removed */}
                 </div>
               </div>
             </div>
@@ -1143,24 +1086,16 @@ export default function AdminDashboard({
         </div>
       )}
 
-      {activeTab === 'gmail' && (
-        <GmailManager
-          users={users}
-          orders={orders}
-          prepopulatedEmail={prepopulatedEmail}
-          onClearPrepopulatedEmail={() => setPrepopulatedEmail(null)}
-          onBackToStats={() => setActiveTab('stats')}
-        />
-      )}
+      {/* Gmail tab rendering section removed */}
 
       {activeTab === 'security' && (
-        <div className="mx-auto max-w-xl rounded-2xl border border-pink-100 bg-white p-6 shadow-sm md:p-8 animate-fade-in space-y-6">
-          <div className="border-b border-pink-50 pb-4">
-            <h3 className="font-serif text-xl font-bold text-gray-900 flex items-center gap-2">
-              <Lock className="text-rose-600 h-5 w-5 shrink-0" />
+        <div className="mx-auto max-w-xl rounded-2xl border border-amber-200/60 bg-white p-6 shadow-sm md:p-8 animate-fade-in space-y-6">
+          <div className="border-b border-amber-100 pb-4">
+            <h3 className="font-serif text-xl font-bold text-emerald-950 flex items-center gap-2">
+              <Lock className="text-emerald-800 h-5 w-5 shrink-0" />
               <span>Đổi Mật Khẩu Đăng Nhập Quản Trị</span>
             </h3>
-            <p className="text-xs text-gray-400 mt-1">Cập nhật mật khẩu bảo mật riêng để điều hành cửa hàng Fióre</p>
+            <p className="text-xs text-stone-400 mt-1">Cập nhật mật khẩu bảo mật riêng để điều hành cửa hàng Fióre</p>
           </div>
 
           <form onSubmit={handlePasswordChange} className="space-y-4">
@@ -1184,7 +1119,7 @@ export default function AdminDashboard({
                 value={currentPw}
                 onChange={(e) => setCurrentPw(e.target.value)}
                 placeholder="Nhập mật khẩu quản trị hiện tại"
-                className="w-full rounded-xl border border-pink-100 bg-neutral-50/50 p-3 text-xs outline-none transition focus:border-rose-400 focus:bg-white"
+                className="w-full rounded-xl border border-amber-200 bg-[#FAF7F0]/30 p-3 text-xs outline-none transition focus:border-emerald-700 focus:bg-white"
               />
             </div>
 
@@ -1196,7 +1131,7 @@ export default function AdminDashboard({
                 value={newPw}
                 onChange={(e) => setNewPw(e.target.value)}
                 placeholder="Nhập mật khẩu mới (tối thiểu 4 ký tự)"
-                className="w-full rounded-xl border border-pink-100 bg-neutral-50/50 p-3 text-xs outline-none transition focus:border-rose-400 focus:bg-white"
+                className="w-full rounded-xl border border-amber-200 bg-[#FAF7F0]/30 p-3 text-xs outline-none transition focus:border-emerald-700 focus:bg-white"
               />
             </div>
 
@@ -1208,13 +1143,13 @@ export default function AdminDashboard({
                 value={confirmNewPw}
                 onChange={(e) => setConfirmNewPw(e.target.value)}
                 placeholder="Xác nhận lại mật khẩu mới"
-                className="w-full rounded-xl border border-pink-100 bg-neutral-50/50 p-3 text-xs outline-none transition focus:border-rose-400 focus:bg-white"
+                className="w-full rounded-xl border border-amber-200 bg-[#FAF7F0]/30 p-3 text-xs outline-none transition focus:border-emerald-700 focus:bg-white"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition active:scale-98 cursor-pointer shadow-md mt-2 flex justify-center items-center gap-1.5"
+              className="w-full bg-emerald-800 hover:bg-emerald-990 text-white font-bold py-3 px-4 rounded-xl text-xs transition active:scale-98 cursor-pointer shadow-md mt-2 flex justify-center items-center gap-1.5"
             >
               <Check className="h-4 w-4" /> Cập nhật mật khẩu quản trị
             </button>
@@ -1225,9 +1160,9 @@ export default function AdminDashboard({
       {/* --- ADD / EDIT PRODUCT POPUP DIA LOG --- */}
       {showProductModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl border border-pink-50 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-pink-50 pb-3 mb-4">
-              <h4 className="font-serif text-lg font-bold text-gray-900">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl border border-amber-200 min-h-[500px] max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-amber-100 pb-3 mb-4">
+              <h4 className="font-serif text-lg font-bold text-emerald-950">
                 {editProdItem ? `Chỉnh Sửa Mẫu "${editProdItem.name}"` : 'Thêm Mẫu Thiết Kế Mới'}
               </h4>
               <button
@@ -1241,47 +1176,47 @@ export default function AdminDashboard({
             <form onSubmit={handleProductSubmit} className="space-y-3.5 text-xs">
               
               <div>
-                <label className="block font-bold text-gray-500 uppercase tracking-wide mb-1">Tên bó hoa *</label>
+                <label className="block font-bold text-stone-500 uppercase tracking-wide mb-1">Tên bó hoa *</label>
                 <input
                   type="text"
                   required
                   value={prodName}
                   onChange={(e) => setProdName(e.target.value)}
                   placeholder="Ví dụ: Bó Hoa Sữa Trắng Trẻ"
-                  className="w-full rounded-lg border border-pink-100 p-2.5 outline-none focus:border-rose-400"
+                  className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block font-bold text-gray-500 uppercase tracking-wide mb-1">Đơn Giá (VND) *</label>
+                  <label className="block font-bold text-stone-500 uppercase tracking-wide mb-1">Đơn Giá (VND) *</label>
                   <input
-                    type="number"
+                     type="number"
                     required
                     value={prodPrice}
                     onChange={(e) => setProdPrice(Number(e.target.value))}
-                    className="w-full rounded-lg border border-pink-100 p-2.5 outline-none focus:border-rose-400"
+                    className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-gray-500 uppercase tracking-wide mb-1">Kho sẵn có (Số lượng) *</label>
+                  <label className="block font-bold text-stone-500 uppercase tracking-wide mb-1">Kho sẵn có (Số lượng) *</label>
                   <input
                     type="number"
                     required
                     value={prodStock}
                     onChange={(e) => setProdStock(Number(e.target.value))}
-                    className="w-full rounded-lg border border-pink-100 p-2.5 outline-none focus:border-rose-400"
+                    className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block font-bold text-gray-500 uppercase tracking-wide mb-1">Danh mục chuyên mục *</label>
+                  <label className="block font-bold text-stone-500 uppercase tracking-wide mb-1">Danh mục chuyên mục *</label>
                   <select
                     value={prodCategory}
                     onChange={(e) => setProdCategory(e.target.value)}
-                    className="w-full rounded-lg border border-pink-100 p-2.5 bg-white outline-none focus:border-rose-400"
+                    className="w-full rounded-lg border border-amber-200 p-2.5 bg-white outline-none focus:border-emerald-700"
                   >
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
@@ -1289,61 +1224,61 @@ export default function AdminDashboard({
                   </select>
                 </div>
                 <div>
-                  <label className="block font-bold text-gray-500 uppercase tracking-wide mb-1">Đường dẫn ảnh bìa (URL) *</label>
+                  <label className="block font-bold text-stone-500 uppercase tracking-wide mb-1">Đường dẫn ảnh bìa (URL) *</label>
                   <input
                     type="text"
                     required
                     value={prodImage}
                     onChange={(e) => setProdImage(e.target.value)}
-                    className="w-full rounded-lg border border-pink-100 p-2.5 outline-none focus:border-rose-400"
+                    className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-bold text-gray-500 uppercase tracking-wide mb-1">Mô tả ngắn (Hiển thị thẻ bán)</label>
+                <label className="block font-bold text-stone-500 uppercase tracking-wide mb-1">Mô tả ngắn (Hiển thị thẻ bán)</label>
                 <input
                   type="text"
                   value={prodShortDesc}
                   onChange={(e) => setProdShortDesc(e.target.value)}
                   placeholder="Ví dụ: Bó gồm 10 cúc trắng tinh nghịch..."
-                  className="w-full rounded-lg border border-pink-100 p-2.5 outline-none focus:border-rose-400"
+                  className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-gray-500 uppercase tracking-wide mb-1">Mô tả chi tiết sản phẩm</label>
+                <label className="block font-bold text-stone-500 uppercase tracking-wide mb-1">Mô tả chi tiết sản phẩm</label>
                 <textarea
                   value={prodDesc}
                   onChange={(e) => setProdDesc(e.target.value)}
                   rows={3}
-                  className="w-full rounded-lg border border-pink-100 p-2.5 outline-none focus:border-rose-400"
+                  className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700"
                 />
               </div>
 
-              <div className="flex gap-4 border-t border-pink-50 pt-3">
-                <label className="flex items-center space-x-1.5 font-bold text-gray-600">
+              <div className="flex gap-4 border-t border-amber-100 pt-3">
+                <label className="flex items-center space-x-1.5 font-bold text-stone-600">
                   <input
                     type="checkbox"
                     checked={prodIsNew}
                     onChange={(e) => setProdIsNew(e.target.checked)}
-                    className="h-4 w-4 rounded text-rose-600 focus:ring-rose-500"
+                    className="h-4 w-4 rounded text-emerald-800 focus:ring-emerald-700"
                   />
                   <span>Mẫu hoa MỚI ra mắt</span>
                 </label>
 
-                <label className="flex items-center space-x-1.5 font-bold text-gray-600">
+                <label className="flex items-center space-x-1.5 font-bold text-stone-600">
                   <input
                     type="checkbox"
                     checked={prodIsFeatured}
                     onChange={(e) => setProdIsFeatured(e.target.checked)}
-                    className="h-4 w-4 rounded text-rose-600 focus:ring-rose-500"
+                    className="h-4 w-4 rounded text-emerald-800 focus:ring-emerald-700"
                   />
                   <span>Mẫu hoa NỔI BẬT trang chủ</span>
                 </label>
               </div>
 
-              <div className="flex justify-end space-x-2 pt-4 border-t border-pink-50">
+              <div className="flex justify-end space-x-2 pt-4 border-t border-amber-100">
                 <button
                   type="button"
                   onClick={() => setShowProductModal(false)}
@@ -1353,7 +1288,7 @@ export default function AdminDashboard({
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full bg-rose-600 px-5 py-2 text-white font-bold hover:bg-rose-700 cursor-pointer"
+                  className="rounded-full bg-emerald-800 px-5 py-2 text-white font-bold hover:bg-emerald-990 cursor-pointer"
                   id="admin-submit-product-btn"
                 >
                   {editProdItem ? 'Cập nhật' : 'Thêm mới'}
@@ -1368,9 +1303,9 @@ export default function AdminDashboard({
       {/* --- ADD / EDIT CATEGORY POPUP DIA LOG --- */}
       {showCategoryModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-pink-50">
-            <div className="flex items-center justify-between border-b border-pink-50 pb-3 mb-4">
-              <h4 className="font-serif text-lg font-bold text-gray-900">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-amber-200">
+            <div className="flex items-center justify-between border-b border-amber-100 pb-3 mb-4">
+              <h4 className="font-serif text-lg font-bold text-emerald-950">
                 {editCatItem ? `Sửa Danh Mục "${editCatItem.name}"` : 'Tạo Danh Mục Tươi'}
               </h4>
               <button onClick={() => setShowCategoryModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
@@ -1378,40 +1313,40 @@ export default function AdminDashboard({
 
             <form onSubmit={handleCategorySubmit} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-gray-500 uppercase mb-1">Tên Danh Mục *</label>
+                <label className="block font-bold text-stone-500 uppercase mb-1">Tên Danh Mục *</label>
                 <input
                   type="text"
                   required
                   value={catName}
                   onChange={(e) => setCatName(e.target.value)}
                   placeholder="Ví dụ: Hoa Chúc Mừng 20/11"
-                  className="w-full rounded-lg border border-pink-100 p-2.5 outline-none focus:border-rose-400"
+                  className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-gray-500 uppercase mb-1">Mô tả ngắn</label>
+                <label className="block font-bold text-stone-500 uppercase mb-1">Mô tả ngắn</label>
                 <input
                   type="text"
                   value={catDesc}
                   onChange={(e) => setCatDesc(e.target.value)}
                   placeholder="Tuyển chọn hoa tươi cho thầy cô..."
-                  className="w-full rounded-lg border border-pink-100 p-2.5 outline-none focus:border-rose-400"
+                  className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700"
                 />
               </div>
 
-              <div>
-                <label className="block font-bold text-gray-500 uppercase mb-1">Đường dẫn ảnh bìa danh mục *</label>
+               <div>
+                <label className="block font-bold text-stone-500 uppercase mb-1">Đường dẫn ảnh bìa danh mục *</label>
                 <input
                   type="text"
                   required
                   value={catImage}
                   onChange={(e) => setCatImage(e.target.value)}
-                  className="w-full rounded-lg border border-pink-100 p-2.5 outline-none focus:border-rose-400"
+                  className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700"
                 />
               </div>
 
-              <div className="flex justify-end space-x-2 pt-4 border-t border-pink-50">
+              <div className="flex justify-end space-x-2 pt-4 border-t border-amber-100">
                 <button
                   type="button"
                   onClick={() => setShowCategoryModal(false)}
@@ -1421,7 +1356,7 @@ export default function AdminDashboard({
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full bg-rose-600 px-5 py-1.5 text-white font-bold hover:bg-rose-700 cursor-pointer"
+                  className="rounded-full bg-emerald-800 px-5 py-1.5 text-white font-bold hover:bg-emerald-900 cursor-pointer"
                 >
                   {editCatItem ? 'Cập Nhật' : 'Thêm Mới'}
                 </button>

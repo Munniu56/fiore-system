@@ -32,7 +32,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
 
   return (
     <div className="flex justify-center items-center py-12 px-4 sm:px-6 lg:px-8 mt-4 animate-fade-in">
-      <div className="w-full max-w-md space-y-8 rounded-2xl border border-pink-100 bg-white p-8 shadow-md">
+      <div className="w-full max-w-md space-y-8 rounded-2xl border border-amber-200/60 bg-white p-8 shadow-md">
         
         {/* Header Visual */}
         <div className="text-center flex flex-col items-center">
@@ -42,10 +42,10 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
             className="mx-auto h-24 w-auto object-contain mb-4 animate-fade-in"
             referrerPolicy="no-referrer"
           />
-          <h2 className="mt-2 font-serif text-2xl font-bold tracking-tight text-gray-900">
+          <h2 className="mt-2 font-serif text-2xl font-bold tracking-tight text-emerald-950">
             Đăng nhập Quản trị viên
           </h2>
-          <p className="mt-1.5 text-xs text-gray-500">
+          <p className="mt-1.5 text-xs text-stone-500">
             Vui lòng xác thực tài khoản để truy cập hệ thống quản trị Fióre
           </p>
         </div>
@@ -62,11 +62,11 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1">
                 Tên đăng nhập
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-pink-300">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-emerald-700">
                   <User className="h-4 w-4" />
                 </span>
                 <input
@@ -75,18 +75,18 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Nhập tên đăng nhập"
-                  className="w-full rounded-lg border border-pink-100 bg-neutral-50/50 py-2.5 pl-10 pr-4 text-xs font-medium outline-none transition focus:border-rose-400 focus:bg-white"
+                  className="w-full rounded-lg border border-amber-200 bg-neutral-50/50 py-2.5 pl-10 pr-4 text-xs font-medium outline-none transition focus:border-emerald-700 focus:bg-white"
                   autoComplete="username"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1">
                 Mật khẩu
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-pink-300">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-emerald-700">
                   <Lock className="h-4 w-4" />
                 </span>
                 <input
@@ -95,13 +95,13 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Nhập mật khẩu"
-                  className="w-full rounded-lg border border-pink-100 bg-neutral-50/50 py-2.5 pl-10 pr-10 text-xs font-medium outline-none transition focus:border-rose-400 focus:bg-white"
+                  className="w-full rounded-lg border border-amber-200 bg-neutral-50/50 py-2.5 pl-10 pr-10 text-xs font-medium outline-none transition focus:border-emerald-700 focus:bg-white"
                   autoComplete="current-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-rose-500 cursor-pointer"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-emerald-700 cursor-pointer"
                   title={showPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -110,18 +110,18 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
             </div>
           </div>
 
-          <div className="rounded-lg bg-pink-50/50 p-3 text-pink-700/80 text-[10.5px] border border-pink-100/50 space-y-1">
+          <div className="rounded-lg bg-amber-50 p-3 text-amber-900/80 text-[10.5px] border border-amber-200/60 space-y-1">
             <p className="font-bold flex items-center gap-1">
               <span>💡 Gợi ý truy cập mẫu:</span>
             </p>
-            <p>Tên đăng nhập: <strong className="text-rose-600">admin</strong></p>
-            <p>Mật khẩu mặc định: <strong className="text-rose-600">123456</strong> (hoặc mật khẩu do bạn đổi)</p>
+            <p>Tên đăng nhập: <strong className="text-emerald-850 font-bold">admin</strong></p>
+            <p>Mật khẩu mặc định: <strong className="text-emerald-850 font-bold">123456</strong> (hoặc mật khẩu do bạn đổi)</p>
           </div>
 
           <div className="pt-2">
             <button
               type="submit"
-              className="group relative flex w-full justify-center rounded-lg bg-rose-600 py-2.5 text-xs font-bold text-white transition hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 cursor-pointer shadow-xs"
+              className="group relative flex w-full justify-center rounded-lg bg-emerald-800 py-2.5 text-xs font-bold text-white transition hover:bg-emerald-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 cursor-pointer shadow-xs"
             >
               Đăng nhập
             </button>
