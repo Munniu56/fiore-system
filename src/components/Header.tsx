@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { Flower, Search, ShoppingBag, User, Settings, ShoppingCart, LogOut, CheckCircle } from 'lucide-react';
 import { User as UserType } from '../types';
+import brandLogoHeader from '../assets/images/logo_white_bg_1780554592404.png';
 
 interface HeaderProps {
   currentUser: UserType | null;
@@ -39,15 +40,15 @@ export default function Header({
         {/* Brand Logo - Fiore */}
         <div 
           onClick={() => onNavigate('home')} 
-          className="flex cursor-pointer flex-col items-start justify-center transition hover:opacity-85 select-none"
+          className="flex cursor-pointer items-center transition hover:opacity-85 select-none"
           id="logo-brand"
         >
-          <span className="font-serif text-2xl font-bold tracking-wider text-[#1F3D2B]">
-            Fióre
-          </span>
-          <span className="text-[10px] font-sans font-semibold tracking-[0.2em] text-[#C8A96B] uppercase -mt-0.5 block">
-            Boutique de Fleurs
-          </span>
+          <img 
+            src={brandLogoHeader} 
+            alt="Fióre Boutique de Fleurs" 
+            className="h-12 w-auto object-contain sm:h-14"
+            referrerPolicy="no-referrer"
+          />
         </div>
 
         {/* Realtime Search Bar (Only shown for customer storefront view types) */}

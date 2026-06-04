@@ -6,6 +6,7 @@
 import React from 'react';
 import { Sparkles, Heart, Gift, Award, ArrowRight } from 'lucide-react';
 import { Category } from '../types';
+import heroFlowersImg from '../assets/images/hero_flowers_1780553979242.png';
 
 interface LandingHeroProps {
   categories: Category[];
@@ -99,7 +100,7 @@ export default function LandingHero({
           <div className="relative mt-8 sm:mx-auto lg:col-span-5 lg:mx-0 lg:mt-0">
             <div className="relative mx-auto w-full max-w-md rounded-2xl border-4 border-pink-50 bg-white p-3 shadow-xl">
               <img
-                src="/images/regenerated_image_1780392900313.jpg"
+                src={heroFlowersImg}
                 alt="Tiệm hoa nghệ thuật Fiore"
                 referrerPolicy="no-referrer"
                 className="h-[420px] w-full rounded-xl object-cover"

@@ -17,6 +17,7 @@ import AdminLogin from './components/AdminLogin';
 import AboutUs from './components/AboutUs';
 import ContactUs from './components/ContactUs';
 import SupportChat from './components/SupportChat';
+import brandLogoFooter from './assets/images/logo_footer_green_bg_1780554739638.png';
 
 import { verifyVnpayCallback } from './vnpayConfig';
 
@@ -1143,7 +1144,7 @@ export default function App() {
                   style={{ backgroundColor: '#1F3D2B', borderColor: 'rgba(255,255,255,0.15)' }}
                 >
                   <img 
-                    src="/images/brand_logo_luxury_1780395269921.png" 
+                    src={brandLogoFooter} 
                     alt="Fióre Boutique de Fleurs" 
                     className="h-14 w-auto object-contain"
                     referrerPolicy="no-referrer"

@@ -5,6 +5,7 @@
 
 import React, { useState } from 'react';
 import { Lock, User, ShieldAlert, Flower } from 'lucide-react';
+import brandLogoHeader from '../assets/images/logo_white_bg_1780554592404.png';
 
 interface AdminLoginProps {
   onLoginSuccess: () => void;
@@ -32,14 +33,12 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
         
         {/* Header Visual */}
         <div className="text-center flex flex-col items-center">
-          <div className="flex flex-col items-center justify-center mb-4 select-none text-center">
-            <span className="font-serif text-3xl font-bold tracking-wider text-[#1F3D2B]">
-              Fióre
-            </span>
-            <span className="text-[10px] font-sans font-semibold tracking-[0.2em] text-[#C8A96B] uppercase mt-0.5 block">
-              Boutique de Fleurs
-            </span>
-          </div>
+          <img 
+            src={brandLogoHeader} 
+            alt="Fióre Boutique de Fleurs logo" 
+            className="mx-auto h-24 w-auto object-contain mb-4 animate-fade-in"
+            referrerPolicy="no-referrer"
+          />
           <h2 className="mt-2 font-serif text-2xl font-bold tracking-tight text-gray-900">
             Đăng nhập Quản trị viên
           </h2>

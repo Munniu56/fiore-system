@@ -4,37 +4,43 @@
  */
 
 import { Product, Category } from './types';
+import loveFlowers from './assets/images/love_flowers_1780554000296.png';
+import birthdayFlowers from './assets/images/birthday_flowers_1780554020787.png';
+import openingFlowers from './assets/images/opening_flowers_1780554039978.png';
+import congratulationFlowers from './assets/images/congratulation_flowers_1780554058281.png';
+import condolenceFlowers from './assets/images/condolence_flowers_1780554077741.png';
+import seasonalFlowers from './assets/images/seasonal_flowers_1780554104772.png';
 
 export const INITIAL_CATEGORIES: Category[] = [
   {
     id: 'tinh-yeu',
     name: 'Hoa tình yêu',
     description: 'Bó hoa lãng mạn hâm nóng tình cảm đôi lứa',
-    image: '/images/regenerated_image_1780392914223.jpg'
+    image: loveFlowers
   },
   {
     id: 'sinh-nhat',
     name: 'Hoa sinh nhật',
     description: 'Món quà ý nghĩa chúc tuổi mới thêm hạnh phúc, thành công',
-    image: '/images/regenerated_image_1780392901636.jpg'
+    image: birthdayFlowers
   },
   {
     id: 'khai-truong',
     name: 'Hoa khai trương',
     description: 'Kệ hoa sang trọng thay lời chúc mã đáo thành công, hồng phát',
-    image: '/images/regenerated_image_1780392908021.webp'
+    image: openingFlowers
   },
   {
     id: 'chuc-mung',
     name: 'Hoa chúc mừng',
     description: 'Chúc mừng thăng chức, tốt nghiệp, sự kiện đáng nhớ',
-    image: '/images/regenerated_image_1780392909111.jpg'
+    image: congratulationFlowers
   },
   {
     id: 'chia-buon',
     name: 'Hoa chia buồn',
     description: 'Kính viếng thành kính phân ưu, gửi lời chia buồn sâu sắc',
-    image: '/images/regenerated_image_1780392910373.jpg'
+    image: condolenceFlowers
   },
   {
     id: 'hoa-cuoi',
@@ -46,7 +52,7 @@ export const INITIAL_CATEGORIES: Category[] = [
     id: 'theo-mua',
     name: 'Hoa theo mùa',
     description: 'Những đóa hoa tinh túy đặc sắc đón chào từng mùa trong năm',
-    image: '/images/regenerated_image_1780392911551.jpg'
+    image: seasonalFlowers
   }
 ];
 

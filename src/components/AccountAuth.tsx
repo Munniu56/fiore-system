@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { Lock, Mail, User, Phone, MapPin, KeyRound, ShieldAlert, CheckCircle, Save } from 'lucide-react';
 import { User as UserType } from '../types';
+import brandLogoHeader from '../assets/images/logo_white_bg_1780554592404.png';
 
 interface AccountAuthProps {
   currentUser: UserType | null;
@@ -281,14 +282,12 @@ export default function AccountAuth({
         /* Tab 2: Standard authentication flow with preset bypasses */
         <div className="mx-auto max-w-md rounded-3xl border border-pink-100 bg-white p-6 shadow-md sm:p-8 flex flex-col items-center animate-fade-in">
           
-          <div className="flex flex-col items-center justify-center mb-6 select-none border-b border-pink-100 pb-4 text-center w-full">
-            <span className="font-serif text-3xl font-bold tracking-wider text-[#1F3D2B]">
-              Fióre
-            </span>
-            <span className="text-[10px] font-sans font-semibold tracking-[0.2em] text-[#C8A96B] uppercase mt-0.5 block">
-              Boutique de Fleurs
-            </span>
-          </div>
+          <img 
+            src={brandLogoHeader} 
+            alt="Fióre Boutique de Fleurs logo" 
+            className="h-24 w-auto object-contain mb-6"
+            referrerPolicy="no-referrer"
+          />
           
           <div className="text-center mb-6 w-full">
             <h2 className="font-serif text-2xl font-bold text-gray-900">
