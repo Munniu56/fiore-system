@@ -3,8 +3,8 @@ import { Product, Category, Order, User, OrderStatus } from './types';
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES } from './data';
 import AdminDashboard from './components/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
-import { initGmailAuth, subscribeToGmailAuth } from './gmailService';
-import { Shield } from 'lucide-react';
+import { initGmailAuth, subscribeToGmailAuth, googleSignIn, googleSignOut, sendOrderNotificationEmail } from './gmailService';
+import { Shield, Mail, CheckCircle } from 'lucide-react';
 
 export default function AdminApp() {
   // --- STATE INITIALIZATION (SYNCED WITH LATEST CLIENT SITE KEYS) ---
@@ -156,6 +156,11 @@ export default function AdminApp() {
 
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
 
+  const [gmailUser, setGmailUser] = useState<any>(null);
+  const [gmailToken, setGmailToken] = useState<string | null>(() => {
+    return typeof window !== 'undefined' ? localStorage.getItem('fiore_gmail_access_token') : null;
+  });
+
   // --- SAVE STATES TO LOCAL STORAGE ---
   useEffect(() => {
     localStorage.setItem('fiore_products', JSON.stringify(products));
@@ -176,8 +181,13 @@ export default function AdminApp() {
   // Hook to automatically initialize Google/Gmail auth states in case needed
   useEffect(() => {
     const unsubAuth = initGmailAuth();
+    const unsubSub = subscribeToGmailAuth((gUser, gToken) => {
+      setGmailUser(gUser);
+      setGmailToken(gToken);
+    });
     return () => {
       unsubAuth();
+      unsubSub();
     };
   }, []);
 
@@ -215,15 +225,38 @@ export default function AdminApp() {
     setCategories((prev) => prev.filter((c) => c.id !== id));
   };
 
-  const handleUpdateOrderStatus = (orderId: string, status: OrderStatus) => {
-    setOrders((prev) => prev.map((o) => {
-      if (o.id === orderId) {
-        const updatedOrder = { ...o, status };
-        // Sync custom state updates back
-        return updatedOrder;
+  const handleUpdateOrderStatus = async (orderId: string, status: OrderStatus) => {
+    let orderToEmail: Order | undefined;
+
+    setOrders((prev) => {
+      const updated = prev.map((o) => {
+        if (o.id === orderId) {
+          const updatedOrder = { ...o, status };
+          if (status === 'paid' && o.status !== 'paid') {
+            orderToEmail = updatedOrder;
+          }
+          return updatedOrder;
+        }
+        return o;
+      });
+      localStorage.setItem('fiore_orders', JSON.stringify(updated));
+      return updated;
+    });
+
+    if (orderToEmail) {
+      const targetEmail = orderToEmail.customerEmail || 'thuyvanngo35@gmail.com';
+      console.log('Phát hiện trạng thái đơn hàng Đã thanh toán. Đang tự động gửi email tới:', targetEmail);
+      try {
+        const sent = await sendOrderNotificationEmail(orderToEmail, targetEmail);
+        if (sent) {
+          alert(`🎉 [Fióre] Đã tự động gửi email thông báo xác nhận thành công đơn hàng #${orderToEmail.id} đã thanh toán cho khách hàng qua địa chỉ: ${targetEmail}`);
+        } else {
+          alert(`⚠️ Trạng thái đơn hàng #${orderToEmail.id} đã cập nhật là "Đã thanh toán". Tuy nhiên, không thể gửi email tự động do Gmail chưa liên kết hoặc hết hạn token. Bạn vui lòng bấm nút "Kết nối Gmail" ở góc trên.`);
+        }
+      } catch (err) {
+        console.error('Lỗi tự động gửi email:', err);
       }
-      return o;
-    }));
+    }
   };
 
   const handleLoginSuccess = () => {
@@ -244,9 +277,37 @@ export default function AdminApp() {
             Fióre Boutique de Fleurs <span className="text-emerald-950 font-sans text-xs ml-1 font-bold bg-amber-400 px-2 py-0.5 rounded-full select-none">HỆ THỐNG QUẢN TRỊ</span>
           </span>
         </div>
-        <div className="text-xs text-amber-200 font-mono hidden md:block">
-          Cổng vận hành độc lập
-        </div>
+        
+        {isAdminAuthenticated ? (
+          <div className="flex items-center gap-3">
+            {gmailUser ? (
+              <div className="flex items-center gap-2 bg-emerald-900/60 px-3 py-1.5 rounded-full border border-emerald-500/20 text-xs">
+                <CheckCircle className="h-4 w-4 text-amber-300 shrink-0" />
+                <span className="text-stone-200 truncate hidden sm:inline max-w-[150px]" title={gmailUser.email}>
+                  Gmail: {gmailUser.email}
+                </span>
+                <button
+                  onClick={googleSignOut}
+                  className="text-amber-400 hover:text-amber-200 font-bold transition ml-1 cursor-pointer"
+                >
+                  Huỷ kết nối
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={googleSignIn}
+                className="flex items-center gap-1.5 bg-amber-400 hover:bg-amber-500 active:scale-95 transition text-emerald-950 font-bold text-xs px-3.5 py-1.5 rounded-full shadow-sm cursor-pointer"
+              >
+                <Mail className="h-3.5 w-3.5 shrink-0" />
+                <span>Kết nối Gmail tự động</span>
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="text-xs text-amber-200 font-mono hidden md:block">
+            Cổng vận hành độc lập
+          </div>
+        )}
       </header>
 
       <main className="flex-grow p-4 sm:p-6 max-w-[1600px] mx-auto w-full">
