@@ -469,45 +469,54 @@ export default function AdminDashboard({
         <div className="space-y-8 animate-fade-in">
           
           {/* Key Stat Cards Grid */}
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="flex flex-col xs:flex-row flex-wrap sm:items-stretch gap-4">
             
-            <div className="rounded-2xl border border-amber-200/60 bg-white p-3 sm:p-5 shadow-xs flex items-center space-x-2 sm:space-x-4 min-w-0">
-              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
+            {/* Card 1: Doanh thu tích lũy (Dữ liệu tiền tự động điều chỉnh khung cho khớp số tiền) */}
+            <div className="rounded-2xl border border-amber-200/60 bg-white p-4 sm:p-5 shadow-xs flex items-center space-x-3 sm:space-x-4 flex-1 min-w-[220px] sm:min-w-max md:min-w-[240px] transition-all">
+              <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
                 <DollarSign className="h-5.5 w-5.5 sm:h-6 sm:w-6" strokeWidth={2.5} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-stone-400 break-words whitespace-normal">Doanh thu tích lũy</p>
-                <p className="text-[10px] xs:text-xs sm:text-base md:text-lg lg:text-xs xl:text-lg font-black text-emerald-950 tracking-tight mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis" title={formatVND(totalRevenue)}>{formatVND(totalRevenue)}</p>
+                <p className="text-[10px] sm:text-[11px] uppercase font-bold tracking-wider text-stone-400 break-words whitespace-normal">Doanh thu tích lũy</p>
+                <p className="text-xs xs:text-sm sm:text-lg md:text-xl font-black text-emerald-950 tracking-tight mt-0.5 whitespace-nowrap" title={formatVND(totalRevenue)}>
+                  {formatVND(totalRevenue)}
+                </p>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-amber-200/60 bg-white p-3 sm:p-5 shadow-xs flex items-center space-x-2 sm:space-x-4 min-w-0">
-              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
+            <div className="rounded-2xl border border-amber-200/60 bg-white p-4 sm:p-5 shadow-xs flex items-center space-x-3 sm:space-x-4 flex-1 min-w-[150px] sm:min-w-[190px] transition-all">
+              <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
                 <ShoppingBag className="h-5.5 w-5.5 sm:h-6 sm:w-6" strokeWidth={2.5} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-stone-400 break-words whitespace-normal">Tổng số đơn hàng</p>
-                <p className="text-[10px] xs:text-xs sm:text-base md:text-lg lg:text-xs xl:text-lg font-black text-emerald-950 tracking-tight mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{totalOrdersCount} Đơn</p>
+                <p className="text-[10px] sm:text-[11px] uppercase font-bold tracking-wider text-stone-400 break-words whitespace-normal">Tổng số đơn hàng</p>
+                <p className="text-xs xs:text-sm sm:text-lg md:text-xl font-black text-emerald-950 tracking-tight mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                  {totalOrdersCount} Đơn
+                </p>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-amber-200/60 bg-white p-3 sm:p-5 shadow-xs flex items-center space-x-2 sm:space-x-4 min-w-0">
-              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
+            <div className="rounded-2xl border border-amber-200/60 bg-white p-4 sm:p-5 shadow-xs flex items-center space-x-3 sm:space-x-4 flex-1 min-w-[150px] sm:min-w-[190px] transition-all">
+              <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
                 <Users className="h-5.5 w-5.5 sm:h-6 sm:w-6" strokeWidth={2.5} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-stone-400 break-words whitespace-normal">Khách hàng tích cực</p>
-                <p className="text-[10px] xs:text-xs sm:text-base md:text-lg lg:text-xs xl:text-lg font-black text-emerald-950 tracking-tight mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{activeCustomersCount} Người</p>
+                <p className="text-[10px] sm:text-[11px] uppercase font-bold tracking-wider text-stone-400 break-words whitespace-normal">Khách hàng tích cực</p>
+                <p className="text-xs xs:text-sm sm:text-lg md:text-xl font-black text-emerald-950 tracking-tight mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                  {activeCustomersCount} Người
+                </p>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-amber-200/60 bg-white p-3 sm:p-5 shadow-xs flex items-center space-x-2 sm:space-x-4 min-w-0">
-              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
+            <div className="rounded-2xl border border-amber-200/60 bg-white p-4 sm:p-5 shadow-xs flex items-center space-x-3 sm:space-x-4 flex-1 min-w-[150px] sm:min-w-[190px] transition-all">
+              <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
                 <Gift className="h-5.5 w-5.5 sm:h-6 sm:w-6" strokeWidth={2.5} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-stone-400 break-words whitespace-normal">Số lượng kiểu hoa</p>
-                <p className="text-[10px] xs:text-xs sm:text-base md:text-lg lg:text-xs xl:text-lg font-black text-emerald-950 tracking-tight mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{products.length} Loại</p>
+                <p className="text-[10px] sm:text-[11px] uppercase font-bold tracking-wider text-stone-400 break-words whitespace-normal">Số lượng kiểu hoa</p>
+                <p className="text-xs xs:text-sm sm:text-lg md:text-xl font-black text-emerald-950 tracking-tight mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                  {products.length} Loại
+                </p>
               </div>
             </div>
 
