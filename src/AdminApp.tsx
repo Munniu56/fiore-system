@@ -249,20 +249,16 @@ export default function AdminApp() {
       const targetEmail = orderToEmail.customerEmail || 'thuyvanngo35@gmail.com';
       console.log('Phát hiện đơn hàng Đã thanh toán. Đang kích hoạt EmailJS tự động gửi tới:', targetEmail);
       try {
-        const result = await sendEmailJSOrderPaid(orderToEmail, targetEmail);
+        const result = await sendEmailJSOrderPaid(orderToEmail);
         if (result.success) {
-          if (result.simulated) {
-            alert(`🎉 [Fióre EmailJS] Đã mô phỏng gửi email tự động thành công đơn hàng #${orderToEmail.id} (Đã thanh toán) tới người nhận: ${targetEmail}.\n\n(Để kết nối thật, vui lòng cấu hình VITE_EMAILJS_SERVICE_ID trong .env)`);
-          } else {
-            alert(`🎉 [Fióre EmailJS] Đã gửi thư điện tử tự động xác nhận hóa đơn đơn hàng #${orderToEmail.id} thành công cho khách hàng qua: ${targetEmail}`);
-          }
+          alert(`🎉 [Fióre EmailJS] Đã gửi thư điện tử tự động xác nhận hóa đơn cho đơn hàng #${orderToEmail.id} thành công tới khách hàng qua: ${targetEmail}`);
         } else {
           // Fallback to Gmail REST API if possible
           const gmailSent = await sendOrderNotificationEmail(orderToEmail, targetEmail);
           if (gmailSent) {
             alert(`🎉 [Fióre Gmail] Đã tự động dùng Gmail API thay thế để liên hệ khách hàng #${orderToEmail.id} qua ${targetEmail}`);
           } else {
-            alert(`⚠️ Có lỗi phát sinh khi truyền tải hóa đơn cho đơn hàng #${orderToEmail.id}: ${result.error || 'Vui lòng kiểm tra cấu hình EmailJS hoặc Gmail.'}`);
+            alert(`⚠️ Có lỗi phát sinh khi truyền tải hóa đơn cho đơn hàng #${orderToEmail.id}: ${result.error || 'Vui lòng kiểm tra cấu hình EmailJS hoặc kết nối Gmail.'}`);
           }
         }
       } catch (err) {

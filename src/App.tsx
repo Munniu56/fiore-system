@@ -22,6 +22,7 @@ import brandLogoFooter from './assets/images/logo_footer_green_bg_1780554739638.
 
 import { verifyVnpayCallback } from './vnpayConfig';
 import { initGmailAuth, subscribeToGmailAuth, googleSignIn, googleSignOut, sendOrderNotificationEmail } from './gmailService';
+import { sendEmailJSOrderPaid } from './emailjsService';
 
 import { Product, Category, CartItem, Order, User, OrderStatus } from './types';
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES } from './data';
@@ -318,26 +319,22 @@ export default function App() {
 
                 setOrders((prev) => [...prev, newOrder]);
 
-                // Auto-send order confirmation email if Gmail is connected
-                const currentToken = localStorage.getItem('fiore_gmail_access_token') || gmailToken;
-                if (currentToken) {
-                  const emailRecipient = newOrder.customerEmail;
-                  sendOrderNotificationEmail(newOrder, emailRecipient)
-                    .then((success) => {
-                      if (success) {
-                        console.log(`Email hóa đơn đơn hàng VNPAY ${newOrder.id} đã được gửi tự động qua Gmail!`);
-                        setSentEmailOrderIds((prev) => {
-                          if (prev.includes(newOrder.id)) return prev;
-                          return [...prev, newOrder.id];
-                        });
-                      } else {
-                        console.warn('Gửi email tự động không thành công qua Gmail.');
-                      }
-                    })
-                    .catch((err) => {
-                      console.error('Lỗi khi gửi email tự động VNPAY:', err);
-                    });
-                }
+                // Auto-send single order confirmation email via EmailJS
+                sendEmailJSOrderPaid(newOrder, currentUser)
+                  .then((res) => {
+                    if (res.success) {
+                      console.log(`Email hóa đơn đơn hàng VNPAY ${newOrder.id} đã được gửi tự động qua EmailJS!`);
+                      setSentEmailOrderIds((prev) => {
+                        if (prev.includes(newOrder.id)) return prev;
+                        return [...prev, newOrder.id];
+                      });
+                    } else {
+                      console.warn('Gửi email tự động không thành công qua EmailJS.');
+                    }
+                  })
+                  .catch((err) => {
+                    console.error('Lỗi khi gửi email tự động VNPAY qua EmailJS:', err);
+                  });
               }
             } catch (e) {
               console.error('Error parsing pending VNPAY order:', e);
@@ -501,26 +498,22 @@ export default function App() {
     setOrders((prev) => [...prev, newOrder]);
     setCartItems([]); // Clear cart items on purchase completion!
 
-    // Auto-send order confirmation email if Gmail is connected for all orders
-    const currentToken = localStorage.getItem('fiore_gmail_access_token') || gmailToken;
-    if (currentToken) {
-      const emailRecipient = newOrder.customerEmail;
-      sendOrderNotificationEmail(newOrder, emailRecipient)
-        .then((success) => {
-          if (success) {
-            console.log(`Email hóa đơn đơn hàng ${newOrder.id} đã được gửi tự động qua Gmail!`);
-            setSentEmailOrderIds((prev) => {
-              if (prev.includes(newOrder.id)) return prev;
-              return [...prev, newOrder.id];
-            });
-          } else {
-            console.warn('Gửi email tự động không thành công qua Gmail.');
-          }
-        })
-        .catch((err) => {
-          console.error('Lỗi khi gửi email tự động:', err);
-        });
-    }
+    // Auto-send single order confirmation email via EmailJS
+    sendEmailJSOrderPaid(newOrder, currentUser)
+      .then((res) => {
+        if (res.success) {
+          console.log(`Email hóa đơn đơn hàng ${newOrder.id} đã được gửi tự động qua EmailJS!`);
+          setSentEmailOrderIds((prev) => {
+            if (prev.includes(newOrder.id)) return prev;
+            return [...prev, newOrder.id];
+          });
+        } else {
+          console.warn('Gửi email tự động không thành công qua EmailJS.');
+        }
+      })
+      .catch((err) => {
+        console.error('Lỗi khi gửi email tự động qua EmailJS:', err);
+      });
   };
 
   // --- ACCOUNT AUTHENTICATION ACTIONS ---
