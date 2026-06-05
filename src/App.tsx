@@ -58,13 +58,15 @@ export default function App() {
     const saved = localStorage.getItem('fiore_categories');
     if (saved) {
       try {
-        const parsed = JSON.parse(saved) as Category[];
-        if (parsed.length < INITIAL_CATEGORIES.length || !parsed.some(c => c.id === 'hoa-cuoi')) {
-          const merged = [...parsed];
-          INITIAL_CATEGORIES.forEach(ic => {
-            if (!merged.some(c => c.id === ic.id)) {
-              merged.push(ic);
-            }
+        let parsed = JSON.parse(saved) as Category[];
+        // Filter out deleted 'hoa-cuoi' category if exists in localStorage
+        parsed = parsed.filter(c => c.id !== 'hoa-cuoi');
+
+        const hasAllNew = INITIAL_CATEGORIES.every(ic => parsed.some(c => c.id === ic.id));
+        if (!hasAllNew || parsed.length > INITIAL_CATEGORIES.length) {
+          const merged = INITIAL_CATEGORIES.map(ic => {
+            const existing = parsed.find(c => c.id === ic.id);
+            return existing ? { ...ic, name: existing.name, description: existing.description } : ic;
           });
           localStorage.setItem('fiore_categories', JSON.stringify(merged));
           return merged;

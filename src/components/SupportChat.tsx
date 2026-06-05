@@ -48,7 +48,6 @@ export default function SupportChat({ products = [], onViewProduct }: SupportCha
       case 'khai-truong': return 'Hoa khai trương';
       case 'chuc-mung': return 'Hoa chúc mừng';
       case 'chia-buon': return 'Hoa chia buồn';
-      case 'hoa-cuoi': return 'Hoa cưới cầm tay';
       case 'theo-mua': return 'Hoa theo mùa';
       default: return 'Hoa thiết kế';
     }
@@ -113,8 +112,7 @@ export default function SupportChat({ products = [], onViewProduct }: SupportCha
         text === 'hoa tình yêu' || text === 'hoa tinh yeu' ||
         text === 'hoa khai trương' || text === 'hoa khai truong' ||
         text === 'hoa chúc mừng' || text === 'hoa chuc mung' ||
-        text === 'hoa chia buồn' || text === 'hoa chia buon' ||
-        text === 'hoa cưới' || text === 'hoa cuoi'
+        text === 'hoa chia buồn' || text === 'hoa chia buon'
     ) {
       let filtered = [...products];
       let categoryLabel = '';
@@ -123,9 +121,9 @@ export default function SupportChat({ products = [], onViewProduct }: SupportCha
       if (text.includes('sinh nhật') || text.includes('sinh nhat') || text.includes('mẹ') || text.includes('tặng mẹ')) {
         filtered = filtered.filter(p => p.categoryId === 'sinh-nhat');
         categoryLabel = 'hoa sinh nhật';
-      } else if (text.includes('tình yêu') || text.includes('tinh yeu') || text.includes('người yêu') || text.includes('nguoi yeu') || text.includes('vợ') || text.includes('bạn gái') || text.includes('bồ') || text.includes('tương tư')) {
+      } else if (text.includes('tình yêu') || text.includes('tinh yeu') || text.includes('người yêu') || text.includes('nguoi yeu') || text.includes('vợ') || text.includes('bạn gái') || text.includes('bồ') || text.includes('tương tư') || text.includes('cưới') || text.includes('cuoi') || text.includes('cô dâu') || text.includes('co dau') || text.includes('cầm tay') || text.includes('hôn lễ')) {
         filtered = filtered.filter(p => p.categoryId === 'tinh-yeu');
-        categoryLabel = 'hoa tình yêu';
+        categoryLabel = 'hoa tình yêu/ngày cưới';
       } else if (text.includes('khai trương') || text.includes('khai truong')) {
         filtered = filtered.filter(p => p.categoryId === 'khai-truong');
         categoryLabel = 'hoa khai trương';
@@ -135,9 +133,6 @@ export default function SupportChat({ products = [], onViewProduct }: SupportCha
       } else if (text.includes('chia buồn') || text.includes('chia buon') || text.includes('đám tang') || text.includes('dam tang') || text.includes('phúng viếng')) {
         filtered = filtered.filter(p => p.categoryId === 'chia-buon');
         categoryLabel = 'hoa chia buồn';
-      } else if (text.includes('cưới') || text.includes('cuoi') || text.includes('cô dâu') || text.includes('co dau') || text.includes('cầm tay') || text.includes('hôn lễ')) {
-        filtered = filtered.filter(p => p.categoryId === 'hoa-cuoi');
-        categoryLabel = 'hoa cưới';
       }
 
       // Check prices / budget
