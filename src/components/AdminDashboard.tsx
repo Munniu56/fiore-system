@@ -53,6 +53,19 @@ export default function AdminDashboard({
 
   const handleTabChange = (tab: 'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts') => {
     setActiveTab(tab);
+    if (tab === 'contacts') {
+      const saved = localStorage.getItem('fiore_contacts');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (JSON.stringify(parsed) !== JSON.stringify(contacts)) {
+            setContacts(parsed);
+          }
+        } catch (err) {
+          console.error('Error fetching contacts on tab change:', err);
+        }
+      }
+    }
   };
 
   const [prepopulatedEmail, setPrepopulatedEmail] = useState<{ to: string; subject: string; body: string } | null>(null);

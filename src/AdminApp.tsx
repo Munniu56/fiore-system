@@ -205,14 +205,17 @@ export default function AdminApp() {
     localStorage.setItem('fiore_contacts', JSON.stringify(contacts));
   }, [contacts]);
 
-  // Handle storage changes across page instances/actions
+  // Handle storage changes & periodic polling across page instances/actions (e.g. for sandboxed preview systems)
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'fiore_contacts') {
         const saved = localStorage.getItem('fiore_contacts');
         if (saved) {
           try {
-            setContacts(JSON.parse(saved));
+            const parsed = JSON.parse(saved);
+            if (JSON.stringify(parsed) !== JSON.stringify(contacts)) {
+              setContacts(parsed);
+            }
           } catch (err) {
             console.error('Error synchronizing contacts storage event', err);
           }
@@ -220,8 +223,27 @@ export default function AdminApp() {
       }
     };
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+
+    // Periodic poller fallback
+    const interval = setInterval(() => {
+      const saved = localStorage.getItem('fiore_contacts');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (JSON.stringify(parsed) !== JSON.stringify(contacts)) {
+            setContacts(parsed);
+          }
+        } catch (err) {
+          console.error('Error polling contacts in background', err);
+        }
+      }
+    }, 1500);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [contacts]);
 
   const [gmailUser, setGmailUser] = useState<any>(null);
   const [gmailToken, setGmailToken] = useState<string | null>(() => {
