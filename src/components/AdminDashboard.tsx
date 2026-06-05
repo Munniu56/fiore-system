@@ -372,86 +372,97 @@ export default function AdminDashboard({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      
-      {/* Title & Stats Navigation Tab control bar */}
-      <div className="sticky top-[46px] sm:top-[52px] z-30 bg-[#FAF7F0] -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 pt-4 pb-5 mb-8 flex flex-col xl:flex-row xl:items-center xl:justify-between border-b border-amber-200/60 gap-4 shadow-sm/5 transition-all">
-        <div>
-          <h1 className="font-serif text-3xl font-bold text-emerald-950" id="admin-dashboard-title">Hệ Thống Quản Trị Fióre</h1>
-          <p className="text-sm text-stone-600 mt-1 mr-2">Quản lý hiệu suất, danh mục mẫu hoa, sổ chi tiêu và điều hành kho bãi</p>
-        </div>
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
+        
+        {/* Left Sticky Sidebar on Desktop, Responsive Wrapper on Mobile */}
+        <aside className="w-full lg:w-72 lg:shrink-0 lg:sticky lg:top-[76px] lg:h-[calc(100vh-110px)] flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-amber-200/60 pb-6 lg:pb-0 lg:pr-6 bg-[#FAF7F0] z-20">
+          <div className="flex flex-col gap-5">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-serif font-black text-2xl text-emerald-950 tracking-tight">Fióre</span>
+                <span className="text-emerald-950 font-sans text-[10px] font-bold bg-amber-400 px-2 py-0.5 rounded-full select-none">ADMIN</span>
+              </div>
+              <h1 className="font-serif text-xl font-bold text-emerald-950 leading-tight" id="admin-dashboard-title">Hệ Thống Quản Trị</h1>
+              <p className="text-xs text-stone-500 mt-1">Hệ thống điều vận & quản lý hiệu suất tiệm hoa</p>
+            </div>
 
-        {/* Dynamic Admin Tabs navigation design with Logout button */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex flex-wrap gap-1.5 bg-amber-50/60 border border-amber-200/50 p-1 rounded-xl text-xs font-semibold">
-            <button
-              onClick={() => setActiveTab('stats')}
-              className={`rounded-lg px-3.5 py-2 flex items-center transition ${
-                activeTab === 'stats' ? 'bg-emerald-800 text-white shadow-xs' : 'text-stone-700 hover:text-emerald-800'
-              }`}
-            >
-              <BarChart2 className="mr-1.5 h-4 w-4" /> Báo cáo thống kê
-            </button>
-            <button
-              onClick={() => setActiveTab('products')}
-              className={`rounded-lg px-3.5 py-2 flex items-center transition ${
-                activeTab === 'products' ? 'bg-emerald-800 text-white shadow-xs' : 'text-stone-700 hover:text-emerald-800'
-              }`}
-            >
-              <Package className="mr-1.5 h-4 w-4" /> Quản lý sản phẩm
-            </button>
-            <button
-              onClick={() => setActiveTab('categories')}
-              className={`rounded-lg px-3.5 py-2 flex items-center transition ${
-                activeTab === 'categories' ? 'bg-emerald-800 text-white shadow-xs' : 'text-stone-700 hover:text-emerald-800'
-              }`}
-            >
-              <Layers className="mr-1.5 h-4 w-4" /> Quản lý danh mục
-            </button>
-            <button
-              onClick={() => setActiveTab('orders')}
-              className={`rounded-lg px-3.5 py-2 flex items-center transition ${
-                activeTab === 'orders' ? 'bg-emerald-800 text-white shadow-xs' : 'text-stone-700 hover:text-emerald-800'
-              }`}
-              id="admin-orders-tab"
-            >
-              <ShoppingBag className="mr-1.5 h-4 w-4" /> 
-              Quản lý đơn hàng 
-              {(confirmedOrdersCount + paidOrdersCount + preparingOrdersCount) > 0 && (
-                <span className="ml-1 px-1.5 py-0.2 md:py-0.5 text-[9px] bg-amber-500 text-emerald-950 rounded-full font-bold animate-pulse">{confirmedOrdersCount + paidOrdersCount + preparingOrdersCount}</span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('customers')}
-              className={`rounded-lg px-3.5 py-2 flex items-center transition ${
-                activeTab === 'customers' ? 'bg-emerald-800 text-white shadow-xs' : 'text-stone-700 hover:text-emerald-800'
-              }`}
-            >
-              <Users className="mr-1.5 h-4 w-4" /> Sổ khách hàng
-            </button>
-            {/* Thư điện tử / Gmail removed */}
-            <button
-              onClick={() => setActiveTab('security')}
-              className={`rounded-lg px-3.5 py-2 flex items-center transition ${
-                activeTab === 'security' ? 'bg-emerald-800 text-white shadow-xs' : 'text-stone-700 hover:text-emerald-800'
-              }`}
-              id="admin-security-tab"
-            >
-              <Lock className="mr-1.5 h-4 w-4" /> Bảo mật & Mật khẩu
-            </button>
+            {/* Sticky Navigation Tabs */}
+            <nav className="flex flex-col gap-1.5 bg-amber-50/50 border border-amber-200/50 p-2 rounded-xl text-xs font-semibold text-stone-700">
+              <button
+                onClick={() => setActiveTab('stats')}
+                className={`w-full rounded-lg px-3.5 py-2 flex items-center transition cursor-pointer ${
+                  activeTab === 'stats' ? 'bg-emerald-850 text-white shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
+                }`}
+              >
+                <BarChart2 className="mr-2 h-4 w-4 shrink-0" /> Báo cáo thống kê
+              </button>
+              <button
+                onClick={() => setActiveTab('products')}
+                className={`w-full rounded-lg px-3.5 py-2 flex items-center transition cursor-pointer ${
+                  activeTab === 'products' ? 'bg-emerald-850 text-white shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
+                }`}
+              >
+                <Package className="mr-2 h-4 w-4 shrink-0" /> Quản lý sản phẩm
+              </button>
+              <button
+                onClick={() => setActiveTab('categories')}
+                className={`w-full rounded-lg px-3.5 py-2 flex items-center transition cursor-pointer ${
+                  activeTab === 'categories' ? 'bg-emerald-850 text-white shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
+                }`}
+              >
+                <Layers className="mr-2 h-4 w-4 shrink-0" /> Quản lý danh mục
+              </button>
+              <button
+                onClick={() => setActiveTab('orders')}
+                className={`w-full rounded-lg px-3.5 py-2 flex items-center justify-between transition cursor-pointer ${
+                  activeTab === 'orders' ? 'bg-emerald-850 text-white shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
+                }`}
+                id="admin-orders-tab"
+              >
+                <div className="flex items-center">
+                  <ShoppingBag className="mr-2 h-4 w-4 shrink-0" /> 
+                  <span>Quản lý đơn hàng</span>
+                </div>
+                {(confirmedOrdersCount + paidOrdersCount + preparingOrdersCount) > 0 && (
+                  <span className="px-1.5 py-0.5 text-[9px] bg-amber-500 text-emerald-950 rounded-full font-bold animate-pulse">{confirmedOrdersCount + paidOrdersCount + preparingOrdersCount}</span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('customers')}
+                className={`w-full rounded-lg px-3.5 py-2 flex items-center transition cursor-pointer ${
+                  activeTab === 'customers' ? 'bg-emerald-850 text-white shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
+                }`}
+              >
+                <Users className="mr-2 h-4 w-4 shrink-0" /> Sổ khách hàng
+              </button>
+              <button
+                onClick={() => setActiveTab('security')}
+                className={`w-full rounded-lg px-3.5 py-2 flex items-center transition cursor-pointer ${
+                  activeTab === 'security' ? 'bg-emerald-850 text-white shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
+                }`}
+                id="admin-security-tab"
+              >
+                <Lock className="mr-2 h-4 w-4 shrink-0" /> Bảo mật & Mật khẩu
+              </button>
+            </nav>
           </div>
 
           {onAdminLogout && (
-            <button
-              onClick={onAdminLogout}
-              className="rounded-xl border border-red-200 bg-red-50/55 px-3.5 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100 flex items-center space-x-1 cursor-pointer"
-              id="admin-logout-button-hdr"
-            >
-              <LogOut className="h-4 w-4 shrink-0" />
-              <span>Đăng xuất</span>
-            </button>
+            <div className="pt-4 lg:pt-0">
+              <button
+                onClick={onAdminLogout}
+                className="w-full rounded-xl border border-red-200 bg-red-50/55 px-3.5 py-2 text-xs font-bold text-red-650 transition hover:bg-red-100/70 flex items-center justify-center space-x-1 cursor-pointer"
+                id="admin-logout-button-hdr"
+              >
+                <LogOut className="h-4 w-4 shrink-0" />
+                <span>Đăng xuất</span>
+              </button>
+            </div>
           )}
-        </div>
-      </div>
+        </aside>
+
+        {/* Right side primary content workspace */}
+        <div className="flex-1 w-full min-w-0">
 
       {/* --- TAB 1: REPORTS & GRAPHS STATISTICS --- */}
       {activeTab === 'stats' && (
@@ -1299,6 +1310,9 @@ export default function AdminDashboard({
           </div>
         </div>
       )}
+
+        </div>
+      </div>
 
       {/* --- ADD / EDIT CATEGORY POPUP DIA LOG --- */}
       {showCategoryModal && (
