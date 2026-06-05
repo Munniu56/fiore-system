@@ -375,7 +375,7 @@ export default function AdminDashboard({
       <div className="flex flex-col lg:flex-row gap-8 items-start">
         
         {/* Left Sticky Sidebar on Desktop, Responsive Wrapper on Mobile */}
-        <aside className="w-full lg:w-72 lg:shrink-0 lg:sticky lg:top-[76px] lg:h-[calc(100vh-110px)] flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-amber-200/60 pb-6 lg:pb-0 lg:pr-6 bg-[#FAF7F0] z-20">
+        <aside className="w-full lg:w-60 lg:shrink-0 lg:sticky lg:top-[76px] lg:h-[calc(100vh-110px)] flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-amber-200/60 pb-6 lg:pb-0 lg:pr-4 bg-[#FAF7F0] z-20">
           <div className="flex flex-col gap-5">
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -391,7 +391,7 @@ export default function AdminDashboard({
               <button
                 onClick={() => setActiveTab('stats')}
                 className={`w-full rounded-lg px-3.5 py-2 flex items-center transition cursor-pointer ${
-                  activeTab === 'stats' ? 'bg-emerald-850 text-white shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
+                  activeTab === 'stats' ? 'bg-emerald-100/60 text-emerald-950 font-bold shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
                 }`}
               >
                 <BarChart2 className="mr-2 h-4 w-4 shrink-0" /> Báo cáo thống kê
@@ -399,7 +399,7 @@ export default function AdminDashboard({
               <button
                 onClick={() => setActiveTab('products')}
                 className={`w-full rounded-lg px-3.5 py-2 flex items-center transition cursor-pointer ${
-                  activeTab === 'products' ? 'bg-emerald-850 text-white shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
+                  activeTab === 'products' ? 'bg-emerald-100/60 text-emerald-950 font-bold shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
                 }`}
               >
                 <Package className="mr-2 h-4 w-4 shrink-0" /> Quản lý sản phẩm
@@ -407,7 +407,7 @@ export default function AdminDashboard({
               <button
                 onClick={() => setActiveTab('categories')}
                 className={`w-full rounded-lg px-3.5 py-2 flex items-center transition cursor-pointer ${
-                  activeTab === 'categories' ? 'bg-emerald-850 text-white shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
+                  activeTab === 'categories' ? 'bg-emerald-100/60 text-emerald-950 font-bold shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
                 }`}
               >
                 <Layers className="mr-2 h-4 w-4 shrink-0" /> Quản lý danh mục
@@ -415,7 +415,7 @@ export default function AdminDashboard({
               <button
                 onClick={() => setActiveTab('orders')}
                 className={`w-full rounded-lg px-3.5 py-2 flex items-center justify-between transition cursor-pointer ${
-                  activeTab === 'orders' ? 'bg-emerald-850 text-white shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
+                  activeTab === 'orders' ? 'bg-emerald-100/60 text-emerald-950 font-bold shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
                 }`}
                 id="admin-orders-tab"
               >
@@ -430,7 +430,7 @@ export default function AdminDashboard({
               <button
                 onClick={() => setActiveTab('customers')}
                 className={`w-full rounded-lg px-3.5 py-2 flex items-center transition cursor-pointer ${
-                  activeTab === 'customers' ? 'bg-emerald-850 text-white shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
+                  activeTab === 'customers' ? 'bg-emerald-100/60 text-emerald-950 font-bold shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
                 }`}
               >
                 <Users className="mr-2 h-4 w-4 shrink-0" /> Sổ khách hàng
@@ -438,7 +438,7 @@ export default function AdminDashboard({
               <button
                 onClick={() => setActiveTab('security')}
                 className={`w-full rounded-lg px-3.5 py-2 flex items-center transition cursor-pointer ${
-                  activeTab === 'security' ? 'bg-emerald-850 text-white shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
+                  activeTab === 'security' ? 'bg-emerald-100/60 text-emerald-950 font-bold shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
                 }`}
                 id="admin-security-tab"
               >
@@ -471,43 +471,43 @@ export default function AdminDashboard({
           {/* Key Stat Cards Grid */}
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             
-            <div className="rounded-2xl border border-amber-200/60 bg-white p-5 shadow-xs flex items-center space-x-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
-                <DollarSign className="h-6 w-6" strokeWidth={2.5} />
+            <div className="rounded-2xl border border-amber-200/60 bg-white p-3 sm:p-5 shadow-xs flex items-center space-x-2 sm:space-x-4 min-w-0">
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
+                <DollarSign className="h-5.5 w-5.5 sm:h-6 sm:w-6" strokeWidth={2.5} />
               </div>
-              <div>
-                <p className="text-[10px] uppercase font-bold tracking-wider text-stone-400">Doanh thu tích lũy</p>
-                <p className="text-lg font-black text-emerald-950 tracking-tight sm:text-xl md:text-2xl mt-0.5">{formatVND(totalRevenue)}</p>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-amber-200/60 bg-white p-5 shadow-xs flex items-center space-x-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
-                <ShoppingBag className="h-6 w-6" strokeWidth={2.5} />
-              </div>
-              <div>
-                <p className="text-[10px] uppercase font-bold tracking-wider text-stone-400">Tổng số đơn hàng</p>
-                <p className="text-xl font-black text-emerald-950 tracking-tight sm:text-2xl mt-0.5">{totalOrdersCount} Đơn</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-stone-400 break-words whitespace-normal">Doanh thu tích lũy</p>
+                <p className="text-xs xs:text-sm sm:text-lg md:text-xl lg:text-xs xl:text-lg font-black text-emerald-950 tracking-tight mt-0.5 break-all whitespace-normal" title={formatVND(totalRevenue)}>{formatVND(totalRevenue)}</p>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-amber-200/60 bg-white p-5 shadow-xs flex items-center space-x-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
-                <Users className="h-6 w-6" strokeWidth={2.5} />
+            <div className="rounded-2xl border border-amber-200/60 bg-white p-3 sm:p-5 shadow-xs flex items-center space-x-2 sm:space-x-4 min-w-0">
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
+                <ShoppingBag className="h-5.5 w-5.5 sm:h-6 sm:w-6" strokeWidth={2.5} />
               </div>
-              <div>
-                <p className="text-[10px] uppercase font-bold tracking-wider text-stone-400">Khách hàng tích cực</p>
-                <p className="text-xl font-black text-emerald-950 tracking-tight sm:text-2xl mt-0.5">{activeCustomersCount} Người</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-stone-400 break-words whitespace-normal">Tổng số đơn hàng</p>
+                <p className="text-xs xs:text-sm sm:text-lg md:text-xl lg:text-xs xl:text-lg font-black text-emerald-950 tracking-tight mt-0.5 break-all whitespace-normal">{totalOrdersCount} Đơn</p>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-amber-200/60 bg-white p-5 shadow-xs flex items-center space-x-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
-                <Gift className="h-6 w-6" strokeWidth={2.5} />
+            <div className="rounded-2xl border border-amber-200/60 bg-white p-3 sm:p-5 shadow-xs flex items-center space-x-2 sm:space-x-4 min-w-0">
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
+                <Users className="h-5.5 w-5.5 sm:h-6 sm:w-6" strokeWidth={2.5} />
               </div>
-              <div>
-                <p className="text-[10px] uppercase font-bold tracking-wider text-stone-400">Số lượng kiểu hoa</p>
-                <p className="text-xl font-black text-emerald-950 tracking-tight sm:text-2xl mt-0.5">{products.length} Loại</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-stone-400 break-words whitespace-normal">Khách hàng tích cực</p>
+                <p className="text-xs xs:text-sm sm:text-lg md:text-xl lg:text-xs xl:text-lg font-black text-emerald-950 tracking-tight mt-0.5 break-all whitespace-normal">{activeCustomersCount} Người</p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-amber-200/60 bg-white p-3 sm:p-5 shadow-xs flex items-center space-x-2 sm:space-x-4 min-w-0">
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
+                <Gift className="h-5.5 w-5.5 sm:h-6 sm:w-6" strokeWidth={2.5} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-stone-400 break-words whitespace-normal">Số lượng kiểu hoa</p>
+                <p className="text-xs xs:text-sm sm:text-lg md:text-xl lg:text-xs xl:text-lg font-black text-emerald-950 tracking-tight mt-0.5 break-all whitespace-normal">{products.length} Loại</p>
               </div>
             </div>
 
@@ -758,14 +758,14 @@ export default function AdminDashboard({
                 {bestSellersList.length > 0 ? (
                   <div className="space-y-3.5 text-xs">
                     {bestSellersList.map((bs, idx) => (
-                      <div key={idx} className="flex justify-between items-center bg-[#FAF7F0] p-2 rounded-lg border border-amber-200/40">
-                        <div className="flex items-center space-x-2">
-                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-800 font-bold text-white text-[10px]">
+                      <div key={idx} className="flex justify-between items-center bg-[#FAF7F0] p-2 rounded-lg border border-amber-200/40 gap-2 min-w-0">
+                        <div className="flex items-center space-x-2 min-w-0">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-800 font-bold text-white text-[10px] shrink-0">
                             {idx + 1}
                           </span>
-                          <span className="font-bold text-emerald-950 line-clamp-1 max-w-[130px]">{bs.productName}</span>
+                          <span className="font-bold text-emerald-950 break-words whitespace-normal" title={bs.productName}>{bs.productName}</span>
                         </div>
-                        <div className="text-right shrink-0">
+                        <div className="text-right shrink-0 text-[11px] sm:text-xs">
                           <p className="font-bold text-emerald-800">Đã bán {bs.quantitySold} bó</p>
                           <p className="text-[10px] text-stone-400 font-medium">Thu về {formatVND(bs.revenue)}</p>
                         </div>
