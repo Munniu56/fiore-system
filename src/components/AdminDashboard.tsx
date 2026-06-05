@@ -643,7 +643,7 @@ export default function AdminDashboard({
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
             
             {/* Sales revenue over time */}
-            <div className="lg:col-span-8 rounded-2xl border border-amber-200/60 bg-white p-6 shadow-xs">
+            <div className="lg:col-span-12 rounded-2xl border border-amber-200/60 bg-white p-6 shadow-xs">
               <div className="flex items-center justify-between border-b border-amber-100/60 pb-3 mb-6">
                 <div>
                   <h3 className="font-serif text-base font-bold text-emerald-950">Biểu đồ doanh thu thực tế theo tuần</h3>
@@ -804,105 +804,101 @@ export default function AdminDashboard({
             </div>
 
             {/* Orders Status Breakdowns and Best Sellers */}
-            <div className="lg:col-span-4 space-y-6">
-              
-              {/* Status Visual distribution */}
-              <div className="rounded-2xl border border-amber-200/60 bg-white p-5 shadow-xs">
-                <h3 className="font-serif text-sm font-bold text-emerald-950 border-b border-amber-100 pb-2.5 mb-4">
-                  Phân phối trạng thái vận đơn
-                </h3>
+            {/* Status Visual distribution */}
+            <div className="lg:col-span-6 rounded-2xl border border-amber-200/60 bg-white p-5 shadow-xs">
+              <h3 className="font-serif text-sm font-bold text-emerald-950 border-b border-amber-100 pb-2.5 mb-4">
+                Phân phối trạng thái vận đơn
+              </h3>
 
-                <div className="space-y-3 text-xs">
-                  <div>
-                    <div className="flex justify-between font-semibold text-gray-700 mb-1">
-                      <span>Hoàn tất ({completedOrdersCount})</span>
-                      <span>{orders.length > 0 ? Math.round((completedOrdersCount / orders.length) * 100) : 0}%</span>
-                    </div>
-                    <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
-                      <div className="bg-[#1F3D2B] h-full rounded-full" style={{ width: `${orders.length > 0 ? (completedOrdersCount / orders.length) * 100 : 0}%` }}></div>
-                    </div>
+              <div className="space-y-3 text-xs">
+                <div>
+                  <div className="flex justify-between font-semibold text-gray-700 mb-1">
+                    <span>Hoàn tất ({completedOrdersCount})</span>
+                    <span>{orders.length > 0 ? Math.round((completedOrdersCount / orders.length) * 100) : 0}%</span>
                   </div>
-
-                  <div>
-                    <div className="flex justify-between font-semibold text-gray-700 mb-1">
-                      <span>Đang giao hàng ({shippingOrdersCount})</span>
-                      <span>{orders.length > 0 ? Math.round((shippingOrdersCount / orders.length) * 100) : 0}%</span>
-                    </div>
-                    <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
-                      <div className="bg-orange-500 h-full rounded-full" style={{ width: `${orders.length > 0 ? (shippingOrdersCount / orders.length) * 100 : 0}%` }}></div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between font-semibold text-gray-700 mb-1">
-                      <span>Đang chuẩn bị hàng ({preparingOrdersCount})</span>
-                      <span>{orders.length > 0 ? Math.round((preparingOrdersCount / orders.length) * 100) : 0}%</span>
-                    </div>
-                    <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
-                      <div className="bg-yellow-400 h-full rounded-full" style={{ width: `${orders.length > 0 ? (preparingOrdersCount / orders.length) * 100 : 0}%` }}></div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between font-semibold text-gray-700 mb-1">
-                      <span>Đã thanh toán ({paidOrdersCount})</span>
-                      <span>{orders.length > 0 ? Math.round((paidOrdersCount / orders.length) * 100) : 0}%</span>
-                    </div>
-                    <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
-                      <div className="bg-[#10B981] h-full rounded-full" style={{ width: `${orders.length > 0 ? (paidOrdersCount / orders.length) * 100 : 0}%` }}></div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between font-semibold text-gray-700 mb-1">
-                      <span>Đã xác nhận ({confirmedOrdersCount})</span>
-                      <span>{orders.length > 0 ? Math.round((confirmedOrdersCount / orders.length) * 100) : 0}%</span>
-                    </div>
-                    <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
-                      <div className="bg-blue-500 h-full rounded-full" style={{ width: `${orders.length > 0 ? (confirmedOrdersCount / orders.length) * 100 : 0}%` }}></div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between font-semibold text-gray-700 mb-1">
-                      <span>Đã hủy ({cancelledOrdersCount})</span>
-                      <span>{orders.length > 0 ? Math.round((cancelledOrdersCount / orders.length) * 100) : 0}%</span>
-                    </div>
-                    <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
-                      <div className="bg-red-500 h-full rounded-full" style={{ width: `${orders.length > 0 ? (cancelledOrdersCount / orders.length) * 100 : 0}%` }}></div>
-                    </div>
+                  <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
+                    <div className="bg-[#1F3D2B] h-full rounded-full" style={{ width: `${orders.length > 0 ? (completedOrdersCount / orders.length) * 100 : 0}%` }}></div>
                   </div>
                 </div>
 
-              </div>
-
-              {/* Best selling list */}
-              <div className="rounded-2xl border border-amber-200/60 bg-white p-5 shadow-xs">
-                <h3 className="font-serif text-sm font-bold text-emerald-950 border-b border-amber-100 pb-2.5 mb-3.5">
-                  Sản phẩm mẫu hoa bán chạy
-                </h3>
-                {bestSellersList.length > 0 ? (
-                  <div className="space-y-3.5 text-xs">
-                    {bestSellersList.map((bs, idx) => (
-                      <div key={idx} className="flex justify-between items-center bg-[#FAF7F0] p-2 rounded-lg border border-amber-200/40 gap-2 min-w-0">
-                        <div className="flex items-center space-x-2 min-w-0">
-                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-800 font-bold text-white text-[10px] shrink-0">
-                            {idx + 1}
-                          </span>
-                          <span className="font-bold text-emerald-950 break-words whitespace-normal" title={bs.productName}>{bs.productName}</span>
-                        </div>
-                        <div className="text-right shrink-0 text-[11px] sm:text-xs">
-                          <p className="font-bold text-emerald-800">Đã bán {bs.quantitySold} bó</p>
-                          <p className="text-[10px] text-stone-400 font-medium">Thu về {formatVND(bs.revenue)}</p>
-                        </div>
-                      </div>
-                    ))}
+                <div>
+                  <div className="flex justify-between font-semibold text-gray-700 mb-1">
+                    <span>Đang giao hàng ({shippingOrdersCount})</span>
+                    <span>{orders.length > 0 ? Math.round((shippingOrdersCount / orders.length) * 100) : 0}%</span>
                   </div>
-                ) : (
-                  <div className="p-3 text-center text-xs text-gray-400 italic">Chưa phát sinh dữ liệu đơn hàng thành công.</div>
-                )}
+                  <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
+                    <div className="bg-orange-500 h-full rounded-full" style={{ width: `${orders.length > 0 ? (shippingOrdersCount / orders.length) * 100 : 0}%` }}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-semibold text-gray-700 mb-1">
+                    <span>Đang chuẩn bị hàng ({preparingOrdersCount})</span>
+                    <span>{orders.length > 0 ? Math.round((preparingOrdersCount / orders.length) * 100) : 0}%</span>
+                  </div>
+                  <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
+                    <div className="bg-yellow-400 h-full rounded-full" style={{ width: `${orders.length > 0 ? (preparingOrdersCount / orders.length) * 100 : 0}%` }}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-semibold text-gray-700 mb-1">
+                    <span>Đã thanh toán ({paidOrdersCount})</span>
+                    <span>{orders.length > 0 ? Math.round((paidOrdersCount / orders.length) * 100) : 0}%</span>
+                  </div>
+                  <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
+                    <div className="bg-[#10B981] h-full rounded-full" style={{ width: `${orders.length > 0 ? (paidOrdersCount / orders.length) * 100 : 0}%` }}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-semibold text-gray-700 mb-1">
+                    <span>Đã xác nhận ({confirmedOrdersCount})</span>
+                    <span>{orders.length > 0 ? Math.round((confirmedOrdersCount / orders.length) * 100) : 0}%</span>
+                  </div>
+                  <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
+                    <div className="bg-blue-500 h-full rounded-full" style={{ width: `${orders.length > 0 ? (confirmedOrdersCount / orders.length) * 100 : 0}%` }}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-semibold text-gray-700 mb-1">
+                    <span>Đã hủy ({cancelledOrdersCount})</span>
+                    <span>{orders.length > 0 ? Math.round((cancelledOrdersCount / orders.length) * 100) : 0}%</span>
+                  </div>
+                  <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
+                    <div className="bg-red-500 h-full rounded-full" style={{ width: `${orders.length > 0 ? (cancelledOrdersCount / orders.length) * 100 : 0}%` }}></div>
+                  </div>
+                </div>
               </div>
 
+            </div>
+
+            {/* Best selling list */}
+            <div className="lg:col-span-6 rounded-2xl border border-amber-200/60 bg-white p-5 shadow-xs">
+              <h3 className="font-serif text-sm font-bold text-emerald-950 border-b border-amber-100 pb-2.5 mb-3.5">
+                Sản phẩm mẫu hoa bán chạy
+              </h3>
+              {bestSellersList.length > 0 ? (
+                <div className="space-y-3.5 text-xs">
+                  {bestSellersList.map((bs, idx) => (
+                    <div key={idx} className="flex justify-between items-center bg-[#FAF7F0] p-2 rounded-lg border border-amber-200/40 gap-2 min-w-0">
+                      <div className="flex items-center space-x-2 min-w-0">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-800 font-bold text-white text-[10px] shrink-0">
+                          {idx + 1}
+                        </span>
+                        <span className="font-bold text-emerald-950 break-words whitespace-normal" title={bs.productName}>{bs.productName}</span>
+                      </div>
+                      <div className="text-right shrink-0 text-[11px] sm:text-xs">
+                        <p className="font-bold text-emerald-800">Đã bán {bs.quantitySold} bó</p>
+                        <p className="text-[10px] text-stone-400 font-medium">Thu về {formatVND(bs.revenue)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-3 text-center text-xs text-gray-400 italic">Chưa phát sinh dữ liệu đơn hàng thành công.</div>
+              )}
             </div>
 
           </div>
