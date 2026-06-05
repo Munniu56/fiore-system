@@ -7,63 +7,115 @@ export interface EmailJSConfig {
   publicKey: string;
 }
 
-// Read parameters from user configuration or fallback to requested production keys
 export const getEmailJSConfig = (): EmailJSConfig => {
   return {
-    serviceId: import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_qt6j7iz',
-    templateId: import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_7fo9udp',
-    publicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 'JQRh7NC5GOl4J9yB6',
+    serviceId:
+      import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_qt6j7iz',
+
+    templateId:
+      import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_7fo9udp',
+
+    publicKey:
+      import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 'JQRh7NC5GOl4J9yB6',
   };
 };
 
-/**
- * Sends a single elegant automated email confirmation to the customer using EmailJS.
- */
 export const sendEmailJSOrderPaid = async (
   order: Order,
-  currentUser?: { name: string; phone: string; email: string } | null
+  currentUser?: {
+    name: string;
+    phone: string;
+    email: string;
+  } | null
 ): Promise<{ success: boolean; error?: string }> => {
+  console.log('[EmailJS] sendEmailJSOrderPaid được gọi');
+
   const config = getEmailJSConfig();
 
-  // Determine standard payment method string as requested
   let mappedPaymentMethod = 'Thanh toán trực tiếp khi nhận hoa (COD)';
+
   if (order.paymentMethod === 'VISA') {
     mappedPaymentMethod = 'Thẻ quốc tế Visa';
   } else if (order.paymentMethod === 'VNPAY') {
     mappedPaymentMethod = 'VNPAY Sandbox';
   }
 
-  // Format cart items beautifully for the customer
   const cartItemsText = order.items
     .map(
       (item) =>
-        `- ${item.product.name} (x${item.quantity}) — ${item.product.price.toLocaleString(
+        `• ${item.product.name} x${item.quantity} - ${item.product.price.toLocaleString(
           'vi-VN'
         )}đ`
     )
     .join('\n');
 
-  // Format order total
-  const orderTotalText = order.totalAmount.toLocaleString('vi-VN') + ' đ';
+  const orderTotalText =
+    order.totalAmount.toLocaleString('vi-VN') + ' đ';
 
-  // Map the exact 13 variables required by the template:
+  const customerEmail =
+    order.customerEmail ||
+    currentUser?.email ||
+    '';
+
   const templateParams = {
+    customer_name:
+      currentUser?.name ||
+      order.recipientName ||
+      'Khách hàng',
+
     order_id: order.id,
-    sender_name: currentUser ? currentUser.name : (order.recipientName || 'Khách hàng Fióre'),
-    sender_phone: currentUser ? currentUser.phone : order.recipientPhone,
-    sender_email: order.customerEmail || 'customer@fiore.vn',
-    recipient_name: order.recipientName,
-    recipient_phone: order.recipientPhone,
-    recipient_address: order.shippingAddress,
-    delivery_date: 'Giao hàng trong ngày (hoặc theo ghi chú)',
-    delivery_time: 'Khung giờ linh hoạt (hoặc theo ghi chú)',
-    card_message: order.note || 'Không có ghi chú thiệp',
-    cart_items: cartItemsText,
-    order_total: orderTotalText,
-    payment_method: mappedPaymentMethod,
+
+    receiver_name:
+      order.recipientName,
+
+    receiver_phone:
+      order.recipientPhone,
+
+    shipping_address:
+      order.shippingAddress,
+
+    payment_method:
+      mappedPaymentMethod,
+
+    order_items:
+      cartItemsText,
+
+    note:
+      order.note ||
+      'Không có lời nhắn',
+
+    total_price:
+      orderTotalText,
+
+    to_email:
+      customerEmail,
   };
 
-  console.log('[Fióre EmailJS] Đang truyền các tham số gửi email xác nhận:', templateParams);
+  console.log(
+    '[EmailJS] Config:',
+    config
+  );
+
+  console.log(
+    '[EmailJS] Customer email:',
+    customerEmail
+  );
+
+  console.log(
+    '[EmailJS] Template params:',
+    templateParams
+  );
+
+  if (!customerEmail) {
+    console.error(
+      '[EmailJS] Không tìm thấy email khách hàng'
+    );
+
+    return {
+      success: false,
+      error: 'Không tìm thấy email khách hàng',
+    };
+  }
 
   try {
     const response = await emailjs.send(
@@ -72,13 +124,27 @@ export const sendEmailJSOrderPaid = async (
       templateParams,
       config.publicKey
     );
-    console.log('[Fióre EmailJS] Gửi email thành công!', response.status, response.text);
-    return { success: true };
+
+    console.log(
+      '[EmailJS] Gửi email thành công',
+      response
+    );
+
+    return {
+      success: true,
+    };
   } catch (error: any) {
-    console.error('[Fióre EmailJS] Lỗi gửi email:', error);
+    console.error(
+      '[EmailJS ERROR]',
+      error
+    );
+
     return {
       success: false,
-      error: error?.text || error?.message || 'Không thể gửi email qua máy chủ EmailJS',
+      error:
+        error?.text ||
+        error?.message ||
+        'Không thể gửi email',
     };
   }
 };
