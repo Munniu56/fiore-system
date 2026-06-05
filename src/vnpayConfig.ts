@@ -19,7 +19,7 @@ export function createVnpayPaymentUrl(orderId: string, amount: number, ipAddr: s
     pad(date.getSeconds());
 
   // ReturnUrl where VNPAY redirects back
-  const returnUrl = window.location.origin + window.location.pathname;
+  const returnUrl = window.location.origin + '/src/pages/vnpay-return.html';
 
   const params: Record<string, string> = {
     vnp_Version: '2.1.0',

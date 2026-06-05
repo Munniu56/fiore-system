@@ -46,6 +46,10 @@ export interface Order {
   paymentStatus: 'Unpaid' | 'Paid';
   status: OrderStatus;
   createdAt: string;
+  vnp_TransactionNo?: string;
+  vnp_PayDate?: string;
+  vnp_BankCode?: string;
+  vnp_Amount?: string;
 }
 
 export interface User {

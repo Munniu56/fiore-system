@@ -220,6 +220,17 @@ export default function App() {
     };
   }, []);
 
+  // Synchronize URL search param "view" with our client-side view state
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const view = searchParams.get('view');
+    if (view && ['orders', 'checkout', 'catalog', 'home', 'about', 'contact', 'auth'].includes(view)) {
+      setCurrentView(view);
+      const newUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, []);
+
   // Listen for navigation events and synchronize with path URL
   useEffect(() => {
     const p = location.pathname;

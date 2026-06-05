@@ -16,6 +16,7 @@ export default defineConfig(() => {
         input: {
           main: path.resolve(__dirname, 'index.html'),
           admin: path.resolve(__dirname, 'admin.html'),
+          vnpay_return: path.resolve(__dirname, 'src/pages/vnpay-return.html'),
         },
       },
     },
