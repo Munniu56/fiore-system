@@ -22,7 +22,37 @@ export default function ContactUs() {
       return;
     }
 
-    // Trigger fake success but let state reflect real UI change
+    try {
+      // Load current contacts
+      const savedContactsStr = localStorage.getItem('fiore_contacts') || '[]';
+      let savedContacts = [];
+      try {
+        savedContacts = JSON.parse(savedContactsStr);
+        if (!Array.isArray(savedContacts)) {
+          savedContacts = [];
+        }
+      } catch (err) {
+        savedContacts = [];
+      }
+
+      // Create new contact message
+      const newContact = {
+        id: `msg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        fullName: fullName.trim(),
+        email: email.trim(),
+        message: message.trim(),
+        createdAt: new Date().toISOString(),
+        status: 'new'
+      };
+
+      // Append and save
+      savedContacts = [newContact, ...savedContacts];
+      localStorage.setItem('fiore_contacts', JSON.stringify(savedContacts));
+    } catch (error) {
+      console.error('Error saving contact message:', error);
+    }
+
+    // Trigger success and let state reflect real UI change
     setIsSubmitted(true);
     
     // Clear fields

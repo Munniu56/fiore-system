@@ -72,3 +72,13 @@ export interface BestSeller {
   quantitySold: number;
   revenue: number;
 }
+
+export interface ContactMessage {
+  id: string;
+  fullName: string;
+  email: string;
+  message: string;
+  createdAt: string;
+  status: 'new' | 'read' | 'replied';
+}
+

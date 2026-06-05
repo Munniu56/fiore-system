@@ -9,7 +9,7 @@ import {
   BarChart2, Gift, DollarSign, Package, Users, Plus, Edit2, 
   Trash2, Layers, Check, ShoppingBag, Eye, X, RefreshCw, Star, Info, TrendingUp, Search, LogOut, Mail, Lock, ShieldAlert
 } from 'lucide-react';
-import { Product, Category, Order, User, OrderStatus } from '../types';
+import { Product, Category, Order, User, OrderStatus, ContactMessage } from '../types';
 // Gmail manager removed specifically for isolated admin portal
 
 interface AdminDashboardProps {
@@ -44,8 +44,94 @@ export default function AdminDashboard({
   onAdminLogout,
 }: AdminDashboardProps) {
   
-  const [activeTab, setActiveTab ] = useState<'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security'>('stats');
+  const [activeTab, setActiveTab ] = useState<'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts'>('stats');
+  const [contacts, setContacts ] = useState<ContactMessage[]>(() => {
+    if (typeof window === 'undefined') return [];
+    const saved = localStorage.getItem('fiore_contacts');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Error parsing contacts:', e);
+      }
+    }
+    
+    // Default high-quality localized customer message sample data
+    const sampleContacts: ContactMessage[] = [
+      {
+        id: 'msg-1',
+        fullName: 'Phạm Minh Đức',
+        email: 'ducpm.designer@gmail.com',
+        message: 'Xin chào, tôi muốn đặt hoa hồng thiết kế riêng cho sự kiện cưới vào tháng sau tại Huế. Shop có thể gửi báo giá chi tiết qua email này được không? Xin cảm ơn!',
+        createdAt: '2026-06-04T08:15:00Z',
+        status: 'new'
+      },
+      {
+        id: 'msg-2',
+        fullName: 'Trần Thị Thu Thảo',
+        email: 'thuthao9x@yahoo.com',
+        message: 'Đơn hàng BST Hoa Khai Trương của tôi giao lúc sáng rất tươi và đẹp, sếp tôi rất thích. Lần sau doanh nghiệp tôi sẽ tiếp tục ủng hộ Fióre!',
+        createdAt: '2026-06-03T11:45:00Z',
+        status: 'read'
+      },
+      {
+        id: 'msg-3',
+        fullName: 'Hoàng Anh Tuấn',
+        email: 'tuandep_trai@gmail.com',
+        message: 'Shop ơi, mẫu "Nắng mai ấm áp" có thể thay thế hoa hướng dương bằng hoa cẩm tú cầu được không ạ? Giá cả thay đổi như thế nào?',
+        createdAt: '2026-06-01T15:20:00Z',
+        status: 'replied'
+      }
+    ];
+    localStorage.setItem('fiore_contacts', JSON.stringify(sampleContacts));
+    return sampleContacts;
+  });
+
+  // Sync to localStorage
+  React.useEffect(() => {
+    localStorage.setItem('fiore_contacts', JSON.stringify(contacts));
+  }, [contacts]);
+
+  // Sync with state on storage events (multi-tab support)
+  React.useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'fiore_contacts') {
+        const saved = localStorage.getItem('fiore_contacts');
+        if (saved) {
+          try {
+            setContacts(JSON.parse(saved));
+          } catch (err) {
+            console.error('Error on storage change:', err);
+          }
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  const handleTabChange = (tab: 'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts') => {
+    setActiveTab(tab);
+    if (tab === 'contacts') {
+      const saved = localStorage.getItem('fiore_contacts');
+      if (saved) {
+        try {
+          setContacts(JSON.parse(saved));
+        } catch (err) {
+          console.error('Error on tab change:', err);
+        }
+      }
+    }
+  };
+
   const [prepopulatedEmail, setPrepopulatedEmail] = useState<{ to: string; subject: string; body: string } | null>(null);
+
+  // Customer Contacts management subview states
+  const [contactSearch, setContactSearch] = useState('');
+  const [contactFilter, setContactFilter] = useState<'all' | 'new' | 'read' | 'replied'>('all');
+  const [replyingToId, setReplyingToId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
 
   // Security password change states
   const [currentPw, setCurrentPw] = useState('');
@@ -234,6 +320,8 @@ export default function AdminDashboard({
   const completedOrdersCount = orders.filter(o => o.status === 'completed').length;
   const cancelledOrdersCount = orders.filter(o => o.status === 'cancelled').length;
 
+  const unreadContactsCount = contacts.filter(c => c.status === 'new').length;
+
   const getStatusBadgeStyles = (status: OrderStatus) => {
     switch (status) {
       case 'confirmed':
@@ -389,7 +477,7 @@ export default function AdminDashboard({
             {/* Sticky Navigation Tabs */}
             <nav className="flex flex-col gap-1.5 bg-amber-50/50 border border-amber-200/50 p-2 rounded-xl text-xs font-semibold text-stone-700">
               <button
-                onClick={() => setActiveTab('stats')}
+                onClick={() => handleTabChange('stats')}
                 className={`w-full rounded-lg px-3.5 py-2 flex items-center transition cursor-pointer ${
                   activeTab === 'stats' ? 'bg-emerald-100/60 text-emerald-950 font-bold shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
                 }`}
@@ -397,7 +485,7 @@ export default function AdminDashboard({
                 <BarChart2 className="mr-2 h-4 w-4 shrink-0" /> Báo cáo thống kê
               </button>
               <button
-                onClick={() => setActiveTab('products')}
+                onClick={() => handleTabChange('products')}
                 className={`w-full rounded-lg px-3.5 py-2 flex items-center transition cursor-pointer ${
                   activeTab === 'products' ? 'bg-emerald-100/60 text-emerald-950 font-bold shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
                 }`}
@@ -405,7 +493,7 @@ export default function AdminDashboard({
                 <Package className="mr-2 h-4 w-4 shrink-0" /> Quản lý sản phẩm
               </button>
               <button
-                onClick={() => setActiveTab('categories')}
+                onClick={() => handleTabChange('categories')}
                 className={`w-full rounded-lg px-3.5 py-2 flex items-center transition cursor-pointer ${
                   activeTab === 'categories' ? 'bg-emerald-100/60 text-emerald-950 font-bold shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
                 }`}
@@ -413,7 +501,7 @@ export default function AdminDashboard({
                 <Layers className="mr-2 h-4 w-4 shrink-0" /> Quản lý danh mục
               </button>
               <button
-                onClick={() => setActiveTab('orders')}
+                onClick={() => handleTabChange('orders')}
                 className={`w-full rounded-lg px-3.5 py-2 flex items-center justify-between transition cursor-pointer ${
                   activeTab === 'orders' ? 'bg-emerald-100/60 text-emerald-950 font-bold shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
                 }`}
@@ -428,7 +516,7 @@ export default function AdminDashboard({
                 )}
               </button>
               <button
-                onClick={() => setActiveTab('customers')}
+                onClick={() => handleTabChange('customers')}
                 className={`w-full rounded-lg px-3.5 py-2 flex items-center transition cursor-pointer ${
                   activeTab === 'customers' ? 'bg-emerald-100/60 text-emerald-950 font-bold shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
                 }`}
@@ -436,7 +524,22 @@ export default function AdminDashboard({
                 <Users className="mr-2 h-4 w-4 shrink-0" /> Sổ khách hàng
               </button>
               <button
-                onClick={() => setActiveTab('security')}
+                onClick={() => handleTabChange('contacts')}
+                className={`w-full rounded-lg px-3.5 py-2 flex items-center justify-between transition cursor-pointer ${
+                  activeTab === 'contacts' ? 'bg-emerald-100/60 text-emerald-950 font-bold shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
+                }`}
+                id="admin-contacts-tab"
+              >
+                <div className="flex items-center">
+                  <Mail className="mr-2 h-4 w-4 shrink-0" />
+                  <span>Liên hệ khách hàng</span>
+                </div>
+                {unreadContactsCount > 0 && (
+                  <span className="px-1.5 py-0.5 text-[9px] bg-amber-500 text-emerald-950 rounded-full font-bold animate-pulse">{unreadContactsCount}</span>
+                )}
+              </button>
+              <button
+                onClick={() => handleTabChange('security')}
                 className={`w-full rounded-lg px-3.5 py-2 flex items-center transition cursor-pointer ${
                   activeTab === 'security' ? 'bg-emerald-100/60 text-emerald-950 font-bold shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
                 }`}
@@ -1177,6 +1280,326 @@ export default function AdminDashboard({
               <Check className="h-4 w-4" /> Cập nhật mật khẩu quản trị
             </button>
           </form>
+        </div>
+      )}
+
+      {/* --- TAB 7: CUSTOMER CONTACTS - LIÊN HỆ KHÁCH HÀNG --- */}
+      {activeTab === 'contacts' && (
+        <div className="rounded-2xl border border-amber-200/60 bg-white p-6 shadow-xs animate-fade-in space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-amber-100 pb-4 gap-4">
+            <div>
+              <h3 className="font-serif text-lg font-bold text-emerald-950 flex items-center gap-2">
+                <Mail className="text-emerald-800 h-5 w-5 shrink-0" />
+                <span>Liên Hệ Khách Hàng</span>
+              </h3>
+              <p className="text-xs text-stone-400 mt-1">
+                Xem tin nhắn của khách từ mục Gửi Lời Nhắn Gửi Tới Fióre ở trang Liên hệ
+              </p>
+            </div>
+            
+            {/* Counts overview */}
+            <div className="flex flex-wrap gap-2 text-[10px] font-bold">
+              <span className="px-2.5 py-1 bg-stone-100 text-stone-700 rounded-full border border-stone-200">
+                Tổng: {contacts.length}
+              </span>
+              <span className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-200">
+                Chưa đọc: {contacts.filter(c => c.status === 'new').length}
+              </span>
+              <span className="px-2.5 py-1 bg-emerald-50 text-emerald-800 rounded-full border border-emerald-200">
+                Đã trả lời: {contacts.filter(c => c.status === 'replied').length}
+              </span>
+            </div>
+          </div>
+
+          {/* Search and Filters toolbar */}
+          <div className="flex flex-col md:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-stone-400" />
+              <input
+                type="text"
+                placeholder="Tìm theo tên, email, nội dung tin nhắn..."
+                value={contactSearch}
+                onChange={(e) => setContactSearch(e.target.value)}
+                className="w-full rounded-xl border border-amber-200 bg-[#FAF7F0]/30 pl-9 pr-4 py-2.5 text-xs outline-none transition focus:border-emerald-700 focus:bg-white"
+              />
+              {contactSearch && (
+                <button 
+                  onClick={() => setContactSearch('')}
+                  className="absolute right-3 top-3 text-stone-400 hover:text-stone-600 font-sans text-xs"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <div className="flex gap-1.5 self-start md:self-auto overflow-x-auto pb-1 md:pb-0">
+              {(['all', 'new', 'read', 'replied'] as const).map((filter) => {
+                const label = 
+                  filter === 'all' ? 'Tất cả' :
+                  filter === 'new' ? 'Chưa đọc' :
+                  filter === 'read' ? 'Đã đọc' : 'Đã phản hồi';
+                
+                const count = 
+                  filter === 'all' ? contacts.length :
+                  contacts.filter(c => c.status === filter).length;
+
+                return (
+                  <button
+                    key={filter}
+                    onClick={() => setContactFilter(filter)}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center gap-1 border ${
+                      contactFilter === filter 
+                        ? 'bg-emerald-900 text-white border-emerald-950 shadow-xs' 
+                        : 'bg-stone-50 text-stone-600 border-stone-200/50 hover:bg-stone-100'
+                    }`}
+                  >
+                    <span>{label}</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                      contactFilter === filter ? 'bg-black text-white' : 'bg-stone-200 text-stone-700'
+                    }`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Messages list */}
+          {contacts.filter(c => {
+            const matchSearch = 
+              c.fullName.toLowerCase().includes(contactSearch.toLowerCase()) ||
+              c.email.toLowerCase().includes(contactSearch.toLowerCase()) ||
+              c.message.toLowerCase().includes(contactSearch.toLowerCase());
+            const matchFilter = contactFilter === 'all' || c.status === contactFilter;
+            return matchSearch && matchFilter;
+          }).length === 0 ? (
+            <div className="text-center py-12 border border-dashed border-amber-200 bg-amber-50/10 rounded-2xl">
+              <Mail className="mx-auto h-12 w-12 text-stone-300 stroke-1 mb-3" />
+              <p className="text-xs text-stone-500 font-medium">Không tìm thấy yêu cầu liên hệ nào phù hợp</p>
+              <button 
+                onClick={() => { setContactSearch(''); setContactFilter('all'); }}
+                className="mt-3 text-xs font-bold text-emerald-900 hover:underline cursor-pointer"
+              >
+                Đặt lại bộ lọc tìm kiếm
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {contacts
+                .filter(c => {
+                  const matchSearch = 
+                    c.fullName.toLowerCase().includes(contactSearch.toLowerCase()) ||
+                    c.email.toLowerCase().includes(contactSearch.toLowerCase()) ||
+                    c.message.toLowerCase().includes(contactSearch.toLowerCase());
+                  const matchFilter = contactFilter === 'all' || c.status === contactFilter;
+                  return matchSearch && matchFilter;
+                })
+                .map((contact) => {
+                  const isSelected = selectedContactId === contact.id;
+                  return (
+                    <div 
+                      key={contact.id}
+                      onClick={() => {
+                        setSelectedContactId(isSelected ? null : contact.id);
+                        // Mark as read if it is new
+                        if (contact.status === 'new') {
+                          setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, status: 'read' as const } : c));
+                        }
+                      }}
+                      className={`group border rounded-xl p-4 transition-all duration-250 cursor-pointer ${
+                        contact.status === 'new' 
+                          ? 'border-emerald-200 bg-emerald-50/20 shadow-xs' 
+                          : 'border-amber-200/50 bg-white hover:border-amber-300'
+                      } ${isSelected ? 'ring-2 ring-emerald-800 border-transparent shadow-md' : ''}`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div className="flex items-center gap-2.5">
+                          {/* Profile letter */}
+                          <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                            contact.status === 'new' 
+                              ? 'bg-emerald-800 text-white' 
+                              : 'bg-stone-100 text-stone-600'
+                          }`}>
+                            {contact.fullName.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <span className="font-bold text-emerald-950 text-sm block sm:inline">
+                              {contact.fullName}
+                            </span>
+                            <span className="text-stone-400 font-mono text-[11px] sm:ml-2">
+                              ({contact.email})
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Badges & Date */}
+                        <div className="flex items-center justify-between sm:justify-end gap-2 text-right">
+                          <span className="text-stone-400 font-mono text-[10px] whitespace-nowrap order-2 sm:order-1">
+                            {new Date(contact.createdAt).toLocaleString('vi-VN')}
+                          </span>
+                          
+                          <div className="flex gap-1.5 order-1 sm:order-2">
+                            {contact.status === 'new' && (
+                              <span className="px-2 py-0.5 text-[9px] bg-red-100 text-red-600 font-black rounded-lg uppercase tracking-wider animate-pulse">
+                                Mới
+                              </span>
+                            )}
+                            {contact.status === 'read' && (
+                              <span className="px-2 py-0.5 text-[9px] bg-sky-50 text-sky-650 font-bold rounded-lg border border-sky-200/50">
+                                Đã xem
+                              </span>
+                            )}
+                            {contact.status === 'replied' && (
+                              <span className="px-2 py-0.5 text-[9px] bg-emerald-55 text-emerald-800 font-bold rounded-lg border border-emerald-200/50">
+                                Đã trả lời
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Message Content */}
+                      <div className="mt-3 text-stone-700 text-xs leading-relaxed font-sans pl-10">
+                        <p className={`whitespace-pre-line ${isSelected ? '' : 'line-clamp-2'}`}>
+                          {contact.message}
+                        </p>
+                      </div>
+
+                      {/* Reply visual summary if has reply */}
+                      {contact.replyDetail && (
+                        <div className="mt-3.5 bg-emerald-50/40 border border-emerald-100 rounded-xl p-3 pl-10 text-xs">
+                          <p className="font-bold text-emerald-900 mb-1 flex items-center gap-1">
+                            <Check className="h-3.5 w-3.5" /> 
+                            <span>Fióre Phản hồi:</span>
+                            <span className="font-mono text-[10px] text-stone-400 font-medium ml-auto">
+                              {new Date(contact.repliedAt || '').toLocaleString('vi-VN')}
+                            </span>
+                          </p>
+                          <p className="text-stone-600 whitespace-pre-line text-[11.5px] italic">
+                            "{contact.replyDetail}"
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Expanded Controller Panel */}
+                      {isSelected && (
+                        <div 
+                          onClick={(e) => e.stopPropagation()} 
+                          className="mt-4 border-t border-amber-100/60 pt-4 flex flex-col gap-3 pl-10 select-text"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2.5">
+                            {/* Left actions: Toggle & Trash */}
+                            <div className="flex flex-wrap items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setContacts(prev => prev.map(c => {
+                                    if (c.id === contact.id) {
+                                      const nextStatus: 'new' | 'read' = c.status === 'new' ? 'read' : 'new';
+                                      return { ...c, status: nextStatus };
+                                    }
+                                    return c;
+                                  }));
+                                }}
+                                className="px-3 py-1.5 border border-stone-200 hover:bg-stone-50 rounded-lg text-xs font-bold text-stone-600 transition flex items-center gap-1.5 cursor-pointer"
+                              >
+                                <RefreshCw className="h-3.5 w-3.5" />
+                                <span>Đánh dấu là {contact.status === 'new' ? 'Quen thuộc (Đã xem)' : 'Mới (Chưa xem)'}</span>
+                              </button>
+                              
+                              <button
+                                onClick={() => {
+                                  if (confirm('Bạn chắc chắn muốn xóa thư liên hệ này của khách hàng?')) {
+                                    setContacts(prev => prev.filter(c => c.id !== contact.id));
+                                    setSelectedContactId(null);
+                                  }
+                                }}
+                                className="px-3 py-1.5 border border-red-200 bg-red-50/50 hover:bg-red-100 text-red-650 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                                <span>Xóa tin nhắn</span>
+                              </button>
+                            </div>
+
+                            {/* Right actions: Composition triggers */}
+                            <div className="flex items-center gap-2">
+                              <a 
+                                href={`mailto:${contact.email}?subject=Fióre Boutique Florist - Phản hồi thư liên hệ của bạn&body=Kính gửi bạn ${contact.fullName},%0D%0A%0D%0AFióre đã nhận được thông tin liên hệ của bạn gửi tới cửa hàng.%0D%0A%0D%0ANội dung phản hồi:`}
+                                className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 border border-stone-300 rounded-lg text-xs font-bold text-stone-800 transition flex items-center gap-1.5 cursor-pointer"
+                              >
+                                <Mail className="h-3.5 w-3.5" />
+                                <span>Gửi Mail chính thức</span>
+                              </a>
+
+                              <button
+                                onClick={() => {
+                                  if (replyingToId === contact.id) {
+                                    setReplyingToId(null);
+                                    setReplyText('');
+                                  } else {
+                                    setReplyingToId(contact.id);
+                                    setReplyText(contact.replyDetail || '');
+                                  }
+                                }}
+                                className="px-3.5 py-1.5 bg-emerald-800 hover:bg-emerald-990 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                              >
+                                <span>{contact.replyDetail ? 'Sửa câu trả lời' : 'Viết phản hồi nhanh'}</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Quick reply composing panel */}
+                          {replyingToId === contact.id && (
+                            <div className="border border-stone-200 bg-stone-50/30 rounded-xl p-3 space-y-2 mt-1">
+                              <label className="block text-[10px] font-bold uppercase text-stone-500 tracking-wider">
+                                Nội dung tư vấn / phản hồi cho {contact.fullName}
+                              </label>
+                              <textarea
+                                value={replyText}
+                                onChange={(e) => setReplyText(e.target.value)}
+                                rows={3}
+                                placeholder="Viết câu trả lời của tiệm gửi đến khách hàng..."
+                                className="w-full rounded-lg border border-amber-200 bg-white p-2.5 text-xs outline-none focus:border-emerald-700 leading-relaxed"
+                              />
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  onClick={() => { setReplyingToId(null); setReplyText(''); }}
+                                  className="px-2.5 py-1 text-[11px] text-stone-500 hover:text-stone-700 transition cursor-pointer"
+                                >
+                                  Hủy bỏ
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (!replyText.trim()) return;
+                                    setContacts(prev => prev.map(c => {
+                                      if (c.id === contact.id) {
+                                        return {
+                                          ...c,
+                                          status: 'replied' as const,
+                                          replyDetail: replyText.trim(),
+                                          repliedAt: new Date().toISOString()
+                                        };
+                                      }
+                                      return c;
+                                    }));
+                                    setReplyText('');
+                                    setReplyingToId(null);
+                                  }}
+                                  disabled={!replyText.trim()}
+                                  className="px-3.5 py-1 bg-emerald-800 hover:bg-emerald-900 disabled:opacity-50 text-white font-bold rounded-md text-[11px] transition cursor-pointer"
+                                >
+                                  Lưu phản hồi & Gửi đi
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          )}
         </div>
       )}
 
