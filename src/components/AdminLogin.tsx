@@ -38,7 +38,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
         <div className="text-center flex flex-col items-center">
           <img 
             src={brandLogoHeader} 
-            alt="Fióre Boutique de Fleurs logo" 
+            alt="Fióre Boutique Florist logo" 
             className="mx-auto h-24 w-auto object-contain mb-4 animate-fade-in"
             referrerPolicy="no-referrer"
           />
