@@ -477,7 +477,7 @@ export default function AdminDashboard({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-stone-400 break-words whitespace-normal">Doanh thu tích lũy</p>
-                <p className="text-xs xs:text-sm sm:text-lg md:text-xl lg:text-xs xl:text-lg font-black text-emerald-950 tracking-tight mt-0.5 break-all whitespace-normal" title={formatVND(totalRevenue)}>{formatVND(totalRevenue)}</p>
+                <p className="text-[10px] xs:text-xs sm:text-base md:text-lg lg:text-xs xl:text-lg font-black text-emerald-950 tracking-tight mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis" title={formatVND(totalRevenue)}>{formatVND(totalRevenue)}</p>
               </div>
             </div>
 
@@ -487,7 +487,7 @@ export default function AdminDashboard({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-stone-400 break-words whitespace-normal">Tổng số đơn hàng</p>
-                <p className="text-xs xs:text-sm sm:text-lg md:text-xl lg:text-xs xl:text-lg font-black text-emerald-950 tracking-tight mt-0.5 break-all whitespace-normal">{totalOrdersCount} Đơn</p>
+                <p className="text-[10px] xs:text-xs sm:text-base md:text-lg lg:text-xs xl:text-lg font-black text-emerald-950 tracking-tight mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{totalOrdersCount} Đơn</p>
               </div>
             </div>
 
@@ -497,7 +497,7 @@ export default function AdminDashboard({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-stone-400 break-words whitespace-normal">Khách hàng tích cực</p>
-                <p className="text-xs xs:text-sm sm:text-lg md:text-xl lg:text-xs xl:text-lg font-black text-emerald-950 tracking-tight mt-0.5 break-all whitespace-normal">{activeCustomersCount} Người</p>
+                <p className="text-[10px] xs:text-xs sm:text-base md:text-lg lg:text-xs xl:text-lg font-black text-emerald-950 tracking-tight mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{activeCustomersCount} Người</p>
               </div>
             </div>
 
@@ -507,7 +507,7 @@ export default function AdminDashboard({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-stone-400 break-words whitespace-normal">Số lượng kiểu hoa</p>
-                <p className="text-xs xs:text-sm sm:text-lg md:text-xl lg:text-xs xl:text-lg font-black text-emerald-950 tracking-tight mt-0.5 break-all whitespace-normal">{products.length} Loại</p>
+                <p className="text-[10px] xs:text-xs sm:text-base md:text-lg lg:text-xs xl:text-lg font-black text-emerald-950 tracking-tight mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{products.length} Loại</p>
               </div>
             </div>
 
