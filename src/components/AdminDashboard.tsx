@@ -320,6 +320,17 @@ export default function AdminDashboard({
   const completedOrdersCount = orders.filter(o => o.status === 'completed').length;
   const cancelledOrdersCount = orders.filter(o => o.status === 'cancelled').length;
 
+  // Payment methods breakdown statistics
+  const codOrdersCount = orders.filter(o => o.paymentMethod === 'COD').length;
+  const visaOrdersCount = orders.filter(o => o.paymentMethod === 'VISA').length;
+  const vnpayOrdersCount = orders.filter(o => o.paymentMethod === 'VNPAY').length;
+
+  const codOrdersRevenue = orders.filter(o => o.paymentMethod === 'COD').reduce((sum, o) => sum + o.totalAmount, 0);
+  const visaOrdersRevenue = orders.filter(o => o.paymentMethod === 'VISA').reduce((sum, o) => sum + o.totalAmount, 0);
+  const vnpayOrdersRevenue = orders.filter(o => o.paymentMethod === 'VNPAY').reduce((sum, o) => sum + o.totalAmount, 0);
+
+  const totalOrdersWithPayments = orders.length || 1;
+
   const unreadContactsCount = contacts.filter(c => c.status === 'new').length;
 
   const getStatusBadgeStyles = (status: OrderStatus) => {
@@ -894,6 +905,218 @@ export default function AdminDashboard({
 
             </div>
 
+          </div>
+
+          {/* Biểu đồ mức độ sử dụng phương thức thanh toán */}
+          <div className="rounded-2xl border border-amber-200/60 bg-white p-6 shadow-xs mt-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-amber-100 pb-3 mb-6 gap-3">
+              <div>
+                <h3 className="font-serif text-base font-bold text-emerald-950 flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-emerald-705 animate-pulse"></span>
+                  <span>Mức độ sử dụng phương thức thanh toán</span>
+                </h3>
+                <p className="text-xs text-stone-400 mt-0.5">Phân tích tần suất giao dịch và đóng góp doanh thu từ 3 kênh thanh toán</p>
+              </div>
+              <div className="text-xs font-bold text-emerald-950 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100/50">
+                Tổng cộng: {orders.length} đơn hàng
+              </div>
+            </div>
+
+            {/* Content dual columns */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+              {/* Left Column: Hand-drawn SVG Donut Chart */}
+              <div className="lg:col-span-5 flex flex-col items-center justify-center bg-amber-50/10 border border-amber-200/30 rounded-2xl p-6">
+                <div className="relative h-52 w-52 flex items-center justify-center">
+                  <svg viewBox="0 0 200 200" className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
+                    {/* Background Circle Track */}
+                    <circle
+                      cx="100"
+                      cy="100"
+                      r="70"
+                      fill="transparent"
+                      stroke="#FAF7F0"
+                      strokeWidth="22"
+                    />
+                    
+                    {/* COD (Emerald #1F3D2B) representation segment */}
+                    {codOrdersCount > 0 && (
+                      <circle
+                        cx="100"
+                        cy="100"
+                        r="70"
+                        fill="transparent"
+                        stroke="#1F3D2B"
+                        strokeWidth="22"
+                        strokeDasharray="439.82"
+                        strokeDashoffset={439.82 - (codOrdersCount / totalOrdersWithPayments) * 439.82}
+                        className="transition-all duration-300 hover:stroke-[25px] cursor-pointer"
+                        style={{ transformOrigin: 'center' }}
+                      />
+                    )}
+
+                    {/* VISA/Mastercard (Ocean Blue #2563EB) segment */}
+                    {visaOrdersCount > 0 && (
+                      <circle
+                        cx="100"
+                        cy="100"
+                        r="70"
+                        fill="transparent"
+                        stroke="#2563EB"
+                        strokeWidth="22"
+                        strokeDasharray="439.82"
+                        strokeDashoffset={439.82 - (visaOrdersCount / totalOrdersWithPayments) * 439.82}
+                        style={{
+                          transformOrigin: 'center',
+                          transform: `rotate(${(codOrdersCount / totalOrdersWithPayments) * 360}deg)`
+                        }}
+                        className="transition-all duration-300 hover:stroke-[25px] cursor-pointer"
+                      />
+                    )}
+
+                    {/* VNPAY (Gold/Coffee #C8A96B) segment */}
+                    {vnpayOrdersCount > 0 && (
+                      <circle
+                        cx="100"
+                        cy="100"
+                        r="70"
+                        fill="transparent"
+                        stroke="#C8A96B"
+                        strokeWidth="22"
+                        strokeDasharray="439.82"
+                        strokeDashoffset={439.82 - (vnpayOrdersCount / totalOrdersWithPayments) * 439.82}
+                        style={{
+                          transformOrigin: 'center',
+                          transform: `rotate(${((codOrdersCount + visaOrdersCount) / totalOrdersWithPayments) * 360}deg)`
+                        }}
+                        className="transition-all duration-300 hover:stroke-[25px] cursor-pointer"
+                      />
+                    )}
+                  </svg>
+
+                  {/* Hole details labels summary floating card */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none bg-white rounded-full w-28 h-28 m-auto shadow-sm border border-amber-100/60">
+                    <span className="text-[9px] uppercase font-bold text-stone-400 tracking-wider">Tổng vận đơn</span>
+                    <span className="font-serif text-2xl font-black text-emerald-950 leading-none my-0.5">{orders.length}</span>
+                    <span className="text-[9px] font-mono text-stone-400/90 font-bold">Thanh toán</span>
+                  </div>
+                </div>
+
+                {/* Legend item keys list */}
+                <div className="flex justify-center flex-wrap gap-x-4 gap-y-2 mt-5 text-[11px] font-bold">
+                  <div className="flex items-center space-x-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#1F3D2B] inline-block"></span>
+                    <span className="text-stone-600">COD ({Math.round((codOrdersCount / totalOrdersWithPayments) * 100)}%)</span>
+                  </div>
+                  <div className="flex items-center space-x-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#2563EB] inline-block"></span>
+                    <span className="text-stone-600">VISA ({Math.round((visaOrdersCount / totalOrdersWithPayments) * 100)}%)</span>
+                  </div>
+                  <div className="flex items-center space-x-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#C8A96B] inline-block"></span>
+                    <span className="text-stone-600">VNPAY ({Math.round((vnpayOrdersCount / totalOrdersWithPayments) * 100)}%)</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Detailed Progress Rows block details */}
+              <div className="lg:col-span-7 space-y-4">
+                
+                {/* 1. COD details progress row block */}
+                <div className="border border-amber-100/50 rounded-xl bg-white p-4 hover:border-emerald-200 transition duration-300">
+                  <div className="flex justify-between items-start gap-2 mb-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-8.5 w-8.5 rounded-lg bg-[#1F3D2B]/10 text-[#1F3D2B] font-bold flex items-center justify-center text-[10.5px]">
+                        COD
+                      </div>
+                      <div>
+                        <h4 className="font-serif text-xs font-black text-emerald-950">Giao hàng thu hộ (COD)</h4>
+                        <p className="text-[10px] text-stone-400">Khách nhận hoa rồi trả tiền mặt cho shipper</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-black text-emerald-950 font-sans block">{formatVND(codOrdersRevenue)}</span>
+                      <span className="text-[9.5px] text-stone-400 font-bold font-mono uppercase">{codOrdersCount} giao dịch</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1 mt-3">
+                    <div className="flex justify-between text-[10px] font-bold text-stone-500">
+                      <span>Tỉ lệ sử dụng</span>
+                      <span>{Math.round((codOrdersCount / totalOrdersWithPayments) * 100)}%</span>
+                    </div>
+                    <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-[#1F3D2B] h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${(codOrdersCount / totalOrdersWithPayments) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. VISA/Mastercard progress row block */}
+                <div className="border border-amber-100/50 rounded-xl bg-white p-4 hover:border-blue-200 transition duration-300">
+                  <div className="flex justify-between items-start gap-2 mb-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-8.5 w-8.5 rounded-lg bg-[#2563EB]/10 text-[#2563EB] font-bold flex items-center justify-center text-[10.5px]">
+                        CC
+                      </div>
+                      <div>
+                        <h4 className="font-serif text-xs font-black text-emerald-950">Thẻ quốc tế (VISA / Mastercard / JCB)</h4>
+                        <p className="text-[10px] text-stone-400">Thanh toán tự động bảo mật qua thẻ ngân hàng</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-black text-emerald-950 font-sans block">{formatVND(visaOrdersRevenue)}</span>
+                      <span className="text-[9.5px] text-stone-400 font-bold font-mono uppercase">{visaOrdersCount} giao dịch</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1 mt-3">
+                    <div className="flex justify-between text-[10px] font-bold text-stone-500">
+                      <span>Tỉ lệ sử dụng</span>
+                      <span>{Math.round((visaOrdersCount / totalOrdersWithPayments) * 100)}%</span>
+                    </div>
+                    <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-[#2563EB] h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${(visaOrdersCount / totalOrdersWithPayments) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. VNPAY QR progress row block */}
+                <div className="border border-amber-100/50 rounded-xl bg-white p-4 hover:border-amber-300 transition duration-300">
+                  <div className="flex justify-between items-start gap-2 mb-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-8.5 w-8.5 rounded-lg bg-[#C8A96B]/10 text-[#C8A96B] font-bold flex items-center justify-center text-[10.5px]">
+                        QR
+                      </div>
+                      <div>
+                        <h4 className="font-serif text-xs font-black text-emerald-950">Cổng VNPAY QR</h4>
+                        <p className="text-[10px] text-stone-400">Quét mã QR thanh toán nhanh qua ứng dụng ngân hàng</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-black text-emerald-950 font-sans block">{formatVND(vnpayOrdersRevenue)}</span>
+                      <span className="text-[9.5px] text-stone-400 font-bold font-mono uppercase">{vnpayOrdersCount} giao dịch</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1 mt-3">
+                    <div className="flex justify-between text-[10px] font-bold text-stone-500">
+                      <span>Tỉ lệ sử dụng</span>
+                      <span>{Math.round((vnpayOrdersCount / totalOrdersWithPayments) * 100)}%</span>
+                    </div>
+                    <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-[#C8A96B] h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${(vnpayOrdersCount / totalOrdersWithPayments) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
           </div>
 
         </div>
