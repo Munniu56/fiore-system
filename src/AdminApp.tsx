@@ -289,29 +289,8 @@ export default function AdminApp() {
         </div>
         
         {isAdminAuthenticated ? (
-          <div className="flex items-center gap-3">
-            {gmailUser ? (
-              <div className="flex items-center gap-2 bg-emerald-900/60 px-3 py-1.5 rounded-full border border-emerald-500/20 text-xs">
-                <CheckCircle className="h-4 w-4 text-amber-300 shrink-0" />
-                <span className="text-stone-200 truncate hidden sm:inline max-w-[150px]" title={gmailUser.email}>
-                  Gmail: {gmailUser.email}
-                </span>
-                <button
-                  onClick={googleSignOut}
-                  className="text-amber-400 hover:text-amber-200 font-bold transition ml-1 cursor-pointer"
-                >
-                  Huỷ kết nối
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={googleSignIn}
-                className="flex items-center gap-1.5 bg-amber-400 hover:bg-amber-500 active:scale-95 transition text-emerald-950 font-bold text-xs px-3.5 py-1.5 rounded-full shadow-sm cursor-pointer"
-              >
-                <Mail className="h-3.5 w-3.5 shrink-0" />
-                <span>Kết nối Gmail tự động</span>
-              </button>
-            )}
+          <div className="text-xs text-amber-200 font-mono hidden md:block">
+            Cổng vận hành độc lập (Hệ thống bảo mật)
           </div>
         ) : (
           <div className="text-xs text-amber-200 font-mono hidden md:block">
