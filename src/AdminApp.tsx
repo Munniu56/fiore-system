@@ -4,6 +4,8 @@ import { INITIAL_PRODUCTS, INITIAL_CATEGORIES } from './data';
 import AdminDashboard from './components/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
 import { initGmailAuth, subscribeToGmailAuth, googleSignIn, googleSignOut, sendOrderNotificationEmail } from './gmailService';
+import { sendEmailJSOrderPaid } from './emailjsService';
+import emailjs from '@emailjs/browser';
 import { Shield, Mail, CheckCircle } from 'lucide-react';
 
 export default function AdminApp() {
@@ -245,16 +247,26 @@ export default function AdminApp() {
 
     if (orderToEmail) {
       const targetEmail = orderToEmail.customerEmail || 'thuyvanngo35@gmail.com';
-      console.log('Phát hiện trạng thái đơn hàng Đã thanh toán. Đang tự động gửi email tới:', targetEmail);
+      console.log('Phát hiện đơn hàng Đã thanh toán. Đang kích hoạt EmailJS tự động gửi tới:', targetEmail);
       try {
-        const sent = await sendOrderNotificationEmail(orderToEmail, targetEmail);
-        if (sent) {
-          alert(`🎉 [Fióre] Đã tự động gửi email thông báo xác nhận thành công đơn hàng #${orderToEmail.id} đã thanh toán cho khách hàng qua địa chỉ: ${targetEmail}`);
+        const result = await sendEmailJSOrderPaid(orderToEmail, targetEmail);
+        if (result.success) {
+          if (result.simulated) {
+            alert(`🎉 [Fióre EmailJS] Đã mô phỏng gửi email tự động thành công đơn hàng #${orderToEmail.id} (Đã thanh toán) tới người nhận: ${targetEmail}.\n\n(Để kết nối thật, vui lòng cấu hình VITE_EMAILJS_SERVICE_ID trong .env)`);
+          } else {
+            alert(`🎉 [Fióre EmailJS] Đã gửi thư điện tử tự động xác nhận hóa đơn đơn hàng #${orderToEmail.id} thành công cho khách hàng qua: ${targetEmail}`);
+          }
         } else {
-          alert(`⚠️ Trạng thái đơn hàng #${orderToEmail.id} đã cập nhật là "Đã thanh toán". Tuy nhiên, không thể gửi email tự động do Gmail chưa liên kết hoặc hết hạn token. Bạn vui lòng bấm nút "Kết nối Gmail" ở góc trên.`);
+          // Fallback to Gmail REST API if possible
+          const gmailSent = await sendOrderNotificationEmail(orderToEmail, targetEmail);
+          if (gmailSent) {
+            alert(`🎉 [Fióre Gmail] Đã tự động dùng Gmail API thay thế để liên hệ khách hàng #${orderToEmail.id} qua ${targetEmail}`);
+          } else {
+            alert(`⚠️ Có lỗi phát sinh khi truyền tải hóa đơn cho đơn hàng #${orderToEmail.id}: ${result.error || 'Vui lòng kiểm tra cấu hình EmailJS hoặc Gmail.'}`);
+          }
         }
       } catch (err) {
-        console.error('Lỗi tự động gửi email:', err);
+        console.error('Lỗi truyền tải email tự động:', err);
       }
     }
   };
