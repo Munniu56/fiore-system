@@ -5,8 +5,13 @@
 
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Send, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ContactMessage } from '../types';
 
-export default function ContactUs() {
+interface ContactUsProps {
+  onNewContact?: (contact: ContactMessage) => void;
+}
+
+export default function ContactUs({ onNewContact }: ContactUsProps) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
@@ -36,7 +41,7 @@ export default function ContactUs() {
       }
 
       // Create new contact message
-      const newContact = {
+      const newContact: ContactMessage = {
         id: `msg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
         fullName: fullName.trim(),
         email: email.trim(),
@@ -48,6 +53,10 @@ export default function ContactUs() {
       // Append and save
       savedContacts = [newContact, ...savedContacts];
       localStorage.setItem('fiore_contacts', JSON.stringify(savedContacts));
+
+      if (onNewContact) {
+        onNewContact(newContact);
+      }
     } catch (error) {
       console.error('Error saving contact message:', error);
     }

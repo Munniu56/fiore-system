@@ -24,7 +24,7 @@ import { verifyVnpayCallback } from './vnpayConfig';
 import { initGmailAuth, subscribeToGmailAuth, googleSignIn, googleSignOut, sendOrderNotificationEmail } from './gmailService';
 import { sendEmailJSOrderPaid } from './emailjsService';
 
-import { Product, Category, CartItem, Order, User, OrderStatus } from './types';
+import { Product, Category, CartItem, Order, User, OrderStatus, ContactMessage } from './types';
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES } from './data';
 import { Sparkles, Flower, Phone, Mail, Clock, MapPin, Heart, ArrowRight, Facebook, Instagram, Calendar, Star, FileText, Lock } from 'lucide-react';
 
@@ -199,6 +199,69 @@ export default function App() {
   const [currentRole, setCurrentRole] = useState<'customer' | 'admin'>('customer');
   const [currentView, setCurrentView] = useState<string>('home');
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  
+  const [contacts, setContacts] = useState<ContactMessage[]>(() => {
+    if (typeof window === 'undefined') return [];
+    const saved = localStorage.getItem('fiore_contacts');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Error parsing contacts from localStorage', e);
+      }
+    }
+    const sampleContacts: ContactMessage[] = [
+      {
+        id: 'msg-1',
+        fullName: 'Phạm Minh Đức',
+        email: 'ducpm.designer@gmail.com',
+        message: 'Xin chào, tôi muốn đặt hoa hồng thiết kế riêng cho sự kiện cưới vào tháng sau tại Huế. Shop có thể gửi báo giá chi tiết qua email này được không? Xin cảm ơn!',
+        createdAt: '2026-06-04T08:15:00Z',
+        status: 'new'
+      },
+      {
+        id: 'msg-2',
+        fullName: 'Trần Thị Thu Thảo',
+        email: 'thuthao9x@yahoo.com',
+        message: 'Đơn hàng BST Hoa Khai Trương của tôi giao lúc sáng rất tươi và đẹp, sếp tôi rất thích. Lần sau doanh nghiệp tôi sẽ tiếp tục ủng hộ Fióre!',
+        createdAt: '2026-06-03T11:45:00Z',
+        status: 'read'
+      },
+      {
+        id: 'msg-3',
+        fullName: 'Hoàng Anh Tuấn',
+        email: 'tuandep_trai@gmail.com',
+        message: 'Shop ơi, mẫu "Nắng mai ấm áp" có thể thay thế hoa hướng dương bằng hoa cẩm tú cầu được không ạ? Giá cả thay đổi như thế nào?',
+        createdAt: '2026-06-01T15:20:00Z',
+        status: 'replied'
+      }
+    ];
+    localStorage.setItem('fiore_contacts', JSON.stringify(sampleContacts));
+    return sampleContacts;
+  });
+
+  // Sync to localStorage
+  useEffect(() => {
+    localStorage.setItem('fiore_contacts', JSON.stringify(contacts));
+  }, [contacts]);
+
+  // Handle storage changes across page instances/actions
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'fiore_contacts') {
+        const saved = localStorage.getItem('fiore_contacts');
+        if (saved) {
+          try {
+            setContacts(JSON.parse(saved));
+          } catch (err) {
+            console.error('Error synchronizing contacts storage event', err);
+          }
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     return localStorage.getItem('fiore_admin_authenticated') === 'true';
   });
@@ -710,6 +773,8 @@ export default function App() {
                   categories={categories}
                   orders={orders}
                   users={users}
+                  contacts={contacts}
+                  onUpdateContacts={setContacts}
                   onAddProduct={handleAddProduct}
                   onEditProduct={handleEditProduct}
                   onDeleteProduct={handleDeleteProduct}
@@ -1280,7 +1345,7 @@ export default function App() {
         {/* VIEW 10: CONTACT US SCREEN */}
         {currentView === 'contact' && (
           <div className="animate-fade-in">
-            <ContactUs />
+            <ContactUs onNewContact={(newMsg) => setContacts(prev => [newMsg, ...prev])} />
           </div>
         )}
 

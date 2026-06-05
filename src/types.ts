@@ -80,5 +80,7 @@ export interface ContactMessage {
   message: string;
   createdAt: string;
   status: 'new' | 'read' | 'replied';
+  replyDetail?: string;
+  repliedAt?: string;
 }
 

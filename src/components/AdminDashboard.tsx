@@ -17,6 +17,8 @@ interface AdminDashboardProps {
   categories: Category[];
   orders: Order[];
   users: User[];
+  contacts: ContactMessage[];
+  onUpdateContacts: React.Dispatch<React.SetStateAction<ContactMessage[]>>;
   onAddProduct: (prod: Omit<Product, 'id' | 'rating' | 'reviewsCount'>) => void;
   onEditProduct: (prod: Product) => void;
   onDeleteProduct: (id: string) => void;
@@ -34,6 +36,8 @@ export default function AdminDashboard({
   categories,
   orders,
   users,
+  contacts,
+  onUpdateContacts,
   onAddProduct,
   onEditProduct,
   onDeleteProduct,
@@ -45,83 +49,10 @@ export default function AdminDashboard({
 }: AdminDashboardProps) {
   
   const [activeTab, setActiveTab ] = useState<'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts'>('stats');
-  const [contacts, setContacts ] = useState<ContactMessage[]>(() => {
-    if (typeof window === 'undefined') return [];
-    const saved = localStorage.getItem('fiore_contacts');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Error parsing contacts:', e);
-      }
-    }
-    
-    // Default high-quality localized customer message sample data
-    const sampleContacts: ContactMessage[] = [
-      {
-        id: 'msg-1',
-        fullName: 'Phạm Minh Đức',
-        email: 'ducpm.designer@gmail.com',
-        message: 'Xin chào, tôi muốn đặt hoa hồng thiết kế riêng cho sự kiện cưới vào tháng sau tại Huế. Shop có thể gửi báo giá chi tiết qua email này được không? Xin cảm ơn!',
-        createdAt: '2026-06-04T08:15:00Z',
-        status: 'new'
-      },
-      {
-        id: 'msg-2',
-        fullName: 'Trần Thị Thu Thảo',
-        email: 'thuthao9x@yahoo.com',
-        message: 'Đơn hàng BST Hoa Khai Trương của tôi giao lúc sáng rất tươi và đẹp, sếp tôi rất thích. Lần sau doanh nghiệp tôi sẽ tiếp tục ủng hộ Fióre!',
-        createdAt: '2026-06-03T11:45:00Z',
-        status: 'read'
-      },
-      {
-        id: 'msg-3',
-        fullName: 'Hoàng Anh Tuấn',
-        email: 'tuandep_trai@gmail.com',
-        message: 'Shop ơi, mẫu "Nắng mai ấm áp" có thể thay thế hoa hướng dương bằng hoa cẩm tú cầu được không ạ? Giá cả thay đổi như thế nào?',
-        createdAt: '2026-06-01T15:20:00Z',
-        status: 'replied'
-      }
-    ];
-    localStorage.setItem('fiore_contacts', JSON.stringify(sampleContacts));
-    return sampleContacts;
-  });
-
-  // Sync to localStorage
-  React.useEffect(() => {
-    localStorage.setItem('fiore_contacts', JSON.stringify(contacts));
-  }, [contacts]);
-
-  // Sync with state on storage events (multi-tab support)
-  React.useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'fiore_contacts') {
-        const saved = localStorage.getItem('fiore_contacts');
-        if (saved) {
-          try {
-            setContacts(JSON.parse(saved));
-          } catch (err) {
-            console.error('Error on storage change:', err);
-          }
-        }
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  const setContacts = onUpdateContacts;
 
   const handleTabChange = (tab: 'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts') => {
     setActiveTab(tab);
-    if (tab === 'contacts') {
-      const saved = localStorage.getItem('fiore_contacts');
-      if (saved) {
-        try {
-          setContacts(JSON.parse(saved));
-        } catch (err) {
-          console.error('Error on tab change:', err);
-        }
-      }
-    }
   };
 
   const [prepopulatedEmail, setPrepopulatedEmail] = useState<{ to: string; subject: string; body: string } | null>(null);
