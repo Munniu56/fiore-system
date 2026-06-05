@@ -269,7 +269,7 @@ export default function AdminDashboard({
   };
 
   const last7DaysPoints = last7DaysData.map((d, idx) => {
-    const x = 70 + idx * 90;
+    const x = 50 + idx * 100;
     const y = 205 - (d.val / chartMax) * 175;
     return {
       label: d.label,
@@ -285,11 +285,11 @@ export default function AdminDashboard({
     for (let i = 1; i < last7DaysPoints.length; i++) {
       const pPrev = last7DaysPoints[i - 1];
       const pCurr = last7DaysPoints[i];
-      linePath += ` C ${pPrev.x + 45} ${pPrev.y}, ${pCurr.x - 45} ${pCurr.y}, ${pCurr.x} ${pCurr.y}`;
+      linePath += ` C ${pPrev.x + 50} ${pPrev.y}, ${pCurr.x - 50} ${pCurr.y}, ${pCurr.x} ${pCurr.y}`;
     }
   }
 
-  const areaPath = linePath ? `${linePath} L 610 205 L 70 205 Z` : '';
+  const areaPath = linePath ? `${linePath} L 650 205 L 50 205 Z` : '';
 
   // Best seller logic based on order histories
   const bestSellersMap: { [productName: string]: { qty: number; revenue: number } } = {};
@@ -656,7 +656,7 @@ export default function AdminDashboard({
               </div>
 
               {/* Custom SVG Line Chart showing clean visual layout */}
-              <div id="fiore-sales-line-chart-outer-container" className="relative h-64 w-full">
+              <div id="fiore-sales-line-chart-outer-container" className="relative h-52 w-full md:h-[210px]">
                 {/* Embedded Responsive SVG Graphic */}
                 <svg viewBox="0 0 700 240" className="w-full h-full overflow-visible">
                   <defs>
@@ -675,16 +675,16 @@ export default function AdminDashboard({
                   ].map((grid, gIdx) => (
                     <g key={gIdx} className="opacity-40">
                       <line 
-                        x1="70" 
+                        x1="50" 
                         y1={grid.y} 
-                        x2="610" 
+                        x2="650" 
                         y2={grid.y} 
                         stroke="rgba(31, 61, 43, 0.12)" 
                         strokeWidth="1" 
                         strokeDasharray="4 4" 
                       />
                       <text 
-                        x="55" 
+                        x="35" 
                         y={grid.y + 4} 
                         textAnchor="end" 
                         className="font-sans text-[10px] text-gray-400 font-bold"
@@ -769,9 +769,9 @@ export default function AdminDashboard({
                       
                       {/* Virtual transparent hover catching regions */}
                       <rect 
-                        x={pt.x - 45} 
+                        x={pt.x - 50} 
                         y="15" 
-                        width="90" 
+                        width="100" 
                         height="195" 
                         fill="transparent" 
                         className="cursor-pointer" 
