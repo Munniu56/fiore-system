@@ -191,10 +191,9 @@ export default function CheckoutView({
       };
       localStorage.setItem('fiore_pending_vnpay_order', JSON.stringify(pendingOrder));
       
-      // We do not do an automatic redirect because loading VNPAY inside an iframe is blocked
-      // by 'X-Frame-Options: DENY'. Also, attempting 'window.top.location.href' crashes the 
-      // Google AI Studio environment or redirects to a 404.
-      // Keeping isSubmitting = true renders our interactive VNPAY hub modal so the user can control it.
+      // Redirect current page immediately to VNPAY Sandbox (same tab, no new tab)
+      const vnpayUrl = createVnpayPaymentUrl(generatedId, totalAmount);
+      window.location.href = vnpayUrl;
       return;
     }
 
@@ -239,19 +238,18 @@ export default function CheckoutView({
             </div>
 
             <div className="bg-rose-50/50 rounded-2xl p-4 border border-rose-100/50 text-[11px] text-gray-600 text-left space-y-1.55">
-              <p className="font-bold text-rose-800">⚠️ Lưu ý hiển thị môi trường thử nghiệm:</p>
-              <p>Môi trường bảo mật VNPAY Sandbox ngăn chặn hiển thị trực tiếp bên trong iFrame xem thử.</p>
-              <p className="font-semibold text-rose-700">Vui lòng chọn tiếp tục mở liên kết thanh toán sang Tab mới để thanh toán an toàn:</p>
+              <p className="font-bold text-rose-800">⚠️ Thông tin kết nối môi trường thanh toán:</p>
+              <p>Môi trường bảo mật VNPAY Sandbox đang khởi tạo kết nối trực tiếp trong trang hiện tại.</p>
+              <p className="font-semibold text-rose-700">Nếu trình duyệt không tự chuyển hướng, quý khách vui lòng bấm nút dưới đây để thanh toán:</p>
             </div>
 
             <div className="flex flex-col gap-2.5">
               <a
                 href={createVnpayPaymentUrl(placedOrderCode, placedTotalAmount)}
-                target="_blank"
-                rel="noopener noreferrer"
+                target="_self"
                 className="inline-flex w-full items-center justify-center rounded-full bg-rose-600 py-3.5 text-xs font-bold text-white shadow-md hover:bg-rose-700 transition cursor-pointer"
               >
-                💳 Tiếp tục đến VNPAY Sandbox ↗
+                💳 Tiếp tục đến VNPAY Sandbox
               </a>
 
               <button
