@@ -280,11 +280,11 @@ export default function AdminApp() {
   return (
     <div className="min-h-screen bg-[#FAF7F0] flex flex-col font-sans">
       {/* Top Banner Navigation bar specifically for isolated Admin Portal */}
-      <header className="bg-emerald-950 text-white py-3 px-6 shadow-sm flex items-center justify-between border-b border-amber-500/30">
+      <header className="sticky top-0 z-50 bg-emerald-950 text-white py-3 px-6 shadow-sm flex items-center justify-between border-b border-amber-500/30">
         <div className="flex items-center gap-2">
           <Shield className="h-5 w-5 text-amber-400 animate-pulse" />
           <span className="font-serif font-bold tracking-wide text-sm sm:text-base">
-            Fióre Boutique de Fleurs <span className="text-emerald-950 font-sans text-xs ml-1 font-bold bg-amber-400 px-2 py-0.5 rounded-full select-none">HỆ THỐNG QUẢN TRỊ</span>
+            Fióre Boutique Florist <span className="text-emerald-950 font-sans text-xs ml-1 font-bold bg-amber-400 px-2 py-0.5 rounded-full select-none">HỆ THỐNG QUẢN TRỊ</span>
           </span>
         </div>
         

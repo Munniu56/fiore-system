@@ -374,7 +374,7 @@ export default function AdminDashboard({
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       
       {/* Title & Stats Navigation Tab control bar */}
-      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between border-b border-amber-200/60 pb-5 mb-8 gap-4">
+      <div className="sticky top-[46px] sm:top-[52px] z-30 bg-[#FAF7F0] -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 pt-4 pb-5 mb-8 flex flex-col xl:flex-row xl:items-center xl:justify-between border-b border-amber-200/60 gap-4 shadow-sm/5 transition-all">
         <div>
           <h1 className="font-serif text-3xl font-bold text-emerald-950" id="admin-dashboard-title">Hệ Thống Quản Trị Fióre</h1>
           <p className="text-sm text-stone-600 mt-1 mr-2">Quản lý hiệu suất, danh mục mẫu hoa, sổ chi tiêu và điều hành kho bãi</p>
