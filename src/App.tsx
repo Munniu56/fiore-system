@@ -19,6 +19,9 @@ import AboutUs from './components/AboutUs';
 import ContactUs from './components/ContactUs';
 import SupportChat from './components/SupportChat';
 import brandLogoFooter from './assets/images/logo_footer_green_bg_1780554739638.png';
+import blogBirthdayRoses from './assets/images/birthday_rose_tag_1780716864748.png';
+import blogRedRoses from './assets/images/red_roses_bouquet_1780716878432.png';
+import blogRosesGlassVase from './assets/images/roses_glass_vase_1780716891298.png';
 
 import { verifyVnpayCallback } from './vnpayConfig';
 import { initGmailAuth, subscribeToGmailAuth, googleSignIn, googleSignOut, sendOrderNotificationEmail } from './gmailService';
@@ -942,9 +945,9 @@ export default function App() {
                 
                 {/* Article 1 */}
                 <div className="group flex flex-col overflow-hidden rounded-2xl border border-[#E8E1D6] bg-white shadow-[0_4px_20px_rgba(31,61,43,0.03)] hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(31,61,43,0.07)] transition-all duration-300">
-                  <div className="relative overflow-hidden aspect-video h-52">
+                   <div className="relative overflow-hidden aspect-video h-52">
                     <img 
-                      src="https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&q=80&w=600" 
+                      src={blogBirthdayRoses} 
                       alt="Nghệ thuật chọn hoa cho ngày sinh nhật" 
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       referrerPolicy="no-referrer"
@@ -975,9 +978,9 @@ export default function App() {
 
                 {/* Article 2 */}
                 <div className="group flex flex-col overflow-hidden rounded-2xl border border-[#E8E1D6] bg-white shadow-[0_4px_20px_rgba(31,61,43,0.03)] hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(31,61,43,0.07)] transition-all duration-300">
-                  <div className="relative overflow-hidden aspect-video h-52">
+                   <div className="relative overflow-hidden aspect-video h-52">
                     <img 
-                      src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=600" 
+                      src={blogRedRoses} 
                       alt="Ý nghĩa các loài hoa trong tình yêu" 
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       referrerPolicy="no-referrer"
@@ -1008,9 +1011,9 @@ export default function App() {
 
                 {/* Article 3 */}
                 <div className="group flex flex-col overflow-hidden rounded-2xl border border-[#E8E1D6] bg-white shadow-[0_4px_20px_rgba(31,61,43,0.03)] hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(31,61,43,0.07)] transition-all duration-300">
-                  <div className="relative overflow-hidden aspect-video h-52">
+                   <div className="relative overflow-hidden aspect-video h-52">
                     <img 
-                      src="https://images.unsplash.com/photo-1453904300235-0f2f60b15b5d?auto=format&fit=crop&q=80&w=600" 
+                      src={blogRosesGlassVase} 
                       alt="Cách giữ hoa tươi lâu tại nhà" 
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       referrerPolicy="no-referrer"
