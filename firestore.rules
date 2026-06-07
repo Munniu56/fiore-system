@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // Global helpers
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Products Rules
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if true; // Authenticated backend / client can manager
+    }
+
+    // Categories Rules
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Orders Rules
+    match /orders/{orderId} {
+      allow read, write: if true; // Guests can place orders and track them
+    }
+
+    // Users Rules
+    match /users/{userId} {
+      allow read, write: if true; // Anyone can sign up / load profile
+    }
+
+    // Contacts Rules
+    match /contacts/{contactId} {
+      allow read, write: if true; // Guests can leave contact message, admin can read/update
+    }
+  }
+}

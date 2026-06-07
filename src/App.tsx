@@ -27,6 +27,23 @@ import { verifyVnpayCallback } from './vnpayConfig';
 import { initGmailAuth, subscribeToGmailAuth, googleSignIn, googleSignOut, sendOrderNotificationEmail } from './gmailService';
 import { sendEmailJSOrderPaid } from './emailjsService';
 
+import { 
+  seedDatabaseIfNeeded,
+  subscribeProducts,
+  subscribeCategories,
+  subscribeOrders,
+  subscribeContacts,
+  subscribeUsers,
+  saveProduct,
+  removeProduct,
+  saveCategory,
+  removeCategory,
+  saveOrder,
+  saveContact,
+  removeContact,
+  saveUser
+} from './firebase';
+
 import { Product, Category, CartItem, Order, User, OrderStatus, ContactMessage } from './types';
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES } from './data';
 import { Sparkles, Flower, Phone, Mail, Clock, MapPin, Heart, ArrowRight, Facebook, Instagram, Calendar, Star, FileText, Lock } from 'lucide-react';
@@ -246,102 +263,144 @@ export default function App() {
     return sampleContacts;
   });
 
-  // Sync to localStorage
+  // --- FIRESTORE REAL-TIME SYNCHRONIZATION EVENT ---
   useEffect(() => {
-    localStorage.setItem('fiore_contacts', JSON.stringify(contacts));
-  }, [contacts]);
+    const sampleUsers: User[] = [
+      {
+        id: 'usr-1',
+        email: 'sample_customer@gmail.com',
+        name: 'Nguyễn Trần Khánh Vân',
+        phone: '0909111222',
+        address: '26 Lê Thanh Nghị, Quận Hai Bà Trưng, Hà Nội',
+        isAdmin: false
+      }
+    ];
 
-  // Handle storage changes & periodic polling across page instances/actions (e.g. for sandboxed preview systems)
+    const sampleOrders: Order[] = [
+      {
+        id: 'ORD-171',
+        customerName: 'Nguyễn Trần Khánh Vân',
+        customerEmail: 'sample_customer@gmail.com',
+        recipientName: 'Mẹ Khánh Vân',
+        recipientPhone: '0909111222',
+        shippingAddress: '26 Lê Thanh Nghị, Quận Hai Bà Trưng, Hà Nội',
+        note: 'Chúc Mừng Sinh Nhật Mẹ yêu! Mong mẹ mãi tươi trẻ như đóa hoa hướng dương này.',
+        items: [
+          {
+            product: INITIAL_PRODUCTS[1],
+            quantity: 1
+          }
+        ],
+        totalAmount: 480000,
+        paymentMethod: 'VISA',
+        paymentStatus: 'Paid',
+        status: 'completed',
+        createdAt: '2026-05-28T14:30:00Z'
+      },
+      {
+        id: 'ORD-198',
+        customerName: 'Khách Thảo Vy',
+        customerEmail: 'guest_vy@fiore.vn',
+        recipientName: 'Lâm Thảo Vy',
+        recipientPhone: '0987332211',
+        shippingAddress: '159 Trần Hưng Đạo, Quận 1, TP. HCM',
+        note: 'Nhờ shop ghi thiệp: "Nhân ngày 8/3 chúc cháu gái học tập tốt và xinh đẹp."',
+        items: [
+          {
+            product: INITIAL_PRODUCTS[0],
+            quantity: 1
+          },
+          {
+            product: INITIAL_PRODUCTS[4],
+            quantity: 1
+          }
+        ],
+        totalAmount: 1300000,
+        paymentMethod: 'COD',
+        paymentStatus: 'Unpaid',
+        status: 'shipping',
+        createdAt: '2026-06-01T08:15:00Z'
+      },
+      {
+        id: 'ORD-205',
+        customerName: 'Hoàng Long',
+        customerEmail: 'longhcm@gmail.com',
+        recipientName: 'Chị Mai Lan',
+        recipientPhone: '0911223344',
+        shippingAddress: '55 Nguyễn Thị Minh Khai, Quận 3, TP. HCM',
+        note: 'Giao giờ hành chính, gọi điện trước khi giao.',
+        items: [
+          {
+            product: INITIAL_PRODUCTS[2],
+            quantity: 1
+          }
+        ],
+        totalAmount: 1830000,
+        paymentMethod: 'VISA',
+        paymentStatus: 'Paid',
+        status: 'paid',
+        createdAt: '2026-06-02T05:40:00Z'
+      }
+    ];
+
+    let active = true;
+    let cleanups: (() => void)[] = [];
+
+    const initializeAndSubscribe = async () => {
+      // 1. Seed Firestore database with standard defaults if it's completely empty
+      await seedDatabaseIfNeeded(INITIAL_PRODUCTS, INITIAL_CATEGORIES, sampleOrders, sampleUsers);
+      
+      if (!active) return;
+
+      // 2. Attach real-time onSnapshot collection listeners
+      const unsubProducts = subscribeProducts((prods) => {
+        if (prods.length > 0) setProducts(prods);
+      });
+      cleanups.push(unsubProducts);
+
+      const unsubCategories = subscribeCategories((cats) => {
+        if (cats.length > 0) setCategories(cats);
+      });
+      cleanups.push(unsubCategories);
+
+      const unsubOrders = subscribeOrders((ords) => {
+        setOrders(ords);
+      });
+      cleanups.push(unsubOrders);
+
+      const unsubContacts = subscribeContacts((conts) => {
+        setContacts(conts);
+      });
+      cleanups.push(unsubContacts);
+
+      const unsubUsers = subscribeUsers((usrs) => {
+        if (usrs.length > 0) setUsers(usrs);
+      });
+      cleanups.push(unsubUsers);
+    };
+
+    initializeAndSubscribe();
+
+    // Clean up listeners on unmount
+    return () => {
+      active = false;
+      cleanups.forEach((unsub) => unsub());
+    };
+  }, []);
+
+  // Sync admin authentication changes across windows
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      try {
-        if (e.key === 'fiore_contacts') {
-          const saved = localStorage.getItem('fiore_contacts');
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            if (JSON.stringify(parsed) !== JSON.stringify(contacts)) setContacts(parsed);
-          }
-        }
-        if (e.key === 'fiore_products') {
-          const saved = localStorage.getItem('fiore_products');
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            if (JSON.stringify(parsed) !== JSON.stringify(products)) setProducts(parsed);
-          }
-        }
-        if (e.key === 'fiore_categories') {
-          const saved = localStorage.getItem('fiore_categories');
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            if (JSON.stringify(parsed) !== JSON.stringify(categories)) setCategories(parsed);
-          }
-        }
-        if (e.key === 'fiore_orders') {
-          const saved = localStorage.getItem('fiore_orders');
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            if (JSON.stringify(parsed) !== JSON.stringify(orders)) setOrders(parsed);
-          }
-        }
-        if (e.key === 'fiore_users') {
-          const saved = localStorage.getItem('fiore_users');
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            if (JSON.stringify(parsed) !== JSON.stringify(users)) setUsers(parsed);
-          }
-        }
-        if (e.key === 'fiore_admin_authenticated') {
-          const isAuth = localStorage.getItem('fiore_admin_authenticated') === 'true';
-          if (isAuth !== isAdminAuthenticated) setIsAdminAuthenticated(isAuth);
-        }
-      } catch (err) {
-        console.error('Error synchronizing storage event', err);
+      if (e.key === 'fiore_admin_authenticated') {
+        const isAuth = localStorage.getItem('fiore_admin_authenticated') === 'true';
+        if (isAuth !== isAdminAuthenticated) setIsAdminAuthenticated(isAuth);
       }
     };
     window.addEventListener('storage', handleStorageChange);
-
-    // Periodic poller fallback
-    const interval = setInterval(() => {
-      try {
-        const savedContacts = localStorage.getItem('fiore_contacts');
-        if (savedContacts) {
-          const parsed = JSON.parse(savedContacts);
-          if (JSON.stringify(parsed) !== JSON.stringify(contacts)) setContacts(parsed);
-        }
-        const savedProducts = localStorage.getItem('fiore_products');
-        if (savedProducts) {
-          const parsed = JSON.parse(savedProducts);
-          if (JSON.stringify(parsed) !== JSON.stringify(products)) setProducts(parsed);
-        }
-        const savedCategories = localStorage.getItem('fiore_categories');
-        if (savedCategories) {
-          const parsed = JSON.parse(savedCategories);
-          if (JSON.stringify(parsed) !== JSON.stringify(categories)) setCategories(parsed);
-        }
-        const savedOrders = localStorage.getItem('fiore_orders');
-        if (savedOrders) {
-          const parsed = JSON.parse(savedOrders);
-          if (JSON.stringify(parsed) !== JSON.stringify(orders)) setOrders(parsed);
-        }
-        const savedUsers = localStorage.getItem('fiore_users');
-        if (savedUsers) {
-          const parsed = JSON.parse(savedUsers);
-          if (JSON.stringify(parsed) !== JSON.stringify(users)) setUsers(parsed);
-        }
-        const isAuth = localStorage.getItem('fiore_admin_authenticated') === 'true';
-        if (isAuth !== isAdminAuthenticated) {
-          setIsAdminAuthenticated(isAuth);
-        }
-      } catch (err) {
-        console.error('Error polling storage in background', err);
-      }
-    }, 1500);
-
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
     };
-  }, [contacts, products, categories, orders, users, isAdminAuthenticated]);
+  }, [isAdminAuthenticated]);
 
   const [gmailUser, setGmailUser] = useState<any>(null);
   const [gmailToken, setGmailToken] = useState<string | null>(() => {
@@ -637,18 +696,19 @@ export default function App() {
       createdAt: new Date().toISOString()
     };
 
-    // Deduct actual products inventory stocks
-    setProducts((prevProds) => {
-      return prevProds.map((p) => {
-        const itemDeducted = cartItems.find((it) => it.product.id === p.id);
-        if (itemDeducted) {
-          return { ...p, stock: Math.max(0, p.stock - itemDeducted.quantity) };
-        }
-        return p;
-      });
+    // Deduct actual products inventory stocks in Firestore
+    cartItems.forEach((it) => {
+      const match = products.find((prod) => prod.id === it.product.id);
+      if (match) {
+        const updatedProd = {
+          ...match,
+          stock: Math.max(0, match.stock - it.quantity)
+        };
+        saveProduct(updatedProd);
+      }
     });
 
-    setOrders((prev) => [...prev, newOrder]);
+    saveOrder(newOrder);
     setCartItems([]); // Clear cart items on purchase completion!
 
     // Auto-send single order confirmation email via EmailJS
@@ -683,12 +743,15 @@ export default function App() {
     }
 
     // Add into users list if not existed
-    setUsers((prev) => {
-      if (prev.some((u) => u.email.toLowerCase() === user.email.toLowerCase())) {
-        return prev.map((u) => u.email.toLowerCase() === user.email.toLowerCase() ? user : u);
+    const userExists = users.some((u) => u.email.toLowerCase() === user.email.toLowerCase());
+    if (userExists) {
+      const existingUser = users.find((u) => u.email.toLowerCase() === user.email.toLowerCase());
+      if (existingUser) {
+        saveUser({ ...existingUser, ...user });
       }
-      return [...prev, user];
-    });
+    } else {
+      saveUser(user);
+    }
   };
 
   const handleUserLogout = () => {
@@ -701,7 +764,7 @@ export default function App() {
 
   const handleProfileUpdate = (updated: User) => {
     setCurrentUser(updated);
-    setUsers((prev) => prev.map((u) => u.id === updated.id ? updated : u));
+    saveUser(updated);
   };
 
   // --- ADMIN FUNCTIONAL ACTIONS ---
@@ -713,74 +776,83 @@ export default function App() {
       rating: 5.0,
       reviewsCount: 0
     };
-    setProducts((prev) => [newProduct, ...prev]);
+    saveProduct(newProduct);
   };
 
   const handleEditProduct = (prod: Product) => {
-    setProducts((prev) => prev.map((p) => p.id === prod.id ? prod : p));
+    saveProduct(prod);
   };
 
   const handleDeleteProduct = (id: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+    removeProduct(id);
   };
 
   const handleAddCategory = (cat: Omit<Category, 'id'>) => {
     const newId = `cat-${Date.now()}`;
     const newCat = { ...cat, id: newId };
-    setCategories((prev) => [...prev, newCat]);
+    saveCategory(newCat);
   };
 
   const handleEditCategory = (cat: Category) => {
-    setCategories((prev) => prev.map((c) => c.id === cat.id ? cat : c));
+    saveCategory(cat);
   };
 
   const handleDeleteCategory = (id: string) => {
-    setCategories((prev) => prev.filter((c) => c.id !== id));
+    removeCategory(id);
   };
 
   const handleUpdateOrderStatus = (orderId: string, status: OrderStatus) => {
-    setOrders((prev) => {
-      let orderToEmail: Order | null = null;
-      const updated = prev.map((o) => {
-        if (o.id === orderId) {
-          const oldPaymentStatus = o.paymentStatus;
-          const oldStatus = o.status;
-          const newPaymentStatus = (status === 'completed' || status === 'paid') ? 'Paid' : o.paymentStatus;
-          const updatedOrder: Order = {
-            ...o,
-            status,
-            paymentStatus: newPaymentStatus
-          };
-          
-          if (
-            (oldPaymentStatus !== 'Paid' && newPaymentStatus === 'Paid') ||
-            (oldStatus !== 'paid' && status === 'paid')
-          ) {
-            orderToEmail = updatedOrder;
-          }
-          return updatedOrder;
-        }
-        return o;
-      });
+    const o = orders.find((order) => order.id === orderId);
+    if (!o) return;
 
-      if (orderToEmail) {
-        const orderObj: Order = orderToEmail;
-        const currentToken = localStorage.getItem('fiore_gmail_access_token') || gmailToken;
-        if (currentToken) {
-          sendOrderNotificationEmail(orderObj, orderObj.customerEmail)
-            .then((success) => {
-              if (success) {
-                console.log(`Email hóa đơn đơn hàng ${orderObj.id} đã được gửi tự động khi chuyển sang Đã thanh toán!`);
-              } else {
-                console.warn('Gửi email tự động từ dashboard không thành công.');
-              }
-            })
-            .catch((err) => {
-              console.error('Lỗi khi gửi email tự động:', err);
-            });
-        }
+    const oldPaymentStatus = o.paymentStatus;
+    const oldStatus = o.status;
+    const newPaymentStatus = (status === 'completed' || status === 'paid') ? 'Paid' : o.paymentStatus;
+    
+    const updatedOrder: Order = {
+      ...o,
+      status,
+      paymentStatus: newPaymentStatus
+    };
+
+    saveOrder(updatedOrder);
+
+    if (
+      (oldPaymentStatus !== 'Paid' && newPaymentStatus === 'Paid') ||
+      (oldStatus !== 'paid' && status === 'paid')
+    ) {
+      const currentToken = localStorage.getItem('fiore_gmail_access_token') || gmailToken;
+      if (currentToken) {
+        sendOrderNotificationEmail(updatedOrder, updatedOrder.customerEmail)
+          .then((success) => {
+            if (success) {
+              console.log(`Email hóa đơn đơn hàng ${updatedOrder.id} đã được gửi tự động khi chuyển sang Đã thanh toán!`);
+            } else {
+              console.warn('Gửi email tự động từ dashboard không thành công.');
+            }
+          })
+          .catch((err) => {
+            console.error('Lỗi khi gửi email tự động:', err);
+          });
       }
-      return updated;
+    }
+  };
+
+  const handleUpdateContacts = (updater: React.SetStateAction<ContactMessage[]>) => {
+    setContacts((prev) => {
+      const next = typeof updater === 'function' ? (updater as any)(prev) : updater;
+      next.forEach((item: ContactMessage) => {
+        const prevItem = prev.find((p) => p.id === item.id);
+        if (!prevItem || JSON.stringify(prevItem) !== JSON.stringify(item)) {
+          saveContact(item);
+        }
+      });
+      prev.forEach((prevItem) => {
+        if (!next.some((n: ContactMessage) => n.id === prevItem.id)) {
+          removeContact(prevItem.id);
+        }
+      });
+      return next;
     });
   };
 
@@ -851,7 +923,7 @@ export default function App() {
                   orders={orders}
                   users={users}
                   contacts={contacts}
-                  onUpdateContacts={setContacts}
+                  onUpdateContacts={handleUpdateContacts}
                   onAddProduct={handleAddProduct}
                   onEditProduct={handleEditProduct}
                   onDeleteProduct={handleDeleteProduct}
@@ -1426,7 +1498,7 @@ export default function App() {
         {/* VIEW 10: CONTACT US SCREEN */}
         {currentView === 'contact' && (
           <div className="animate-fade-in">
-            <ContactUs onNewContact={(newMsg) => setContacts(prev => [newMsg, ...prev])} />
+            <ContactUs onNewContact={(newMsg) => saveContact(newMsg)} />
           </div>
         )}
 
