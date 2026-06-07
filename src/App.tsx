@@ -790,7 +790,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50/20 antialiased font-sans overflow-x-hidden">
+    <div className="flex min-h-screen flex-col bg-slate-50/20 antialiased font-sans overflow-x-clip">
       
       {/* HEADER COMPONENT */}
       <Header

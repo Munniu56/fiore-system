@@ -35,7 +35,7 @@ export default function Header({
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-pink-100 bg-white/90 backdrop-blur-md">
+    <header className="sticky top-0 z-50 w-full border-b border-pink-100 bg-white/95 backdrop-blur-md shadow-xs">
       <div className="mx-auto flex max-w-7xl h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         
         {/* Brand Logo - Fiore */}
