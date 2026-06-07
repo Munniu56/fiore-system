@@ -79,11 +79,11 @@ export default function CartView({
 
             <div className="divide-y divide-pink-50">
               {cartItems.map((item) => (
-                <div key={item.product.id} className="flex flex-col py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div key={item.product.id} className="flex flex-col py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between gap-4 border-b last:border-0 border-pink-50/50">
                   
                   {/* Miniature & Title */}
                   <div className="flex items-center space-x-4">
-                    <div className="h-20 w-106 sm:h-24 sm:w-24 shrink-0 overflow-hidden rounded-lg bg-pink-50 border border-pink-50">
+                    <div className="h-20 w-20 sm:h-24 sm:w-24 shrink-0 overflow-hidden rounded-lg bg-pink-50 border border-pink-50">
                       <img
                         src={item.product.image}
                         alt={item.product.name}
@@ -91,8 +91,8 @@ export default function CartView({
                         className="h-full w-full object-cover"
                       />
                     </div>
-                    <div>
-                      <h3 className="font-serif text-base font-bold text-gray-800 hover:text-rose-600 transition truncate max-w-[200px] sm:max-w-[280px]">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-serif text-base font-bold text-gray-800 hover:text-rose-600 transition truncate max-w-[180px] xs:max-w-[220px] sm:max-w-[280px]">
                         {item.product.name}
                       </h3>
                       <p className="text-xs text-emerald-600 mt-0.5">Sẵn hoa tươi mới</p>
@@ -103,33 +103,33 @@ export default function CartView({
                   </div>
 
                   {/* Operational controls */}
-                  <div className="flex items-center justify-between sm:justify-end sm:space-x-8">
+                  <div className="flex items-center justify-between sm:justify-end sm:space-x-8 w-full sm:w-auto gap-4 flex-wrap">
                     
                     {/* Unit Price (Desktop only) */}
-                    <div className="hidden text-right sm:block">
+                    <div className="hidden text-right sm:block shrink-0">
                       <p className="text-xs text-gray-400">Đơn giá</p>
                       <p className="text-sm font-bold text-gray-700">{formatVND(item.product.price)}</p>
                     </div>
 
                     {/* Quantity modifier */}
-                    <div className="flex items-center border border-pink-100 rounded-full justify-between p-0.5 bg-neutral-50 w-24">
+                    <div className="flex items-center border border-pink-100 rounded-full justify-between p-0.5 bg-neutral-50 w-24 shrink-0">
                       <button
                         onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
-                        className="flex h-6 w-6 items-center justify-center rounded-full text-gray-500 hover:bg-white"
+                        className="flex h-6.5 w-6.5 items-center justify-center rounded-full text-gray-500 hover:bg-white cursor-pointer"
                       >
                         －
                       </button>
                       <span className="text-xs font-bold text-gray-800">{item.quantity}</span>
                       <button
                         onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
-                        className="flex h-6 w-6 items-center justify-center rounded-full text-gray-500 hover:bg-white"
+                        className="flex h-6.5 w-6.5 items-center justify-center rounded-full text-gray-500 hover:bg-white cursor-pointer"
                       >
                         ＋
                       </button>
                     </div>
 
                     {/* Computed item pricing */}
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                       <p className="text-xs text-gray-400">Thành tiền</p>
                       <p className="text-sm font-bold text-rose-600">
                         {formatVND(item.product.price * item.quantity)}
@@ -139,7 +139,7 @@ export default function CartView({
                     {/* Trash/Remove */}
                     <button
                       onClick={() => onRemoveItem(item.product.id)}
-                      className="rounded-full p-2 text-gray-400 hover:bg-red-50 hover:text-red-500 transition"
+                      className="rounded-full p-2 text-gray-400 hover:bg-red-50 hover:text-red-500 transition cursor-pointer shrink-0"
                       aria-label="Xóa sản phẩm"
                       id={`remove-item-${item.product.id}`}
                     >

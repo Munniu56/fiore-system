@@ -83,10 +83,10 @@ export default function ProductCard({
       </div>
 
       {/* Content Space */}
-      <div className="flex flex-1 flex-col p-4 sm:p-5">
+      <div className="flex flex-1 flex-col p-3 sm:p-5">
         
         {/* Rating and Metadata */}
-        <div className="flex items-center justify-between text-xs text-gray-500">
+        <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] sm:text-xs text-gray-500">
           <span className="font-semibold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-sm">
             {product.categoryId === 'tinh-yeu' ? 'Tình Yêu' : 
              product.categoryId === 'sinh-nhat' ? 'Sinh Nhật' :
@@ -95,35 +95,35 @@ export default function ProductCard({
              product.categoryId === 'chia-buon' ? 'Chia Buồn' : 'Theo Mùa'}
           </span>
           <div className="flex items-center space-x-1">
-            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400 shrink-0" />
             <span className="font-bold text-gray-700">{product.rating}</span>
             <span className="text-gray-400">({product.reviewsCount})</span>
           </div>
         </div>
 
         {/* Title & Desc */}
-        <h3 className="mt-2.5 font-serif text-base font-bold text-gray-800 line-clamp-1 group-hover:text-rose-600 transition">
+        <h3 className="mt-2 font-serif text-sm sm:text-base font-bold text-gray-800 line-clamp-1 group-hover:text-rose-600 transition">
           {product.name}
         </h3>
         
-        <p className="mt-1 text-xs text-gray-500 line-clamp-2 leading-relaxed flex-1">
+        <p className="mt-1 text-[11px] sm:text-xs text-gray-500 line-clamp-2 leading-relaxed flex-1">
           {product.shortDesc}
         </p>
 
         {/* Price & Primary CTA */}
-        <div className="mt-4 flex items-center justify-between border-t border-pink-50 pt-3">
+        <div className="mt-3 flex flex-col xs:flex-row xs:items-center justify-between border-t border-pink-50 pt-2.5 gap-2">
           <div>
-            <p className="text-xs text-gray-400 uppercase tracking-wider">Giá bán</p>
-            <p className="text-base font-bold text-rose-600 sm:text-lg">
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider hidden xs:block">Giá bán</p>
+            <p className="text-sm font-bold text-rose-600 sm:text-lg leading-tight">
               {formatVND(product.price)}
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 self-end xs:self-auto">
             {/* View Details Primary Button */}
             <button
               onClick={() => onViewDetails(product)}
-              className="rounded-full bg-pink-50 px-3.5 py-1.5 text-xs font-bold text-rose-700 transition hover:bg-pink-100 cursor-pointer"
+              className="rounded-full bg-pink-50 px-2.5 py-1 text-[10px] sm:text-xs font-bold text-rose-700 transition hover:bg-pink-100 cursor-pointer min-h-[30px] sm:min-h-0"
             >
               Chi tiết
             </button>
@@ -131,13 +131,13 @@ export default function ProductCard({
             {product.stock > 0 ? (
               <button
                 onClick={(e) => onAddToCart(product, e)}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-600 text-white shadow-xs transition hover:bg-rose-700 cursor-pointer"
+                className="flex h-7.5 w-7.5 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-rose-600 text-white shadow-xs transition hover:bg-rose-700 cursor-pointer"
                 title="Mua ngay"
               >
                 <Plus className="h-4 w-4" />
               </button>
             ) : (
-              <span className="text-xs font-semibold text-gray-400 italic">Hết</span>
+              <span className="text-[10px] sm:text-xs font-semibold text-gray-400 italic">Hết nhẵn</span>
             )}
           </div>
         </div>

@@ -1092,7 +1092,7 @@ export default function AdminDashboard({
 
           {/* Grid visual list for administration */}
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs divide-y divide-amber-200/40">
+            <table className="w-full text-left text-xs divide-y divide-amber-200/40 min-w-[700px] lg:min-w-full">
               <thead>
                 <tr className="bg-amber-50/40 text-stone-500 font-bold uppercase tracking-wider">
                   <th className="p-3">Hình ảnh & Tên</th>

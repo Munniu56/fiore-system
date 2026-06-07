@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Flower, Search, ShoppingBag, User, Settings, ShoppingCart, LogOut, CheckCircle } from 'lucide-react';
+import { Flower, Search, ShoppingBag, User, Settings, ShoppingCart, LogOut, CheckCircle, Menu, X } from 'lucide-react';
 import { User as UserType } from '../types';
 import brandLogoHeader from '../assets/images/logo_white_bg_1780554592404.png';
 
@@ -32,6 +32,7 @@ export default function Header({
   currentView,
 }: HeaderProps) {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-pink-100 bg-white/90 backdrop-blur-md">
@@ -40,13 +41,13 @@ export default function Header({
         {/* Brand Logo - Fiore */}
         <div 
           onClick={() => onNavigate('home')} 
-          className="flex cursor-pointer items-center transition hover:opacity-85 select-none"
+          className="flex cursor-pointer items-center transition hover:opacity-85 select-none shrink-0"
           id="logo-brand"
         >
           <img 
             src={brandLogoHeader} 
             alt="Fióre Boutique de Fleurs" 
-            className="h-12 w-auto object-contain sm:h-14"
+            className="h-10 w-auto object-contain sm:h-14"
             referrerPolicy="no-referrer"
           />
         </div>
@@ -86,7 +87,7 @@ export default function Header({
         </div>
 
         {/* Actions panel */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           
           {/* Quick Shortcuts */}
           <nav className="hidden space-x-1 lg:flex text-sm font-medium">
@@ -153,7 +154,7 @@ export default function Header({
           {currentRole === 'customer' && (
             <button
               onClick={() => onNavigate('cart')}
-              className="relative rounded-full p-2 text-rose-500 ring-offset-2 transition hover:bg-pink-50 hover:text-rose-600 cursor-pointer"
+              className="relative rounded-full p-2 text-rose-500 ring-offset-2 transition hover:bg-pink-50 hover:text-rose-600 cursor-pointer shrink-0"
               aria-label="Xem giỏ hàng"
               id="cart-button"
             >
@@ -167,26 +168,26 @@ export default function Header({
           )}
 
           {/* User Profile Info Dropdown */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <button
               onClick={() => setShowUserDropdown(!showUserDropdown)}
-              className="flex items-center space-x-1 rounded-full p-1.5 transition hover:bg-pink-50 cursor-pointer"
+              className="flex items-center space-x-1 rounded-full p-1.5 transition hover:bg-pink-50 cursor-pointer select-none"
               id="user-menu-button"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-pink-100 text-rose-600">
-                <User className="h-5 w-5" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-pink-100 text-rose-600 text-sm">
+                <User className="h-4.5 w-4.5" />
               </div>
-              <span className="hidden text-xs font-medium text-gray-700 sm:block max-w-[80px] truncate">
+              <span className="hidden text-xs font-semibold text-gray-700 sm:block max-w-[80px] truncate">
                 {currentUser ? currentUser.name : 'Đăng nhập'}
               </span>
             </button>
 
             {showUserDropdown && (
-              <div className="absolute right-0 mt-2 w-56 origin-top-right rounded-lg border border-pink-100 bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none">
+              <div className="absolute right-0 mt-2 w-56 origin-top-right rounded-lg border border-pink-100 bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none z-50">
                 {currentUser ? (
                   <>
                     <div className="border-b border-pink-50 px-4 py-2.5">
-                      <p className="text-xs text-gray-400">Tài khoản</p>
+                      <p className="text-xs text-gray-400 font-medium">Tài khoản</p>
                       <p className="truncate text-sm font-semibold text-gray-800">{currentUser.name}</p>
                       <p className="truncate text-xs text-gray-500">{currentUser.email}</p>
                       {currentUser.isAdmin && (
@@ -247,8 +248,94 @@ export default function Header({
             )}
           </div>
 
+          {/* Hamburger Menu Toggle Button */}
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-rose-500 hover:bg-pink-50 hover:text-rose-600 transition lg:hidden cursor-pointer shrink-0"
+            aria-label="Menu"
+            id="mobile-menu-toggle"
+          >
+            {showMobileMenu ? <X className="h-5.5 w-5.5" /> : <Menu className="h-5.5 w-5.5" />}
+          </button>
+
         </div>
       </div>
+
+      {/* Mobile Menu Dropdown Panel (Drawer) */}
+      {showMobileMenu && (
+        <div className="border-t border-pink-100 bg-white shadow-md lg:hidden animate-fade-in relative z-30" id="mobile-menu-panel">
+          <nav className="flex flex-col space-y-1 p-3">
+            <button
+              onClick={() => {
+                onNavigate('home');
+                setShowMobileMenu(false);
+              }}
+              className={`w-full rounded-lg px-4 py-2.5 text-left text-sm transition ${
+                currentView === 'home'
+                  ? 'text-rose-600 bg-rose-50/50 font-bold'
+                  : 'text-gray-700 hover:text-rose-500 hover:bg-neutral-50'
+              }`}
+            >
+              Trang Chủ
+            </button>
+            <button
+              onClick={() => {
+                onSearchChange('');
+                onNavigate('catalog');
+                setShowMobileMenu(false);
+              }}
+              className={`w-full rounded-lg px-4 py-2.5 text-left text-sm transition ${
+                currentView === 'catalog'
+                  ? 'text-rose-600 bg-rose-50/50 font-bold'
+                  : 'text-gray-700 hover:text-rose-500 hover:bg-neutral-50'
+              }`}
+            >
+              Danh Mục Hoa
+            </button>
+            <button
+              onClick={() => {
+                onNavigate('about');
+                setShowMobileMenu(false);
+              }}
+              className={`w-full rounded-lg px-4 py-2.5 text-left text-sm transition ${
+                currentView === 'about'
+                  ? 'text-rose-600 bg-rose-50/50 font-bold'
+                  : 'text-gray-700 hover:text-rose-500 hover:bg-neutral-50'
+              }`}
+            >
+              Về Chúng Tôi
+            </button>
+            <button
+              onClick={() => {
+                onNavigate('contact');
+                setShowMobileMenu(false);
+              }}
+              className={`w-full rounded-lg px-4 py-2.5 text-left text-sm transition ${
+                currentView === 'contact'
+                  ? 'text-rose-600 bg-rose-50/50 font-bold'
+                  : 'text-gray-700 hover:text-rose-500 hover:bg-neutral-50'
+              }`}
+            >
+              Liên Hệ
+            </button>
+            {currentUser && (
+              <button
+                onClick={() => {
+                  onNavigate('orders');
+                  setShowMobileMenu(false);
+                }}
+                className={`w-full rounded-lg px-4 py-2.5 text-left text-sm transition ${
+                  currentView === 'orders'
+                    ? 'text-rose-600 bg-rose-50/50 font-bold'
+                    : 'text-gray-700 hover:text-rose-500 hover:bg-neutral-50'
+                }`}
+              >
+                Đơn Hàng Của Tôi
+              </button>
+            )}
+          </nav>
+        </div>
+      )}
 
       {/* Mobile search bar block */}
       <div className="px-4 pb-3 md:hidden">

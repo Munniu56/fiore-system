@@ -738,7 +738,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50/20 antialiased font-sans">
+    <div className="flex min-h-screen flex-col bg-slate-50/20 antialiased font-sans overflow-x-hidden">
       
       {/* HEADER COMPONENT */}
       <Header
@@ -854,7 +854,7 @@ export default function App() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
+              <div className="grid grid-cols-2 gap-y-6 gap-x-3 xs:gap-y-10 xs:gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
                 {products
                   .filter((p) => p.isFeatured)
                   .slice(0, 6)
@@ -1243,7 +1243,7 @@ export default function App() {
                 )}
 
                 {filteredProducts.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
+                  <div className="grid grid-cols-2 gap-y-6 gap-x-3 xs:gap-y-10 xs:gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
                     {filteredProducts.map((p) => (
                       <ProductCard
                         key={p.id}

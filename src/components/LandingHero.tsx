@@ -35,16 +35,16 @@ export default function LandingHero({
           
           <div className="text-center lg:col-span-7 lg:text-left">
             <div className="inline-flex items-center space-x-1.5 rounded-full bg-pink-100/80 px-3 py-1 text-xs font-semibold text-rose-700">
-              <Sparkles className="h-3.5 w-3.5" />
+              <Sparkles className="h-3.5 w-3.5 shrink-0" />
               <span>Giao hoa hỏa tốc trong 2 giờ nội thành</span>
             </div>
 
-            <h1 className="mt-4 font-serif text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
+            <h1 className="mt-4 font-serif text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight text-gray-900 leading-tight">
               Gửi Gắm Yêu Thương <br />
               <span className="text-rose-600">Qua Từng Cánh Hoa</span>
             </h1>
 
-            <p className="mt-4 text-base leading-relaxed text-gray-600 sm:text-lg">
+            <p className="mt-4 text-sm sm:text-base leading-relaxed text-gray-600 sm:text-lg">
               Chào mừng bạn đến với <span className="font-semibold text-rose-600">Fióre</span> - không gian ngập tràn sắc hoa nghệ thuật đỉnh cao. Chúng tôi tin rằng mỗi bông hoa đều mang một tâm sự khác nhau, thay người gửi viết nên những lời chúc ý nghĩa của cuộc sống.
             </p>
 
@@ -68,45 +68,45 @@ export default function LandingHero({
               </button>
             </div>
 
-            {/* Core Values / Features bar */}
-            <div className="mt-10 grid grid-cols-3 gap-4 border-t border-pink-100 pt-8 max-w-lg mx-auto lg:mx-0">
+            {/* Core Values / Features bar - Stacks beautifully on mobile */}
+            <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-4 border-t border-pink-100 pt-8 max-w-lg mx-auto lg:mx-0">
               <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-100 text-rose-600 mb-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-100 text-rose-600 mb-2 shrink-0">
                   <Heart className="h-5 w-5" />
                 </div>
                 <h4 className="text-sm font-bold text-gray-800">100% Hoa Tươi</h4>
-                <p className="text-xs text-gray-500 mt-1">Tuyển chọn tươi mới mỗi buổi sớm mai</p>
+                <p className="text-xs text-gray-500 mt-1 max-w-[200px] sm:max-w-none">Tuyển chọn tươi mới mỗi buổi sớm mai</p>
               </div>
               
               <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-100 text-rose-600 mb-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-100 text-rose-600 mb-2 shrink-0">
                   <Gift className="h-5 w-5" />
                 </div>
                 <h4 className="text-sm font-bold text-gray-800">Thiết Kế Độc Quyền</h4>
-                <p className="text-xs text-gray-500 mt-1">Được thiết kế tỉ mỉ bởi nghệ nhân hoa florists</p>
+                <p className="text-xs text-gray-500 mt-1 max-w-[200px] sm:max-w-none">Được thiết kế tỉ mỉ bởi nghệ nhân hoa florists</p>
               </div>
 
               <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-100 text-rose-600 mb-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-100 text-rose-600 mb-2 shrink-0">
                   <Award className="h-5 w-5" />
                 </div>
                 <h4 className="text-sm font-bold text-gray-800">Tận Tâm Phục Vụ</h4>
-                <p className="text-xs text-gray-500 mt-1">Hỗ trợ viết thiệp tay, chụp hình đơn hàng</p>
+                <p className="text-xs text-gray-500 mt-1 max-w-[200px] sm:max-w-none">Hỗ trợ viết thiệp tay, chụp hình đơn hàng</p>
               </div>
             </div>
           </div>
 
           {/* Right Showcase Image Banner */}
-          <div className="relative mt-8 sm:mx-auto lg:col-span-5 lg:mx-0 lg:mt-0">
+          <div className="relative mt-8 sm:mx-auto lg:col-span-5 lg:mx-0 lg:mt-0 w-full">
             <div className="relative mx-auto w-full max-w-md rounded-2xl border-4 border-pink-50 bg-white p-3 shadow-xl">
               <img
                 src={heroFlowersImg}
                 alt="Tiệm hoa nghệ thuật Fiore"
                 referrerPolicy="no-referrer"
-                className="h-[420px] w-full rounded-xl object-cover"
+                className="h-64 xs:h-80 sm:h-[420px] w-full rounded-xl object-cover"
               />
-              <div className="absolute right-6 bottom-6 translate-y-2 rounded-lg bg-white p-4 shadow-lg border border-pink-50 max-w-[200px]">
-                <p className="font-serif text-sm italic text-rose-700">"Trao hoa tươi, khởi đầu hạnh phúc viên mãn."</p>
+              <div className="absolute right-6 bottom-6 translate-y-2 rounded-lg bg-white p-3 sm:p-4 shadow-lg border border-pink-50 max-w-[160px] sm:max-w-[200px]">
+                <p className="font-serif text-xs sm:text-sm italic text-rose-700">"Trao hoa tươi, khởi đầu hạnh phúc viên mãn."</p>
                 <div className="mt-2 flex items-center space-x-1">
                   <div className="h-1 w-8 rounded-full bg-rose-500"></div>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Fiore Team</span>

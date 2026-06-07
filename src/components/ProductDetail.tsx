@@ -187,14 +187,14 @@ export default function ProductDetail({
           <div className="mt-6">
             {/* Quantity Selector & Interactive State */}
             {product.stock > 0 ? (
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                <div className="flex flex-col">
-                  <span className="text-xs font-semibold text-gray-400 uppercase mb-1">Số lượng chọn mua</span>
-                  <div className="flex items-center border border-pink-200 rounded-full w-32 justify-between p-1 bg-white">
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-end w-full">
+                <div className="flex flex-col w-full sm:w-auto shrink-0">
+                  <span className="text-xs font-semibold text-gray-400 uppercase mb-1.5">Số lượng chọn mua</span>
+                  <div className="flex items-center border border-pink-200 rounded-full w-full sm:w-32 justify-between p-1.5 bg-white min-h-[44px]">
                     <button
                       onClick={handleDecrease}
                       disabled={quantity <= 1}
-                      className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 hover:bg-pink-50 disabled:opacity-40"
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 hover:bg-pink-50 disabled:opacity-40 min-h-[36px] min-w-[36px] cursor-pointer"
                     >
                       －
                     </button>
@@ -202,21 +202,21 @@ export default function ProductDetail({
                     <button
                       onClick={handleIncrease}
                       disabled={quantity >= product.stock}
-                      className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 hover:bg-pink-50 disabled:opacity-40"
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-gray-600 hover:bg-pink-50 disabled:opacity-40 min-h-[36px] min-w-[36px] cursor-pointer"
                     >
                       ＋
                     </button>
                   </div>
                 </div>
 
-                <div className="flex-1">
+                <div className="flex-1 w-full">
                   <span className="text-xs block text-gray-400 mb-1.5 font-medium">Kho còn lại: {product.stock} bó</span>
                   <button
                     onClick={handleAddWithFeedback}
-                    className="flex w-full items-center justify-center rounded-full bg-rose-600 py-3.5 px-6 text-sm font-semibold text-white shadow-md transition hover:bg-rose-700 cursor-pointer"
+                    className="flex w-full items-center justify-center rounded-full bg-rose-600 py-3.5 px-6 text-sm font-semibold text-white shadow-md transition hover:bg-rose-700 cursor-pointer min-h-[46px]"
                     id="add-to-cart-detail"
                   >
-                    <ShoppingBag className="mr-2 h-5 w-5" />
+                    <ShoppingBag className="mr-2 h-5 w-5 shrink-0" />
                     Thêm vào giỏ hàng - {formatVND(product.price * quantity)}
                   </button>
                 </div>

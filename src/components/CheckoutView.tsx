@@ -412,16 +412,16 @@ export default function CheckoutView({
 
                 {/* Shipping Notes */}
                 <div>
-                  <label htmlFor="note" className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">
-                    Ghi chú đơn hàng & Viết thiệp miễn phí
+                  <label htmlFor="note" className="block text-xs font-bold uppercase tracking-wider text-rose-700 mb-1.5 flex items-center gap-1">
+                    <span>🎁 Ghi chú giao hàng & Viết thiệp chúc mừng (Miễn phí)</span>
                   </label>
                   <textarea
                     id="note"
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     rows={3}
-                    placeholder="Nhập thời gian nhận hoa mong muốn hoặc nội dung ghi trên thiệp chúc mừng tặng kèm..."
-                    className="w-full rounded-lg border border-pink-50 bg-neutral-50/50 px-4 py-2.5 text-sm outline-none transition focus:border-rose-400 focus:bg-white focus:ring-1 focus:ring-rose-400"
+                    placeholder="Nhập nội dung lời chúc tặng kèm hoặc ghi chú thời gian nhận hoa cụ thể..."
+                    className="w-full rounded-lg border border-pink-100 bg-neutral-50/50 px-4 py-2.5 text-sm outline-none transition focus:border-rose-400 focus:bg-white focus:ring-1 focus:ring-rose-400"
                   />
                 </div>
 
@@ -559,7 +559,7 @@ export default function CheckoutView({
                   <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                     
                     {/* Simulated Visa Interactive Card Graphic */}
-                    <div className="flex flex-col justify-between rounded-xl bg-gradient-to-br from-rose-600 to-rose-700 p-5 text-white shadow-md aspect-video max-w-sm">
+                    <div className="flex flex-col justify-between rounded-xl bg-gradient-to-br from-rose-600 to-rose-700 p-4 sm:p-5 text-white shadow-md aspect-video w-full max-w-sm mx-auto md:mx-0">
                       <div className="flex justify-between items-start">
                         <div>
                           <p className="text-[9px] uppercase tracking-widest opacity-80">Premium Florist Member</p>
