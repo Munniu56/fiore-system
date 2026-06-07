@@ -2,6 +2,7 @@ import { verifyVnpayCallback } from '../vnpayConfig';
 import { sendEmailJSOrderPaid } from '../emailjsService';
 import { Order, Product, Category } from '../types';
 import '../index.css';
+import { saveOrder } from '../firebase';
 
 // VNPAY Sandbox Error Messages Map for descriptive feedback
 const VNPAY_ERROR_CODES: Record<string, string> = {
@@ -157,11 +158,31 @@ async function handleVnpayReturnVerification() {
     }
 
     if (successfullyCreatedOrUpdated && order) {
-      // Record back orders list in LocalStorage
-      localStorage.setItem('fiore_orders', JSON.stringify(orders));
+       try {
+    // Đồng bộ đơn hàng lên Firebase Firestore
+    await saveOrder(order);
 
-      // Clear the temporary checkpoint
-      localStorage.removeItem('fiore_pending_vnpay_order');
+    console.log(
+      '[VNPAY Return] Đã lưu đơn hàng lên Firebase:',
+      order.id
+    );
+  } catch (firebaseErr) {
+    console.error(
+      '[VNPAY Return] Lỗi khi lưu Firebase:',
+      firebaseErr
+    );
+  }
+
+  // Backup LocalStorage
+  localStorage.setItem(
+    'fiore_orders',
+    JSON.stringify(orders)
+  );
+
+  // Xóa dữ liệu tạm
+  localStorage.removeItem(
+    'fiore_pending_vnpay_order'
+  );
 
       // Auto-trigger confirmation email notification via EmailJS
       let currentUserProfile = null;
