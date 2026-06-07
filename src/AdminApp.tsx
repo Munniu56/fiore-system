@@ -7,6 +7,24 @@ import { initGmailAuth, subscribeToGmailAuth, googleSignIn, googleSignOut, sendO
 import { sendEmailJSOrderPaid } from './emailjsService';
 import emailjs from '@emailjs/browser';
 import { Shield, Mail, CheckCircle } from 'lucide-react';
+import { 
+  seedDatabaseIfNeeded,
+  subscribeProducts,
+  saveProduct,
+  removeProduct,
+  subscribeCategories,
+  saveCategory,
+  removeCategory,
+  subscribeOrders,
+  saveOrder,
+  removeOrder,
+  subscribeContacts,
+  saveContact,
+  removeContact,
+  subscribeUsers,
+  saveUser,
+  removeUser
+} from './firebase';
 
 export default function AdminApp() {
   // --- STATE INITIALIZATION (SYNCED WITH LATEST CLIENT SITE KEYS) ---
@@ -200,57 +218,131 @@ export default function AdminApp() {
     return sampleContacts;
   });
 
-  // Sync to localStorage
+  // --- REAL-TIME FIRESTORE SUBSCRIPTIONS ---
   useEffect(() => {
-    localStorage.setItem('fiore_contacts', JSON.stringify(contacts));
-  }, [contacts]);
+    const cleanups: (() => void)[] = [];
+    let active = true;
 
-  // Handle storage changes & periodic polling across page instances/actions (e.g. for sandboxed preview systems)
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'fiore_contacts') {
-        const saved = localStorage.getItem('fiore_contacts');
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved);
-            if (JSON.stringify(parsed) !== JSON.stringify(contacts)) {
-              setContacts(parsed);
+    const initializeAndSubscribe = async () => {
+      const sampleOrders: Order[] = [
+        {
+          id: 'ORD-171',
+          customerName: 'Nguyễn Trần Khánh Vân',
+          customerEmail: 'sample_customer@gmail.com',
+          recipientName: 'Mẹ Khánh Vân',
+          recipientPhone: '0909111222',
+          shippingAddress: '26 Lê Thanh Nghị, Quận Hai Bà Trưng, Hà Nội',
+          note: 'Chúc Mừng Sinh Nhật Mẹ yêu! Mong mẹ mãi tươi trẻ như đóa hoa hướng dương này.',
+          items: [
+            {
+              product: INITIAL_PRODUCTS[1],
+              quantity: 1
             }
-          } catch (err) {
-            console.error('Error synchronizing contacts storage event', err);
-          }
+          ],
+          totalAmount: 480000,
+          paymentMethod: 'VISA',
+          paymentStatus: 'Paid',
+          status: 'completed',
+          createdAt: '2026-05-28T14:30:00Z'
+        },
+        {
+          id: 'ORD-198',
+          customerName: 'Khách Thảo Vy',
+          customerEmail: 'guest_vy@fiore.vn',
+          recipientName: 'Lâm Thảo Vy',
+          recipientPhone: '0987332211',
+          shippingAddress: '159 Trần Hưng Đạo, Quận 1, TP. HCM',
+          note: 'Nhờ shop ghi thiệp: "Nhân ngày 8/3 chúc cháu gái học tập tốt và xinh đẹp."',
+          items: [
+            {
+              product: INITIAL_PRODUCTS[0],
+              quantity: 1
+            },
+            {
+              product: INITIAL_PRODUCTS[4],
+              quantity: 1
+            }
+          ],
+          totalAmount: 1300000,
+          paymentMethod: 'COD',
+          paymentStatus: 'Unpaid',
+          status: 'shipping',
+          createdAt: '2026-06-01T08:15:00Z'
+        },
+        {
+          id: 'ORD-205',
+          customerName: 'Hoàng Long',
+          customerEmail: 'longhcm@gmail.com',
+          recipientName: 'Chị Mai Lan',
+          recipientPhone: '0911223344',
+          shippingAddress: '55 Nguyễn Thị Minh Khai, Quận 3, TP. HCM',
+          note: 'Giao giờ hành chính, gọi điện trước khi giao.',
+          items: [
+            {
+              product: INITIAL_PRODUCTS[2],
+              quantity: 1
+            }
+          ],
+          totalAmount: 1830000,
+          paymentMethod: 'VISA',
+          paymentStatus: 'Paid',
+          status: 'paid',
+          createdAt: '2026-06-02T05:40:00Z'
         }
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
+      ];
 
-    // Periodic poller fallback
-    const interval = setInterval(() => {
-      const saved = localStorage.getItem('fiore_contacts');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (JSON.stringify(parsed) !== JSON.stringify(contacts)) {
-            setContacts(parsed);
-          }
-        } catch (err) {
-          console.error('Error polling contacts in background', err);
+      const sampleUsers: User[] = [
+        {
+          id: 'usr-1',
+          email: 'sample_customer@gmail.com',
+          name: 'Nguyễn Trần Khánh Vân',
+          phone: '0909111222',
+          address: '26 Lê Thanh Nghị, Quận Hai Bà Trưng, Hà Nội',
+          isAdmin: false
         }
-      }
-    }, 1500);
+      ];
+
+      // 1. Seed database if completely empty
+      await seedDatabaseIfNeeded(INITIAL_PRODUCTS, INITIAL_CATEGORIES, sampleOrders, sampleUsers);
+
+      if (!active) return;
+
+      // 2. Register real-time Firestore database listeners
+      const unsubProducts = subscribeProducts((prods) => {
+        if (prods.length > 0) setProducts(prods);
+      });
+      cleanups.push(unsubProducts);
+
+      const unsubCategories = subscribeCategories((cats) => {
+        if (cats.length > 0) setCategories(cats);
+      });
+      cleanups.push(unsubCategories);
+
+      const unsubOrders = subscribeOrders((ords) => {
+        setOrders(ords);
+      });
+      cleanups.push(unsubOrders);
+
+      const unsubContacts = subscribeContacts((conts) => {
+        setContacts(conts);
+      });
+      cleanups.push(unsubContacts);
+
+      const unsubUsers = subscribeUsers((usrs) => {
+        if (usrs.length > 0) setUsers(usrs);
+      });
+      cleanups.push(unsubUsers);
+    };
+
+    initializeAndSubscribe();
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
+      active = false;
+      cleanups.forEach((unsub) => unsub());
     };
-  }, [contacts]);
+  }, []);
 
-  const [gmailUser, setGmailUser] = useState<any>(null);
-  const [gmailToken, setGmailToken] = useState<string | null>(() => {
-    return typeof window !== 'undefined' ? localStorage.getItem('fiore_gmail_access_token') : null;
-  });
-
-  // --- SAVE STATES TO LOCAL STORAGE ---
+  // Sync state changes to local storage as secondary backup
   useEffect(() => {
     localStorage.setItem('fiore_products', JSON.stringify(products));
   }, [products]);
@@ -266,6 +358,42 @@ export default function AdminApp() {
   useEffect(() => {
     localStorage.setItem('fiore_users', JSON.stringify(users));
   }, [users]);
+
+  useEffect(() => {
+    localStorage.setItem('fiore_contacts', JSON.stringify(contacts));
+  }, [contacts]);
+
+  const [gmailUser, setGmailUser] = useState<any>(null);
+  const [gmailToken, setGmailToken] = useState<string | null>(() => {
+    return typeof window !== 'undefined' ? localStorage.getItem('fiore_gmail_access_token') : null;
+  });
+
+  // Intercept contact states dispatcher actions to persist updates to Firestore database
+  const handleUpdateContacts = async (updateArg: React.SetStateAction<ContactMessage[]>) => {
+    let next: ContactMessage[];
+    if (typeof updateArg === 'function') {
+      next = (updateArg as Function)(contacts);
+    } else {
+      next = updateArg;
+    }
+
+    // Process deletes in Firestore
+    const deletedContacts = contacts.filter((c) => !next.some((n) => n.id === c.id));
+    for (const dc of deletedContacts) {
+      await removeContact(dc.id);
+    }
+
+    // Process updates/creates in Firestore
+    const changedOrAddedContacts = next.filter((n) => {
+      const orig = contacts.find((c) => c.id === n.id);
+      return !orig || JSON.stringify(orig) !== JSON.stringify(n);
+    });
+    for (const cc of changedOrAddedContacts) {
+      await saveContact(cc);
+    }
+
+    setContacts(next);
+  };
 
   // Hook to automatically initialize Google/Gmail auth states in case needed
   useEffect(() => {
@@ -289,63 +417,52 @@ export default function AdminApp() {
       rating: 5.0,
       reviewsCount: 0
     };
-    setProducts((prev) => [newProduct, ...prev]);
+    saveProduct(newProduct);
   };
 
   const handleEditProduct = (prod: Product) => {
-    setProducts((prev) => prev.map((p) => p.id === prod.id ? prod : p));
+    saveProduct(prod);
   };
 
   const handleDeleteProduct = (id: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+    removeProduct(id);
   };
 
   const handleAddCategory = (cat: Omit<Category, 'id'>) => {
     const newId = `cat-${Date.now()}`;
     const newCat = { ...cat, id: newId };
-    setCategories((prev) => [...prev, newCat]);
+    saveCategory(newCat);
   };
 
   const handleEditCategory = (cat: Category) => {
-    setCategories((prev) => prev.map((c) => c.id === cat.id ? cat : c));
+    saveCategory(cat);
   };
 
   const handleDeleteCategory = (id: string) => {
-    setCategories((prev) => prev.filter((c) => c.id !== id));
+    removeCategory(id);
   };
 
   const handleUpdateOrderStatus = async (orderId: string, status: OrderStatus) => {
-    let orderToEmail: Order | undefined;
+    const existingOrder = orders.find((o) => o.id === orderId);
+    if (!existingOrder) return;
 
-    setOrders((prev) => {
-      const updated = prev.map((o) => {
-        if (o.id === orderId) {
-          const updatedOrder = { ...o, status };
-          if (status === 'paid' && o.status !== 'paid') {
-            orderToEmail = updatedOrder;
-          }
-          return updatedOrder;
-        }
-        return o;
-      });
-      localStorage.setItem('fiore_orders', JSON.stringify(updated));
-      return updated;
-    });
+    const updatedOrder: Order = { ...existingOrder, status };
+    await saveOrder(updatedOrder);
 
-    if (orderToEmail) {
-      const targetEmail = orderToEmail.customerEmail || 'thuyvanngo35@gmail.com';
+    if (status === 'paid' && existingOrder.status !== 'paid') {
+      const targetEmail = updatedOrder.customerEmail || 'thuyvanngo35@gmail.com';
       console.log('Phát hiện đơn hàng Đã thanh toán. Đang kích hoạt EmailJS tự động gửi tới:', targetEmail);
       try {
-        const result = await sendEmailJSOrderPaid(orderToEmail);
+        const result = await sendEmailJSOrderPaid(updatedOrder);
         if (result.success) {
-          alert(`🎉 [Fióre EmailJS] Đã gửi thư điện tử tự động xác nhận hóa đơn cho đơn hàng #${orderToEmail.id} thành công tới khách hàng qua: ${targetEmail}`);
+          alert(`🎉 [Fióre EmailJS] Đã gửi thư điện tử tự động xác nhận hóa đơn cho đơn hàng #${updatedOrder.id} thành công tới khách hàng qua: ${targetEmail}`);
         } else {
           // Fallback to Gmail REST API if possible
-          const gmailSent = await sendOrderNotificationEmail(orderToEmail, targetEmail);
+          const gmailSent = await sendOrderNotificationEmail(updatedOrder, targetEmail);
           if (gmailSent) {
-            alert(`🎉 [Fióre Gmail] Đã tự động dùng Gmail API thay thế để liên hệ khách hàng #${orderToEmail.id} qua ${targetEmail}`);
+            alert(`🎉 [Fióre Gmail] Đã tự động dùng Gmail API thay thế để liên hệ khách hàng #${updatedOrder.id} qua ${targetEmail}`);
           } else {
-            alert(`⚠️ Có lỗi phát sinh khi truyền tải hóa đơn cho đơn hàng #${orderToEmail.id}: ${result.error || 'Vui lòng kiểm tra cấu hình EmailJS hoặc kết nối Gmail.'}`);
+            alert(`⚠️ Có lỗi phát sinh khi truyền tải hóa đơn cho đơn hàng #${updatedOrder.id}: ${result.error || 'Vui lòng kiểm tra cấu hình EmailJS hoặc kết nối Gmail.'}`);
           }
         }
       } catch (err) {
@@ -393,7 +510,7 @@ export default function AdminApp() {
               orders={orders}
               users={users}
               contacts={contacts}
-              onUpdateContacts={setContacts}
+              onUpdateContacts={handleUpdateContacts}
               onAddProduct={handleAddProduct}
               onEditProduct={handleEditProduct}
               onDeleteProduct={handleDeleteProduct}
