@@ -8,6 +8,24 @@ import { Sparkles, Heart, Gift, Award, ArrowRight } from 'lucide-react';
 import { Category } from '../types';
 import heroFlowersImg from '../assets/images/hero_flowers_1780553979242.png';
 
+// Import high fidelity category assets from src/assets/images
+import loveFlowers from '../assets/images/love_flowers_1780554000296.png';
+import birthdayFlowers from '../assets/images/birthday_flowers_1780554020787.png';
+import openingFlowers from '../assets/images/opening_flowers_1780554039978.png';
+import congratulationFlowers from '../assets/images/congratulation_flowers_1780554058281.png';
+import condolenceFlowers from '../assets/images/condolence_flowers_1780554077741.png';
+import seasonalFlowers from '../assets/images/seasonal_flowers_1780554104772.png';
+
+const CATEGORY_IMAGE_MAP: Record<string, string> = {
+  'tinh-yeu': loveFlowers,
+  'sinh-nhat': birthdayFlowers,
+  'khai-truong': openingFlowers,
+  'chuc-mung': congratulationFlowers,
+  'chia-buon': condolenceFlowers,
+  'theo-mua': seasonalFlowers,
+};
+
+
 interface LandingHeroProps {
   categories: Category[];
   selectedCategory: string;
@@ -136,6 +154,7 @@ export default function LandingHero({
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
             {categories.map((cat) => {
               const isSelected = selectedCategory === cat.id;
+              const displayImage = CATEGORY_IMAGE_MAP[cat.id] || cat.image;
               return (
                 <div
                   key={cat.id}
@@ -150,7 +169,7 @@ export default function LandingHero({
                 >
                   <div className="relative mb-3 h-16 w-16 overflow-hidden rounded-full border border-pink-100">
                     <img
-                      src={cat.image}
+                      src={displayImage}
                       alt={cat.name}
                       referrerPolicy="no-referrer"
                       className="h-full w-full object-cover transition duration-300 group-hover:scale-110"
