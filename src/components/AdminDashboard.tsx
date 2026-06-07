@@ -8,9 +8,10 @@ import { motion } from 'motion/react';
 import { 
   BarChart2, Gift, DollarSign, Package, Users, Plus, Edit2, 
   Trash2, Layers, Check, ShoppingBag, Eye, X, RefreshCw, Star, Info, TrendingUp, Search, LogOut, Mail, Lock, ShieldAlert,
-  Menu, Shield
+  Menu, Shield, Download, FileText, Database
 } from 'lucide-react';
 import { Product, Category, Order, User, OrderStatus, ContactMessage } from '../types';
+import { convertProductsToCSV, convertProductsToMerchantXML, downloadFile } from '../utils/productExporter';
 // Gmail manager removed specifically for isolated admin portal
 
 interface AdminDashboardProps {
@@ -1194,6 +1195,60 @@ export default function AdminDashboard({
       {activeTab === 'products' && (
         <div className="rounded-2xl border border-amber-200/60 bg-white p-6 shadow-xs animate-fade-in">
           
+          {/* Linked Product Files Export & Synchronization Panel */}
+          <div className="mb-6 p-4 rounded-xl border border-amber-150 bg-gradient-to-r from-amber-50/40 to-stone-50/50 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+            <div className="flex items-start space-x-3">
+              <div className="p-2 rounded-lg bg-emerald-150 text-emerald-800 mt-0.5 shrink-0">
+                <Database className="h-4 w-4" />
+              </div>
+              <div>
+                <h4 className="font-bold text-emerald-950 text-xs">Liên kết dữ liệu &amp; Xuất danh mục sản phẩm</h4>
+                <p className="text-stone-500 text-[11px] mt-0.5 leading-relaxed">
+                  Tải xuống cấu trúc tệp liên kết thời gian thực trực tiếp từ hệ thống dữ liệu Fióre. Hỗ trợ đồng bộ hóa danh mục hoa tươi với các nền tảng quảng cáo và phần mềm kế toán.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto shrink-0 justify-end">
+              {/* Direct Excel CSV Export */}
+              <button
+                onClick={() => {
+                  const csvData = convertProductsToCSV(products, categories);
+                  downloadFile(csvData, 'fiore_products_catalog.csv', 'text/csv;charset=utf-8;');
+                }}
+                className="inline-flex items-center space-x-1.5 rounded-lg border border-amber-200 bg-white px-3 py-1.5 text-[11px] font-bold text-stone-700 hover:text-emerald-900 hover:border-emerald-700 transition cursor-pointer shadow-xs"
+              >
+                <FileText className="h-3.5 w-3.5 text-amber-600" />
+                <span>Xuất Excel (.csv)</span>
+              </button>
+
+              {/* Feed XML RSS Google Merchant Center */}
+              <button
+                onClick={() => {
+                  const siteUrl = window.location.origin;
+                  const xmlFeed = convertProductsToMerchantXML(products, categories, siteUrl);
+                  downloadFile(xmlFeed, 'google_merchant_feed.xml', 'application/xml;charset=utf-8;');
+                }}
+                className="inline-flex items-center space-x-1.5 rounded-lg border border-amber-200 bg-white px-3 py-1.5 text-[11px] font-bold text-stone-700 hover:text-emerald-900 hover:border-emerald-700 transition cursor-pointer shadow-xs"
+              >
+                <Download className="h-3.5 w-3.5 text-emerald-600" />
+                <span>XML RSS Feed</span>
+              </button>
+
+              {/* JSON raw backup */}
+              <button
+                onClick={() => {
+                  const jsonData = JSON.stringify(products, null, 2);
+                  downloadFile(jsonData, 'fiore_products_backup.json', 'application/json;charset=utf-8;');
+                }}
+                className="inline-flex items-center space-x-1.5 rounded-lg border border-amber-200 bg-white px-3 py-1.5 text-[11px] font-bold text-stone-700 hover:text-emerald-900 hover:border-emerald-700 transition cursor-pointer shadow-xs"
+              >
+                <Database className="h-3.5 w-3.5 text-indigo-600" />
+                <span>Sao lưu tệp (.json)</span>
+              </button>
+            </div>
+          </div>
+
           {/* Header Action Tools */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3.5">
             <div className="relative flex-1 max-w-sm">
@@ -2063,7 +2118,35 @@ export default function AdminDashboard({
                   </select>
                 </div>
                 <div>
-                  <label className="block font-bold text-stone-500 uppercase tracking-wide mb-1">Đường dẫn ảnh bìa (URL) *</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-bold text-stone-500 uppercase tracking-wide text-xs">Ảnh bìa sản phẩm (URL) *</label>
+                    <label className="text-[10px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded cursor-pointer hover:bg-emerald-100 flex items-center space-x-0.5 transition">
+                      <Plus className="h-2.5 w-2.5" />
+                      <span>Tải ảnh từ máy</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            if (file.size > 2 * 1024 * 1024) {
+                              alert("Kích thước ảnh vượt quá 2MB. Vui lòng chọn ảnh nhỏ hơn.");
+                              return;
+                            }
+                            const reader = new FileReader();
+                            reader.onload = (evt) => {
+                              if (evt.target?.result) {
+                                setProdImage(evt.target.result as string);
+                                setImageLoadError(false);
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
                   <input
                     type="text"
                     required
@@ -2072,7 +2155,8 @@ export default function AdminDashboard({
                       setProdImage(e.target.value);
                       setImageLoadError(false);
                     }}
-                    className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700"
+                    placeholder="Dán liên kết URL hoặc chọn tải ảnh từ máy"
+                    className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700 text-xs"
                   />
                 </div>
               </div>
@@ -2214,18 +2298,47 @@ export default function AdminDashboard({
               </div>
 
                <div>
-                <label className="block font-bold text-stone-500 uppercase mb-1">Đường dẫn ảnh bìa danh mục *</label>
-                <input
-                  type="text"
-                  required
-                  value={catImage}
-                  onChange={(e) => {
-                    setCatImage(e.target.value);
-                    setCatImageLoadError(false);
-                  }}
-                  className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700"
-                />
-              </div>
+                 <div className="flex items-center justify-between mb-1">
+                   <label className="block font-bold text-stone-500 uppercase text-xs">Đường dẫn ảnh bìa danh mục (URL) *</label>
+                   <label className="text-[10px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded cursor-pointer hover:bg-emerald-100 flex items-center space-x-0.5 transition">
+                     <Plus className="h-2.5 w-2.5" />
+                     <span>Tải ảnh từ máy</span>
+                     <input
+                       type="file"
+                       accept="image/*"
+                       className="hidden"
+                       onChange={(e) => {
+                         const file = e.target.files?.[0];
+                         if (file) {
+                           if (file.size > 2 * 1024 * 1024) {
+                             alert("Kích thước ảnh vượt quá 2MB. Vui lòng chọn ảnh nhỏ hơn.");
+                             return;
+                           }
+                           const reader = new FileReader();
+                           reader.onload = (evt) => {
+                             if (evt.target?.result) {
+                               setCatImage(evt.target.result as string);
+                               setCatImageLoadError(false);
+                             }
+                           };
+                           reader.readAsDataURL(file);
+                         }
+                       }}
+                     />
+                   </label>
+                 </div>
+                 <input
+                   type="text"
+                   required
+                   value={catImage}
+                   onChange={(e) => {
+                     setCatImage(e.target.value);
+                     setCatImageLoadError(false);
+                   }}
+                   placeholder="Dán liên kết URL hoặc chọn tải ảnh từ máy"
+                   className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700 text-xs"
+                 />
+               </div>
 
               {/* LIVE CATEGORY IMAGE PREVIEW SECTION */}
               <div className="rounded-xl border border-dashed border-amber-200 bg-stone-50 p-3 flex flex-col items-center">

@@ -611,6 +611,14 @@ export default function App() {
     return products.filter(p => p.categoryId === selectedProduct.categoryId && p.id !== selectedProduct.id);
   }, [products, selectedProduct]);
 
+  // Real-time synchronization of cart items to always display the latest product details, tags, and images from the active database
+  const syncedCartItems = useMemo(() => {
+    return cartItems.map((item) => {
+      const match = products.find((p) => p.id === item.product.id);
+      return match ? { ...item, product: match } : item;
+    });
+  }, [cartItems, products]);
+
   // --- CORE SYSTEM HANDLERS ---
   const handleAddToCart = (product: Product, quantityToAdd: number = 1) => {
     if (product.stock === 0) return;
@@ -1423,7 +1431,7 @@ export default function App() {
         {currentView === 'cart' && (
           <div className="animate-fade-in">
             <CartView
-              cartItems={cartItems}
+              cartItems={syncedCartItems}
               onUpdateQuantity={handleUpdateCartQuantity}
               onRemoveItem={handleRemoveCartItem}
               onClearCart={handleClearCart}
@@ -1443,7 +1451,7 @@ export default function App() {
         {currentView === 'checkout' && (
           <div className="animate-fade-in">
             <CheckoutView
-              cartItems={cartItems}
+              cartItems={syncedCartItems}
               defaultUserEmail={currentUser ? currentUser.email : ''}
               onPlaceOrder={handlePlaceOrder}
               onNavigate={(v) => {
