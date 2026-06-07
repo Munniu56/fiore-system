@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Flower, Search, ShoppingBag, User, Settings, ShoppingCart, LogOut, CheckCircle, Menu, X } from 'lucide-react';
+import { Flower, Search, ShoppingBag, User, Settings, ShoppingCart, LogOut, CheckCircle, Menu, X, Shield } from 'lucide-react';
 import { User as UserType } from '../types';
 import brandLogoHeader from '../assets/images/logo_white_bg_1780554592404.png';
 
@@ -333,6 +333,21 @@ export default function Header({
                 Đơn Hàng Của Tôi
               </button>
             )}
+            
+            <button
+              onClick={() => {
+                onNavigate('admin');
+                setShowMobileMenu(false);
+              }}
+              className="w-full rounded-lg px-4 py-2.5 text-left text-sm font-semibold text-rose-700 bg-rose-50/30 hover:bg-rose-50 transition flex items-center justify-between"
+              id="header-mobile-admin-btn"
+            >
+              <span className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-rose-500" />
+                Cổng Quản Trị Admin
+              </span>
+              <span className="text-[9px] bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded font-bold uppercase">Hệ thống</span>
+            </button>
           </nav>
         </div>
       )}

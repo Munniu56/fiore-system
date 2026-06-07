@@ -202,6 +202,9 @@ export default function App() {
   const [currentRole, setCurrentRole] = useState<'customer' | 'admin'>('customer');
   const [currentView, setCurrentView] = useState<string>('home');
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('fiore_admin_authenticated') === 'true';
+  });
   
   const [contacts, setContacts] = useState<ContactMessage[]>(() => {
     if (typeof window === 'undefined') return [];
@@ -251,34 +254,86 @@ export default function App() {
   // Handle storage changes & periodic polling across page instances/actions (e.g. for sandboxed preview systems)
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'fiore_contacts') {
-        const saved = localStorage.getItem('fiore_contacts');
-        if (saved) {
-          try {
+      try {
+        if (e.key === 'fiore_contacts') {
+          const saved = localStorage.getItem('fiore_contacts');
+          if (saved) {
             const parsed = JSON.parse(saved);
-            if (JSON.stringify(parsed) !== JSON.stringify(contacts)) {
-              setContacts(parsed);
-            }
-          } catch (err) {
-            console.error('Error synchronizing contacts storage event', err);
+            if (JSON.stringify(parsed) !== JSON.stringify(contacts)) setContacts(parsed);
           }
         }
+        if (e.key === 'fiore_products') {
+          const saved = localStorage.getItem('fiore_products');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (JSON.stringify(parsed) !== JSON.stringify(products)) setProducts(parsed);
+          }
+        }
+        if (e.key === 'fiore_categories') {
+          const saved = localStorage.getItem('fiore_categories');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (JSON.stringify(parsed) !== JSON.stringify(categories)) setCategories(parsed);
+          }
+        }
+        if (e.key === 'fiore_orders') {
+          const saved = localStorage.getItem('fiore_orders');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (JSON.stringify(parsed) !== JSON.stringify(orders)) setOrders(parsed);
+          }
+        }
+        if (e.key === 'fiore_users') {
+          const saved = localStorage.getItem('fiore_users');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (JSON.stringify(parsed) !== JSON.stringify(users)) setUsers(parsed);
+          }
+        }
+        if (e.key === 'fiore_admin_authenticated') {
+          const isAuth = localStorage.getItem('fiore_admin_authenticated') === 'true';
+          if (isAuth !== isAdminAuthenticated) setIsAdminAuthenticated(isAuth);
+        }
+      } catch (err) {
+        console.error('Error synchronizing storage event', err);
       }
     };
     window.addEventListener('storage', handleStorageChange);
 
     // Periodic poller fallback
     const interval = setInterval(() => {
-      const saved = localStorage.getItem('fiore_contacts');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (JSON.stringify(parsed) !== JSON.stringify(contacts)) {
-            setContacts(parsed);
-          }
-        } catch (err) {
-          console.error('Error polling contacts in background', err);
+      try {
+        const savedContacts = localStorage.getItem('fiore_contacts');
+        if (savedContacts) {
+          const parsed = JSON.parse(savedContacts);
+          if (JSON.stringify(parsed) !== JSON.stringify(contacts)) setContacts(parsed);
         }
+        const savedProducts = localStorage.getItem('fiore_products');
+        if (savedProducts) {
+          const parsed = JSON.parse(savedProducts);
+          if (JSON.stringify(parsed) !== JSON.stringify(products)) setProducts(parsed);
+        }
+        const savedCategories = localStorage.getItem('fiore_categories');
+        if (savedCategories) {
+          const parsed = JSON.parse(savedCategories);
+          if (JSON.stringify(parsed) !== JSON.stringify(categories)) setCategories(parsed);
+        }
+        const savedOrders = localStorage.getItem('fiore_orders');
+        if (savedOrders) {
+          const parsed = JSON.parse(savedOrders);
+          if (JSON.stringify(parsed) !== JSON.stringify(orders)) setOrders(parsed);
+        }
+        const savedUsers = localStorage.getItem('fiore_users');
+        if (savedUsers) {
+          const parsed = JSON.parse(savedUsers);
+          if (JSON.stringify(parsed) !== JSON.stringify(users)) setUsers(parsed);
+        }
+        const isAuth = localStorage.getItem('fiore_admin_authenticated') === 'true';
+        if (isAuth !== isAdminAuthenticated) {
+          setIsAdminAuthenticated(isAuth);
+        }
+      } catch (err) {
+        console.error('Error polling storage in background', err);
       }
     }, 1500);
 
@@ -286,10 +341,7 @@ export default function App() {
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
     };
-  }, [contacts]);
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem('fiore_admin_authenticated') === 'true';
-  });
+  }, [contacts, products, categories, orders, users, isAdminAuthenticated]);
 
   const [gmailUser, setGmailUser] = useState<any>(null);
   const [gmailToken, setGmailToken] = useState<string | null>(() => {
@@ -1340,8 +1392,12 @@ export default function App() {
               onLogout={handleUserLogout}
               onUpdateProfile={handleProfileUpdate}
               onNavigate={(v) => {
-                setCurrentView(v);
-                window.scrollTo({ top: 0, behavior: 'instant' });
+                if (v === 'admin') {
+                  navigate('/admin');
+                } else {
+                  setCurrentView(v);
+                  window.scrollTo({ top: 0, behavior: 'instant' });
+                }
               }}
             />
           </div>

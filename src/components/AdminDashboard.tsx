@@ -7,7 +7,8 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { 
   BarChart2, Gift, DollarSign, Package, Users, Plus, Edit2, 
-  Trash2, Layers, Check, ShoppingBag, Eye, X, RefreshCw, Star, Info, TrendingUp, Search, LogOut, Mail, Lock, ShieldAlert
+  Trash2, Layers, Check, ShoppingBag, Eye, X, RefreshCw, Star, Info, TrendingUp, Search, LogOut, Mail, Lock, ShieldAlert,
+  Menu, Shield
 } from 'lucide-react';
 import { Product, Category, Order, User, OrderStatus, ContactMessage } from '../types';
 // Gmail manager removed specifically for isolated admin portal
@@ -49,6 +50,7 @@ export default function AdminDashboard({
 }: AdminDashboardProps) {
   
   const [activeTab, setActiveTab ] = useState<'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts'>('stats');
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const setContacts = onUpdateContacts;
 
   const handleTabChange = (tab: 'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts') => {
@@ -415,10 +417,130 @@ export default function AdminDashboard({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Mobile Control Bar and Hamburger Menu Toggle Block (< lg) */}
+      <div className="lg:hidden w-full bg-white border border-amber-200/60 rounded-2xl p-4 mb-4 flex flex-col gap-3 relative z-30 shadow-xs">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="bg-emerald-900 text-amber-400 h-9 w-9 rounded-xl flex items-center justify-center font-bold">
+              <Shield className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase font-mono font-bold tracking-wider text-stone-400">Không gian quản trị</p>
+              <h2 className="text-sm font-bold text-gray-800 font-serif flex items-center gap-1.5">
+                <span>Fióre Admin</span>
+                <span className="text-[9px] font-sans font-bold bg-amber-400 px-1.5 py-0.5 rounded text-emerald-950">
+                  {activeTab === 'stats' && 'Thống kê'}
+                  {activeTab === 'products' && 'Sản phẩm'}
+                  {activeTab === 'categories' && 'Danh mục'}
+                  {activeTab === 'orders' && 'Đơn hàng'}
+                  {activeTab === 'customers' && 'Khách hàng'}
+                  {activeTab === 'contacts' && 'Liên hệ'}
+                  {activeTab === 'security' && 'Bảo mật/MK'}
+                </span>
+              </h2>
+            </div>
+          </div>
+          
+          <button
+            onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 border border-amber-200/50 text-emerald-900 hover:bg-neutral-100 transition cursor-pointer shrink-0"
+            id="admin-mobile-nav-toggle-btn"
+          >
+            {isMobileNavOpen ? <X className="h-5.5 w-5.5" /> : <Menu className="h-5.5 w-5.5" />}
+          </button>
+        </div>
+
+        {/* Expanded Hamburger navigation options */}
+        {isMobileNavOpen && (
+          <div className="border-t border-amber-100 pt-3 mt-1 flex flex-col gap-1.5 animate-fade-in" id="admin-mobile-nav-options">
+            <button
+              onClick={() => { handleTabChange('stats'); setIsMobileNavOpen(false); }}
+              className={`w-full rounded-xl px-4 py-3 flex items-center text-xs font-semibold transition cursor-pointer ${
+                activeTab === 'stats' ? 'bg-emerald-100/60 text-emerald-950 font-bold' : 'text-stone-700 hover:bg-amber-100/40'
+              }`}
+            >
+              <BarChart2 className="mr-2.5 h-4 w-4 shrink-0" /> Báo cáo thống kê
+            </button>
+            <button
+              onClick={() => { handleTabChange('products'); setIsMobileNavOpen(false); }}
+              className={`w-full rounded-xl px-4 py-3 flex items-center text-xs font-semibold transition cursor-pointer ${
+                activeTab === 'products' ? 'bg-emerald-100/60 text-emerald-950 font-bold' : 'text-stone-700 hover:bg-amber-100/40'
+              }`}
+            >
+              <Package className="mr-2.5 h-4 w-4 shrink-0" /> Quản lý sản phẩm
+            </button>
+            <button
+              onClick={() => { handleTabChange('categories'); setIsMobileNavOpen(false); }}
+              className={`w-full rounded-xl px-4 py-3 flex items-center text-xs font-semibold transition cursor-pointer ${
+                activeTab === 'categories' ? 'bg-emerald-100/60 text-emerald-950 font-bold' : 'text-stone-700 hover:bg-amber-100/40'
+              }`}
+            >
+              <Layers className="mr-2.5 h-4 w-4 shrink-0" /> Quản lý danh mục
+            </button>
+            <button
+              onClick={() => { handleTabChange('orders'); setIsMobileNavOpen(false); }}
+              className={`w-full rounded-xl px-4 py-3 flex items-center justify-between text-xs font-semibold transition cursor-pointer ${
+                activeTab === 'orders' ? 'bg-emerald-100/60 text-emerald-950 font-bold' : 'text-stone-700 hover:bg-amber-100/40'
+              }`}
+            >
+              <div className="flex items-center">
+                <ShoppingBag className="mr-2.5 h-4 w-4 shrink-0" /> 
+                <span>Quản lý đơn hàng</span>
+              </div>
+              {(confirmedOrdersCount + paidOrdersCount + preparingOrdersCount) > 0 && (
+                <span className="px-1.5 py-0.5 text-[9px] bg-amber-500 text-emerald-950 rounded-full font-bold animate-pulse">{confirmedOrdersCount + paidOrdersCount + preparingOrdersCount}</span>
+              )}
+            </button>
+            <button
+              onClick={() => { handleTabChange('customers'); setIsMobileNavOpen(false); }}
+              className={`w-full rounded-xl px-4 py-3 flex items-center text-xs font-semibold transition cursor-pointer ${
+                activeTab === 'customers' ? 'bg-emerald-100/60 text-emerald-950 font-bold' : 'text-stone-700 hover:bg-amber-100/40'
+              }`}
+            >
+              <Users className="mr-2.5 h-4 w-4 shrink-0" /> Sổ khách hàng
+            </button>
+            <button
+              onClick={() => { handleTabChange('contacts'); setIsMobileNavOpen(false); }}
+              className={`w-full rounded-xl px-4 py-3 flex items-center justify-between text-xs font-semibold transition cursor-pointer ${
+                activeTab === 'contacts' ? 'bg-emerald-100/60 text-emerald-950 font-bold' : 'text-stone-700 hover:bg-amber-100/40'
+              }`}
+            >
+              <div className="flex items-center">
+                <Mail className="mr-2.5 h-4 w-4 shrink-0" />
+                <span>Liên hệ khách hàng</span>
+              </div>
+              {unreadContactsCount > 0 && (
+                <span className="px-1.5 py-0.5 text-[9px] bg-amber-500 text-emerald-950 rounded-full font-bold animate-pulse">{unreadContactsCount}</span>
+              )}
+            </button>
+            <button
+              onClick={() => { handleTabChange('security'); setIsMobileNavOpen(false); }}
+              className={`w-full rounded-xl px-4 py-3 flex items-center text-xs font-semibold transition cursor-pointer ${
+                activeTab === 'security' ? 'bg-emerald-100/60 text-emerald-950 font-bold' : 'text-stone-700 hover:bg-amber-100/40'
+              }`}
+            >
+              <Lock className="mr-2.5 h-4 w-4 shrink-0" /> Bảo mật & Mật khẩu
+            </button>
+            
+            {onAdminLogout && (
+              <div className="pt-2 border-t border-amber-100 mt-2">
+                <button
+                  onClick={() => { setIsMobileNavOpen(false); onAdminLogout(); }}
+                  className="w-full rounded-xl border border-red-200 bg-red-50/50 px-4 py-3 text-xs font-bold text-red-650 transition hover:bg-red-100 flex items-center justify-center space-x-1.5 cursor-pointer"
+                >
+                  <LogOut className="h-4 w-4 shrink-0" />
+                  <span>Đăng xuất hệ thống</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       <div className="flex flex-col lg:flex-row gap-8 items-start">
         
-        {/* Left Sticky Sidebar on Desktop, Responsive Wrapper on Mobile */}
-        <aside className="w-full lg:w-60 lg:shrink-0 lg:sticky lg:top-[76px] lg:h-[calc(100vh-110px)] flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-amber-200/60 pb-6 lg:pb-0 lg:pr-4 bg-[#FAF7F0] z-20">
+        {/* Left Sticky Sidebar on Desktop */}
+        <aside className="hidden lg:flex w-full lg:w-60 lg:shrink-0 lg:sticky lg:top-[76px] lg:h-[calc(100vh-110px)] flex-col justify-between lg:border-r border-amber-200/60 lg:pr-4 bg-[#FAF7F0] z-20">
           <div className="flex flex-col gap-5">
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -1235,7 +1357,8 @@ export default function AdminDashboard({
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Desktop view table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left text-xs divide-y divide-amber-200/40 table-fixed min-w-[900px] xl:min-w-full">
               <thead>
                 <tr className="bg-amber-50/40 text-stone-500 font-bold uppercase tracking-wider text-center align-middle">
@@ -1292,12 +1415,113 @@ export default function AdminDashboard({
                         <option value="completed">Hoàn tất</option>
                         <option value="cancelled">Đã hủy</option>
                       </select>
-                      {/* Gửi Mail button removed */}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card responsive view */}
+          <div className="block md:hidden space-y-4">
+            {filteredOrders.length === 0 ? (
+              <p className="text-center text-xs text-stone-400 py-6">Không tìm thấy đơn hàng phù hợp</p>
+            ) : (
+              filteredOrders.map((ord) => (
+                <div key={ord.id} className="rounded-xl border border-amber-200/50 bg-neutral-50/50 p-4 space-y-2.5 shadow-xs" id={`admin-order-card-${ord.id}`}>
+                  
+                  {/* Card Header: Order ID & Date */}
+                  <div className="flex items-center justify-between border-b border-amber-100 pb-2">
+                    <span className="font-mono font-bold text-xs text-emerald-950 bg-amber-100 px-2.5 py-0.5 rounded">
+                      #{ord.id}
+                    </span>
+                    <span className="text-[10px] text-stone-400 font-medium">
+                      {formatDateTime(ord.createdAt)}
+                    </span>
+                  </div>
+
+                  {/* Customer Information detail */}
+                  <div className="text-xs space-y-1">
+                    <p className="font-bold text-stone-800">
+                      Khách nhận: <span className="text-emerald-950 font-extrabold">{ord.recipientName}</span>
+                    </p>
+                    <p className="text-stone-605">
+                      SĐT nhận: <span className="font-semibold text-gray-800">{ord.recipientPhone}</span>
+                    </p>
+                    <p className="text-stone-500 leading-normal">
+                      Địa chỉ: <span className="font-medium text-gray-700">{ord.shippingAddress}</span>
+                    </p>
+                  </div>
+
+                  {/* Items list with calculations */}
+                  <div className="bg-white rounded-lg border border-pink-100/60 p-2.5 space-y-2">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Danh sách mẫu thiết kế</p>
+                    {ord.items.map((it, idx) => (
+                      <div key={idx} className="flex justify-between items-start text-xs border-b border-pink-50 last:border-b-0 pb-1.5 last:pb-0">
+                        <span className="truncate text-gray-800 max-w-[170px]" title={it.product.name}>
+                          {it.product.name}
+                        </span>
+                        <span className="text-stone-500 text-[11px] shrink-0 font-medium">
+                          x{it.quantity} - <span className="font-bold text-rose-700">{formatVND(it.product.price)}</span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Note / greetings */}
+                  {ord.note && (
+                    <div className="bg-rose-50/80 border border-rose-100/60 rounded-lg p-2.5 text-[11px] text-rose-800 leading-relaxed">
+                      <p className="font-bold mb-0.5">🎁 Lời chúc / Thiệp gửi kèm:</p>
+                      <p className="italic">"{ord.note}"</p>
+                    </div>
+                  )}
+
+                  {/* Pricing and status summary */}
+                  <div className="flex justify-between items-center text-xs pt-1">
+                    <div>
+                      <p className="text-[9px] text-stone-400 uppercase font-semibold tracking-wider">Tổng đơn hàng</p>
+                      <p className="font-black text-rose-700 text-[13.5px] mt-0.5">{formatVND(ord.totalAmount)}</p>
+                    </div>
+                    
+                    <div className="text-right space-y-1 bg-white border border-amber-100/40 p-1.5 rounded-lg">
+                      <span className={`inline-block px-2 py-0.5 text-[9px] font-extrabold rounded ${
+                        ord.paymentMethod === 'VNPAY'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                          : ord.paymentMethod === 'VISA'
+                            ? 'bg-blue-50 text-blue-600 border border-blue-100'
+                            : 'bg-amber-50 text-amber-700 border border-amber-100'
+                      }`}>
+                        {ord.paymentMethod || 'COD'}
+                      </span>
+                      <div>
+                        <span className={`inline-block px-2 py-0.5 text-[9px] font-bold rounded-full ${getStatusBadgeStyles(ord.status)}`}>
+                          {getStatusLabelText(ord.status)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Direct status selection actions */}
+                  <div className="pt-2.5 border-t border-amber-100">
+                    <label htmlFor={`update-status-select-mobile-${ord.id}`} className="block text-[10px] font-bold uppercase text-stone-400 mb-1">Cập nhật tiến trình đơn:</label>
+                    <select
+                      id={`update-status-select-mobile-${ord.id}`}
+                      value={ord.status}
+                      onChange={(e) => onUpdateOrderStatus(ord.id, e.target.value as OrderStatus)}
+                      className="w-full rounded-xl border border-amber-200 bg-white px-3.5 py-2.5 text-xs font-semibold outline-none text-emerald-950 focus:border-emerald-700 cursor-pointer min-h-[44px]"
+                    >
+                      <option value="confirmed">Đã xác nhận</option>
+                      <option value="paid">Đã thanh toán</option>
+                      <option value="preparing">Đang chuẩn bị hàng</option>
+                      <option value="shipping">Đang giao hàng</option>
+                      <option value="completed">Hoàn tất</option>
+                      <option value="cancelled">Đã hủy</option>
+                    </select>
+                  </div>
+
+                </div>
+              ))
+            )}
           </div>
 
         </div>
