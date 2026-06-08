@@ -46,7 +46,8 @@ import {
 
 import { Product, Category, CartItem, Order, User, OrderStatus, ContactMessage } from './types';
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES } from './data';
-import { Sparkles, Flower, Phone, Mail, Clock, MapPin, Heart, ArrowRight, Facebook, Instagram, Calendar, Star, FileText, Lock } from 'lucide-react';
+import { Sparkles, Flower, Phone, Mail, Clock, MapPin, Heart, ArrowRight, Facebook, Instagram, Calendar, Star, FileText, Lock, CheckCircle, ShoppingBag } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
   
@@ -111,6 +112,9 @@ export default function App() {
     const saved = localStorage.getItem('fiore_cart');
     return saved ? JSON.parse(saved) : [];
   });
+
+  const [cartToast, setCartToast] = useState<{ show: boolean; message: string; productName?: string; image?: string } | null>(null);
+  const toastTimeoutRef = React.useRef<any>(null);
 
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('fiore_current_user');
@@ -634,6 +638,21 @@ export default function App() {
       }
       return [...prev, { product, quantity: Math.min(quantityToAdd, product.stock) }];
     });
+
+    // Hiện thông báo bạn đã thêm sản phẩm vào giỏ hàng
+    setCartToast({
+      show: true,
+      message: 'Bạn đã thêm sản phẩm vào giỏ hàng',
+      productName: product.name,
+      image: product.image
+    });
+
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    toastTimeoutRef.current = setTimeout(() => {
+      setCartToast(null);
+    }, 3000);
   };
 
   const handleUpdateCartQuantity = (productId: string, newQty: number) => {
@@ -1728,6 +1747,50 @@ export default function App() {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
       />
+
+      {/* Floating Success Toast when adding to Card */}
+      <AnimatePresence>
+        {cartToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+            className="fixed bottom-6 right-6 z-[9999] flex max-w-sm items-center gap-3.5 rounded-2xl border border-emerald-100 bg-white p-4 shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
+            style={{ minWidth: '320px' }}
+          >
+            {cartToast.image ? (
+              <img
+                src={cartToast.image}
+                alt={cartToast.productName}
+                className="h-11 w-11 rounded-xl object-cover shadow-sm bg-stone-50"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 animate-pulse">
+                <CheckCircle className="h-5 w-5" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-gray-950 flex items-center gap-1.5">
+                <CheckCircle className="h-4 w-4 text-emerald-600 inline shrink-0" />
+                {cartToast.message}
+              </p>
+              {cartToast.productName && (
+                <p className="text-[11px] font-medium text-stone-500 mt-0.5 truncate max-w-[200px]">
+                  {cartToast.productName}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={() => setCartToast(null)}
+              className="text-stone-400 hover:text-stone-600 font-bold text-xs p-1 cursor-pointer transition-colors"
+            >
+              ✕
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
