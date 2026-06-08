@@ -1688,7 +1688,7 @@ export default function App() {
                 <h5 className="font-bold mb-1.5 uppercase tracking-wider text-[11px]" style={{ color: '#F4E6C8' }}>Kết nối với chúng tôi</h5>
                 <div className="flex items-center space-x-3.5 mt-1">
                   <a 
-                    href="https://www.facebook.com/profile.php?id=61590093366956" 
+                    href="https://www.facebook.com/fioreboutiqueflorist" 
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="transition-all duration-300 transform hover:scale-105"
@@ -1700,7 +1700,7 @@ export default function App() {
                     <Facebook className="h-[22px] w-[22px]" />
                   </a>
                   <a 
-                    href="https://www.instagram.com/fiore_floral1/?hl=en" 
+                    href="https://www.instagram.com/fiore_boutiqueflorist/?hl=en" 
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="transition-all duration-300 transform hover:scale-105"
