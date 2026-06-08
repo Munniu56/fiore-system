@@ -82,6 +82,23 @@
         "repliedAt": { "type": "string" }
       },
       "required": ["id", "fullName", "email", "message", "createdAt", "status"]
+    },
+    "Coupon": {
+      "title": "Coupon",
+      "description": "Discount code / coupon",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "code": { "type": "string" },
+        "description": { "type": "string" },
+        "discountType": { "type": "string" },
+        "discountValue": { "type": "number" },
+        "minOrderValue": { "type": "number" },
+        "maxDiscount": { "type": "number" },
+        "expiryDate": { "type": "string" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["id", "code", "description", "discountType", "discountValue", "minOrderValue", "isActive"]
     }
   },
   "firestore": {
@@ -104,6 +121,10 @@
     "contacts/{id}": {
       "schema": "ContactMessage",
       "description": "Contact messages collection"
+    },
+    "coupons/{id}": {
+      "schema": "Coupon",
+      "description": "Discount coupons collection"
     }
   }
 }

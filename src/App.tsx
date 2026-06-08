@@ -503,6 +503,8 @@ export default function App() {
                   paymentStatus: 'Paid',
                   status: 'paid',
                   createdAt: new Date().toISOString(),
+                  couponCode: pending.couponCode || null,
+                  discountAmount: pending.discountAmount || null,
                 };
 
                 // Deduct inventory stocks
@@ -701,11 +703,14 @@ export default function App() {
     shippingAddress: string;
     note: string;
     paymentMethod: 'COD' | 'VISA' | 'VNPAY';
+    totalAmount?: number;
+    couponCode?: string;
+    discountAmount?: number;
   }) => {
     const sub = cartItems.reduce((acc, curr) => acc + curr.product.price * curr.quantity, 0);
     const shipping = 30000;
     const discount = sub > 1000000 ? 50000 : 0;
-    const finalPrice = sub + shipping - discount;
+    const finalPrice = recipientData.totalAmount !== undefined ? recipientData.totalAmount : (sub + shipping - discount);
 
     const newOrder: Order = {
       id: recipientData.id || `ORD-${Math.floor(100 + Math.random() * 900)}`,
@@ -720,7 +725,9 @@ export default function App() {
       paymentMethod: recipientData.paymentMethod,
       paymentStatus: recipientData.paymentMethod === 'COD' ? 'Unpaid' : 'Paid',
       status: recipientData.paymentMethod === 'COD' ? 'confirmed' : 'paid',
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      couponCode: recipientData.couponCode,
+      discountAmount: recipientData.discountAmount
     };
 
     // Deduct actual products inventory stocks in Firestore

@@ -41,5 +41,10 @@ service cloud.firestore {
     match /contacts/{contactId} {
       allow read, write: if true; // Guests can leave contact message, admin can read/update
     }
+
+    // Coupons Rules
+    match /coupons/{couponId} {
+      allow read, write: if true; // Clients can validate coupons, admin can manage
+    }
   }
 }

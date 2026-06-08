@@ -50,6 +50,8 @@ export interface Order {
   vnp_PayDate?: string;
   vnp_BankCode?: string;
   vnp_Amount?: string;
+  couponCode?: string;
+  discountAmount?: number;
 }
 
 export interface User {
@@ -82,5 +84,17 @@ export interface ContactMessage {
   status: 'new' | 'read' | 'replied';
   replyDetail?: string;
   repliedAt?: string;
+}
+
+export interface Coupon {
+  id: string; // The coupon code string itself (e.g., FIORE10)
+  code: string;
+  description: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number; // e.g., 10 (for 10%) or 50000 (for 50k)
+  minOrderValue: number; // e.g., 200000 VND
+  maxDiscount?: number; // maximum discount limit for percentage
+  expiryDate?: string; // YYYY-MM-DD
+  isActive: boolean;
 }
 

@@ -10,7 +10,8 @@ import {
   Trash2, Layers, Check, ShoppingBag, Eye, X, RefreshCw, Star, Info, TrendingUp, Search, LogOut, Mail, Lock, ShieldAlert,
   Menu, Shield, Download, FileText, Database
 } from 'lucide-react';
-import { Product, Category, Order, User, OrderStatus, ContactMessage } from '../types';
+import { Product, Category, Order, User, OrderStatus, ContactMessage, Coupon } from '../types';
+import { subscribeCoupons, saveCoupon, removeCoupon } from '../firebase';
 import { convertProductsToCSV, convertProductsToMerchantXML, downloadFile } from '../utils/productExporter';
 // Gmail manager removed specifically for isolated admin portal
 
@@ -50,11 +51,11 @@ export default function AdminDashboard({
   onAdminLogout,
 }: AdminDashboardProps) {
   
-  const [activeTab, setActiveTab ] = useState<'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts'>('stats');
+  const [activeTab, setActiveTab ] = useState<'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts' | 'coupons'>('stats');
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const setContacts = onUpdateContacts;
 
-  const handleTabChange = (tab: 'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts') => {
+  const handleTabChange = (tab: 'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts' | 'coupons') => {
     setActiveTab(tab);
     if (tab === 'contacts') {
       const saved = localStorage.getItem('fiore_contacts');
@@ -144,6 +145,78 @@ export default function AdminDashboard({
   const [prodSearch, setProdSearch] = useState('');
   const [orderSearch, setOrderSearch] = useState('');
   const [hoveredChartIdx, setHoveredChartIdx] = useState<number | null>(null);
+
+  // --- COUPON/PROMOTION MANAGEMENT STATES ---
+  const [adminCoupons, setAdminCoupons] = useState<Coupon[]>([]);
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [editCouponItem, setEditCouponItem] = useState<Coupon | null>(null);
+
+  // Form states
+  const [couponCode, setCouponCode] = useState('');
+  const [couponDesc, setCouponDesc] = useState('');
+  const [couponType, setCouponType] = useState<'percentage' | 'fixed'>('percentage');
+  const [couponValue, setCouponValue] = useState(1);
+  const [couponMinOrder, setCouponMinOrder] = useState(0);
+  const [couponMaxDiscount, setCouponMaxDiscount] = useState<number | undefined>(undefined);
+  const [couponIsActive, setCouponIsActive] = useState(true);
+
+  React.useEffect(() => {
+    const unsubscribe = subscribeCoupons((loaded) => {
+      setAdminCoupons(loaded);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleOpenCouponModal = (c?: Coupon) => {
+    if (c) {
+      setEditCouponItem(c);
+      setCouponCode(c.code);
+      setCouponDesc(c.description);
+      setCouponType(c.discountType);
+      setCouponValue(c.discountValue);
+      setCouponMinOrder(c.minOrderValue);
+      setCouponMaxDiscount(c.maxDiscount || undefined);
+      setCouponIsActive(c.isActive);
+    } else {
+      setEditCouponItem(null);
+      setCouponCode('');
+      setCouponDesc('');
+      setCouponType('percentage');
+      setCouponValue(10);
+      setCouponMinOrder(0);
+      setCouponMaxDiscount(undefined);
+      setCouponIsActive(true);
+    }
+    setShowCouponModal(true);
+  };
+
+  const handleSaveCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!couponCode.trim()) {
+      alert('Vui lòng nhập mã ưu đãi!');
+      return;
+    }
+
+    const payload: Coupon = {
+      id: editCouponItem?.id || `cpn-${Date.now()}`,
+      code: couponCode.trim().toUpperCase(),
+      description: couponDesc.trim(),
+      discountType: couponType,
+      discountValue: Number(couponValue),
+      minOrderValue: Number(couponMinOrder),
+      maxDiscount: couponMaxDiscount ? Number(couponMaxDiscount) : null,
+      isActive: couponIsActive,
+    };
+
+    await saveCoupon(payload);
+    setShowCouponModal(false);
+  };
+
+  const handleDeleteCoupon = async (id: string) => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa mã giảm giá này khỏi hệ thống?')) {
+      await removeCoupon(id);
+    }
+  };
 
   const formatVND = (price: number) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -441,6 +514,7 @@ export default function AdminDashboard({
                   {activeTab === 'categories' && 'Danh mục'}
                   {activeTab === 'orders' && 'Đơn hàng'}
                   {activeTab === 'customers' && 'Khách hàng'}
+                  {activeTab === 'coupons' && 'Ưu đãi & Khuyến mãi'}
                   {activeTab === 'contacts' && 'Liên hệ'}
                   {activeTab === 'security' && 'Bảo mật/MK'}
                 </span>
@@ -497,6 +571,14 @@ export default function AdminDashboard({
               {(confirmedOrdersCount + paidOrdersCount + preparingOrdersCount) > 0 && (
                 <span className="px-1.5 py-0.5 text-[9px] bg-amber-500 text-emerald-950 rounded-full font-bold animate-pulse">{confirmedOrdersCount + paidOrdersCount + preparingOrdersCount}</span>
               )}
+            </button>
+            <button
+              onClick={() => { handleTabChange('coupons'); setIsMobileNavOpen(false); }}
+              className={`w-full rounded-xl px-4 py-3 flex items-center text-xs font-semibold transition cursor-pointer ${
+                activeTab === 'coupons' ? 'bg-emerald-100/60 text-emerald-950 font-bold' : 'text-stone-700 hover:bg-amber-100/40'
+              }`}
+            >
+              <Gift className="mr-2.5 h-4 w-4 shrink-0 text-rose-500" /> Quản lý ưu đãi
             </button>
             <button
               onClick={() => { handleTabChange('customers'); setIsMobileNavOpen(false); }}
@@ -598,6 +680,15 @@ export default function AdminDashboard({
                 {(confirmedOrdersCount + paidOrdersCount + preparingOrdersCount) > 0 && (
                   <span className="px-1.5 py-0.5 text-[9px] bg-amber-500 text-emerald-950 rounded-full font-bold animate-pulse">{confirmedOrdersCount + paidOrdersCount + preparingOrdersCount}</span>
                 )}
+              </button>
+              <button
+                onClick={() => handleTabChange('coupons')}
+                className={`w-full rounded-lg px-3.5 py-2 flex items-center transition cursor-pointer ${
+                  activeTab === 'coupons' ? 'bg-emerald-100/60 text-emerald-950 font-bold shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
+                }`}
+                id="admin-coupons-tab"
+              >
+                <Gift className="mr-2 h-4 w-4 shrink-0 text-rose-500" /> Quản lý ưu đãi
               </button>
               <button
                 onClick={() => handleTabChange('customers')}
@@ -2259,6 +2350,105 @@ export default function AdminDashboard({
         </div>
       )}
 
+      {/* --- TAB 8: UNIFIED PROMOTIONS & COUPONS MANAGEMENT (QUẢN LÝ ƯU ĐÃI) --- */}
+      {activeTab === 'coupons' && (
+        <div className="rounded-2xl border border-amber-200/60 bg-white p-6 shadow-xs animate-fade-in space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-amber-100 pb-4 gap-4">
+            <div>
+              <h3 className="font-serif text-lg font-bold text-emerald-950 flex items-center gap-2">
+                <Gift className="text-emerald-800 h-5 w-5 shrink-0 animate-bounce" />
+                <span>Quản Lý Ưu Đãi & Khuyến Mãi</span>
+              </h3>
+              <p className="text-xs text-stone-400 mt-1">
+                Tạo mã giảm giá theo % hoặc số tiền cố định, cấu hình điều kiện trị giá đơn hàng tối thiểu cho khách mua hoa
+              </p>
+            </div>
+            <button
+              onClick={() => handleOpenCouponModal()}
+              className="rounded-full bg-emerald-800 text-white font-bold px-5 py-2 text-xs hover:bg-emerald-900 transition flex items-center justify-center gap-1.5 shadow-md shrink-0 cursor-pointer"
+            >
+              <Plus className="h-4 w-4" /> Thêm Mã Khuyến Mãi
+            </button>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-stone-150">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-stone-50 text-stone-500 font-bold border-b border-stone-200 uppercase tracking-wider">
+                  <th className="p-4">Mã ưu đãi</th>
+                  <th className="p-4">Mô tả chương trình</th>
+                  <th className="p-4">Hình thức giảm</th>
+                  <th className="p-4">Giá trị giảm</th>
+                  <th className="p-4">Đơn hàng tối thiểu</th>
+                  <th className="p-4">Giảm tối đa</th>
+                  <th className="p-4 text-center">Trạng thái</th>
+                  <th className="p-4 text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-stone-100 font-medium text-gray-700">
+                {adminCoupons.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="p-8 text-center text-gray-400 font-medium">
+                      Chưa có mã giảm giá nào được lưu trong hệ thống. Hãy nhấp "Thêm Mã Khuyến Mãi" để bắt đầu!
+                    </td>
+                  </tr>
+                ) : (
+                  adminCoupons.map((c) => (
+                    <tr key={c.id} className="hover:bg-amber-50/20 transition">
+                      <td className="p-4 font-bold text-sm text-emerald-900 tracking-wide select-all uppercase">
+                        <span className="bg-emerald-50 text-emerald-850 px-2.5 py-1 rounded-md border border-emerald-105 font-mono">
+                          {c.code}
+                        </span>
+                      </td>
+                      <td className="p-4 max-w-xs truncate">{c.description}</td>
+                      <td className="p-4 font-semibold">
+                        {c.discountType === 'percentage' ? (
+                          <span className="text-blue-600 font-bold">Phần trăm (%)</span>
+                        ) : (
+                          <span className="text-indigo-600 font-bold">Số tiền cố định</span>
+                        )}
+                      </td>
+                      <td className="p-4 font-bold text-emerald-800">
+                        {c.discountType === 'percentage' ? `${c.discountValue}%` : formatVND(c.discountValue)}
+                      </td>
+                      <td className="p-4 text-gray-550 font-semibold">{formatVND(c.minOrderValue)}</td>
+                      <td className="p-4 text-gray-550 font-mono">
+                        {c.maxDiscount ? formatVND(c.maxDiscount) : 'Không giới hạn'}
+                      </td>
+                      <td className="p-4 text-center">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                          c.isActive
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200/20'
+                            : 'bg-red-50 text-red-700 border border-red-150/20'
+                        }`}>
+                          {c.isActive ? 'Đang kích hoạt' : 'Tạm khóa'}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right space-x-1.5 whitespace-nowrap">
+                        <button
+                          onClick={() => handleOpenCouponModal(c)}
+                          className="p-1.5 text-stone-500 hover:text-emerald-800 transition cursor-pointer"
+                          title="Chỉnh sửa mã"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCoupon(c.id)}
+                          className="p-1.5 text-stone-450 hover:text-red-600 transition cursor-pointer"
+                          title="Xóa mã"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
         </div>
       </div>
 
@@ -2386,6 +2576,140 @@ export default function AdminDashboard({
                   className="rounded-full bg-emerald-800 px-5 py-1.5 text-white font-bold hover:bg-emerald-900 cursor-pointer"
                 >
                   {editCatItem ? 'Cập Nhật' : 'Thêm Mới'}
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- COUPON EDIT/CREATE MODAL --- */}
+      {showCouponModal && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/55 p-4 backdrop-blur-xs animate-fade-in">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl border border-pink-100">
+            <div className="flex items-center justify-between border-b border-pink-50 pb-3 mb-4">
+              <h3 className="font-serif text-lg font-bold text-emerald-950 flex items-center gap-1.5">
+                <Gift className="h-5 w-5 text-rose-500 animate-pulse" />
+                <span>{editCouponItem ? 'Cập Nhật Mã Ưu Đãi' : 'Thêm Mới Mã Ưu Đãi'}</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowCouponModal(false)}
+                className="rounded-full p-1 text-gray-400 hover:bg-neutral-100 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCoupon} className="space-y-4 text-xs font-semibold text-stone-600">
+              <div>
+                <label className="block text-stone-500 uppercase font-bold mb-1">Mã Ưu Đãi (Mã viết liền không dấu) *</label>
+                <input
+                  type="text"
+                  required
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase().replace(/\s/g, ''))}
+                  placeholder="Ví dụ: YEUTHUONG, TET2026..."
+                  className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700 uppercase font-bold text-emerald-950 font-mono tracking-wider"
+                />
+              </div>
+
+              <div>
+                <label className="block text-stone-500 uppercase font-bold mb-1">Mô tả chương trình ưu đãi *</label>
+                <input
+                  type="text"
+                  required
+                  value={couponDesc}
+                  onChange={(e) => setCouponDesc(e.target.value)}
+                  placeholder="Ví dụ: Giảm 10% cho đơn hàng đầu tiên..."
+                  className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-stone-500 uppercase font-bold mb-1">Hình thức áp dụng</label>
+                  <select
+                    value={couponType}
+                    onChange={(e) => {
+                      const type = e.target.value as 'percentage' | 'fixed';
+                      setCouponType(type);
+                      setCouponValue(type === 'percentage' ? 10 : 50000);
+                    }}
+                    className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700 bg-white"
+                  >
+                    <option value="percentage">Phần trăm (%)</option>
+                    <option value="fixed">Số tiền cố định (VND)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-stone-500 uppercase font-bold mb-1">Giá trị giảm *</label>
+                  <input
+                    type="number"
+                    min={1}
+                    required
+                    value={couponValue}
+                    onChange={(e) => setCouponValue(Math.max(1, Number(e.target.value)))}
+                    className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700 font-bold"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-stone-500 uppercase font-bold mb-1">Đơn tối thiểu (VND)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={couponMinOrder}
+                    onChange={(e) => setCouponMinOrder(Math.max(0, Number(e.target.value)))}
+                    className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700 font-semibold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-stone-500 uppercase font-bold mb-1">Giảm tối đa (VND)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    placeholder="Không giới hạn"
+                    value={couponMaxDiscount || ''}
+                    disabled={couponType === 'fixed'}
+                    onChange={(e) => setCouponMaxDiscount(e.target.value ? Math.max(0, Number(e.target.value)) : undefined)}
+                    className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700 font-semibold disabled:bg-gray-100 disabled:text-gray-400"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 py-1.5">
+                <input
+                  type="checkbox"
+                  id="coupon-active-checkbox"
+                  checked={couponIsActive}
+                  onChange={(e) => setCouponIsActive(e.target.checked)}
+                  className="h-4 w-4 text-emerald-800 rounded border-amber-200 focus:ring-emerald-700 bg-white"
+                />
+                <label htmlFor="coupon-active-checkbox" className="text-xs font-bold text-stone-700 cursor-pointer select-none">
+                  Kích hoạt mã giảm giá này ngay lập tức
+                </label>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4 border-t border-amber-100">
+                <button
+                  type="button"
+                  onClick={() => setShowCouponModal(false)}
+                  className="rounded-full px-4 py-1.5 border text-gray-500 hover:bg-neutral-50"
+                >
+                  Thoát
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-full bg-emerald-800 px-5 py-1.5 text-white font-bold hover:bg-emerald-900 cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Check className="h-4.5 w-4.5" />
+                  <span>{editCouponItem ? 'Cập Nhật' : 'Lưu Lại'}</span>
                 </button>
               </div>
 

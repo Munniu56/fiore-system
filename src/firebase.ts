@@ -15,7 +15,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import firebaseConfig from "../firebase-applet-config.json";
-import { Product, Category, Order, User, ContactMessage } from "./types";
+import { Product, Category, Order, User, ContactMessage, Coupon } from "./types";
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 export const db = getFirestore(
@@ -270,6 +270,38 @@ export async function seedDatabaseIfNeeded(
       });
       await batch.commit();
     }
+
+    // Synchronize coupons with the exact promo rules requested by the user
+    try {
+      const cVip: Coupon = {
+        id: "KHACHVIP",
+        code: "KHACHVIP",
+        description: "Ưu đãi khách hàng VIP giảm ngay 100.000đ",
+        discountType: "fixed",
+        discountValue: 100000,
+        minOrderValue: 3000000,
+        isActive: true
+      };
+      const cYeuThuong: Coupon = {
+        id: "YEUTHUONG",
+        code: "YEUTHUONG",
+        description: "Giảm trực tiếp 20.000đ cho đơn từ 500.000đ",
+        discountType: "fixed",
+        discountValue: 20000,
+        minOrderValue: 500000,
+        isActive: true
+      };
+
+      const syncBatch = writeBatch(db);
+      syncBatch.delete(doc(db, "coupons", "FIORE10"));
+      syncBatch.delete(doc(db, "coupons", "XUAN2026"));
+      syncBatch.set(doc(db, "coupons", "KHACHVIP"), cVip);
+      syncBatch.set(doc(db, "coupons", "YEUTHUONG"), cYeuThuong);
+      await syncBatch.commit();
+      console.log("Synchronized promo coupons in Firestore successfully!");
+    } catch (syncErr) {
+      console.error("Error synchronizing coupons in seed check:", syncErr);
+    }
   } catch (error) {
     console.error("Error seeding Firestore database:", error);
   }
@@ -481,6 +513,47 @@ export async function removeUser(userId: string) {
   const path = `users/${userId}`;
   try {
     await deleteDoc(doc(db, "users", userId));
+  } catch (err) {
+    handleFirestoreError(err, OperationType.DELETE, path);
+  }
+}
+
+// Coupons Async Firestore CRUD & Subscribe
+export function subscribeCoupons(
+  onChange: (coupons: Coupon[]) => void,
+  onError?: (err: any) => void,
+) {
+  const collectionRef = collection(db, "coupons");
+  return onSnapshot(
+    collectionRef,
+    (snapshot) => {
+      const list: Coupon[] = [];
+      snapshot.forEach((doc) => {
+        list.push(doc.data() as Coupon);
+      });
+      list.sort((a, b) => a.code.localeCompare(b.code));
+      onChange(list);
+    },
+    (err) => {
+      if (onError) onError(err);
+      handleFirestoreError(err, OperationType.GET, "coupons");
+    },
+  );
+}
+
+export async function saveCoupon(coupon: Coupon) {
+  const path = `coupons/${coupon.id}`;
+  try {
+    await setDoc(doc(db, "coupons", coupon.id), coupon);
+  } catch (err) {
+    handleFirestoreError(err, OperationType.WRITE, path);
+  }
+}
+
+export async function removeCoupon(couponId: string) {
+  const path = `coupons/${couponId}`;
+  try {
+    await deleteDoc(doc(db, "coupons", couponId));
   } catch (err) {
     handleFirestoreError(err, OperationType.DELETE, path);
   }
