@@ -43,11 +43,181 @@ export default function AccountAuth({
   const [showBypassPassword, setShowBypassPassword] = useState(false);
   const [adminBypassError, setAdminBypassError] = useState<string | null>(null);
 
+  // Forgot Password feature states
+  const [isForgotPasswordMode, setIsForgotPasswordMode] = useState(false);
+  const [forgotStep, setForgotStep] = useState(1); // 1: Enter phone, 2: Enter code & new password
+  const [forgotPhone, setForgotPhone] = useState('');
+  const [forgotCode, setForgotCode] = useState('');
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showForgotNewPassword, setShowForgotNewPassword] = useState(false);
+  const [simulatedSMS, setSimulatedSMS] = useState<{ phone: string; code: string } | null>(null);
+
   const triggerNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
     setTimeout(() => {
       setNotification(null);
     }, 3500);
+  };
+
+  const handleSendForgotCode = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotPhone.trim()) {
+      triggerNotification('error', 'Vui lòng cung cấp số điện thoại đã đăng ký.');
+      return;
+    }
+
+    const savedAccountsStr = localStorage.getItem('fiore_accounts') || '[]';
+    let savedAccounts: Array<{ email: string; pass: string; user: UserType }> = JSON.parse(savedAccountsStr);
+
+    const cleanForgotPhone = forgotPhone.trim().replace(/[\s.-]/g, '');
+
+    // List of all known predefined system, sample, and bypass users
+    const systemUsers: UserType[] = [
+      {
+        id: 'usr-admin',
+        email: 'admin@fiore.vn',
+        name: 'Nghệ Nhân Fiore Admin',
+        phone: '0988666333',
+        address: '15 Lý Tự Trọng, Quận 1, TP. HCM',
+        isAdmin: true,
+      },
+      {
+        id: 'usr-demo',
+        email: 'demo@fiore.vn',
+        name: 'Lan Anh (Khách hàng mẫu)',
+        phone: '0901234567',
+        address: '124 Điện Biên Phủ, Quận Bình Thạnh, TP. HCM',
+        isAdmin: false,
+      },
+      {
+        id: 'usr-customer',
+        email: 'vananh@gmail.com',
+        name: 'Vân Anh (Khách VIP)',
+        phone: '0933555222',
+        address: '88 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. HCM',
+        isAdmin: false,
+      },
+      {
+        id: 'usr-0916044683',
+        email: 'khachhang0916044683@fiore.vn',
+        name: 'Lan Vy (Khách mẫu 0916044683)',
+        phone: '0916044683',
+        address: '124 Điện Biên Phủ, Quận Bình Thạnh, TP. HCM',
+        isAdmin: false,
+      }
+    ];
+
+    // Read additional registered users from fiore_users
+    const savedUsersStr = localStorage.getItem('fiore_users') || '[]';
+    const savedUsers: UserType[] = JSON.parse(savedUsersStr);
+
+    // Merge system users with other registered users to form full database lookup
+    const allKnownUsers = [...systemUsers];
+    savedUsers.forEach((usr) => {
+      const dbPhone = (usr.phone || '').trim().replace(/[\s.-]/g, '');
+      if (dbPhone && !allKnownUsers.some((x) => (x.phone || '').trim().replace(/[\s.-]/g, '') === dbPhone)) {
+        allKnownUsers.push(usr);
+      }
+    });
+
+    // Match input phone with any registered users
+    const matchedKnownUser = allKnownUsers.find((usr) => {
+      const uPhone = (usr.phone || '').trim().replace(/[\s.-]/g, '');
+      return uPhone === cleanForgotPhone && uPhone !== '';
+    });
+
+    // If matching registered user is located but does not have a credentials profile, seed them automatically
+    if (matchedKnownUser) {
+      const existsInAccounts = savedAccounts.some((acc) => {
+        const accPhone = (acc.user.phone || '').trim().replace(/[\s.-]/g, '');
+        return accPhone === cleanForgotPhone;
+      });
+
+      if (!existsInAccounts) {
+        savedAccounts.push({
+          email: matchedKnownUser.email,
+          pass: matchedKnownUser.isAdmin ? 'admin123' : 'customer123',
+          user: matchedKnownUser,
+        });
+        localStorage.setItem('fiore_accounts', JSON.stringify(savedAccounts));
+      }
+    }
+
+    const matchedAcc = savedAccounts.find(acc => {
+      const cleanAccPhone = (acc.user.phone || '').trim().replace(/[\s.-]/g, '');
+      return cleanAccPhone === cleanForgotPhone && cleanAccPhone !== '';
+    });
+
+    if (matchedAcc) {
+      // Generate secure random 6-digit number
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      setGeneratedCode(code);
+      setSimulatedSMS({ phone: forgotPhone.trim(), code });
+      setForgotStep(2);
+      triggerNotification('success', 'Mã xác nhận bảo mật đã được gửi tới số điện thoại của bạn.');
+    } else {
+      triggerNotification('error', 'Số điện thoại này chưa được đăng ký trên hệ thống. Quý khách vui lòng kiểm tra lại.');
+    }
+  };
+
+  const handleVerifyAndResetPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (forgotCode !== generatedCode) {
+      triggerNotification('error', 'Mã xác nhận không đúng. Vui lòng kiểm tra lại.');
+      return;
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      triggerNotification('error', 'Mật khẩu mới phải chứa ít nhất 6 ký tự.');
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      triggerNotification('error', 'Mật khẩu xác nhận không chính xác.');
+      return;
+    }
+
+    const savedAccountsStr = localStorage.getItem('fiore_accounts') || '[]';
+    const savedAccounts: Array<{ email: string; pass: string; user: UserType }> = JSON.parse(savedAccountsStr);
+
+    const cleanForgotPhone = forgotPhone.trim().replace(/[\s.-]/g, '');
+    const updatedAccounts = savedAccounts.map((acc) => {
+      const cleanAccPhone = (acc.user.phone || '').trim().replace(/[\s.-]/g, '');
+      if (cleanAccPhone === cleanForgotPhone) {
+        return {
+          ...acc,
+          pass: newPassword, // Update the password and keep existing items unchanged
+        };
+      }
+      return acc;
+    });
+
+    localStorage.setItem('fiore_accounts', JSON.stringify(updatedAccounts));
+
+    // Retrieve updated account to automatically log in the customer
+    const found = updatedAccounts.find(acc => {
+      const cleanAccPhone = (acc.user.phone || '').trim().replace(/[\s.-]/g, '');
+      return cleanAccPhone === cleanForgotPhone;
+    });
+
+    if (found) {
+      onLogin(found.user);
+      triggerNotification('success', `Đổi mật khẩu thành công! Chào mừng Quý khách ${found.user.name} trở lại.`);
+      // Clear out states
+      setIsForgotPasswordMode(false);
+      setForgotStep(1);
+      setForgotPhone('');
+      setForgotCode('');
+      setGeneratedCode('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+      setSimulatedSMS(null);
+      onNavigate('home');
+    } else {
+      triggerNotification('error', 'Đã xảy ra lỗi khi tìm tài khoản cập nhật.');
+    }
   };
 
   const handleAuthSubmit = (e: React.FormEvent) => {
@@ -212,6 +382,31 @@ export default function AccountAuth({
         </div>
       )}
 
+      {/* Simulated Phone SMS notification tray */}
+      {simulatedSMS && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] w-11/12 max-w-md rounded-2xl bg-neutral-900/95 text-white p-4 shadow-[0_15px_40px_rgba(0,0,0,0.35)] border border-white/10 backdrop-blur-md flex items-start gap-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-800 border border-white/5 shadow-inner">
+            <Phone className="h-5 w-5 text-rose-400 animate-pulse" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold tracking-wider text-rose-400 uppercase">TIN NHẮN ĐIỆN THOẠI SMS</span>
+              <span className="text-[9px] text-stone-400">Vừa xong</span>
+            </div>
+            <p className="text-xs font-bold text-white mt-1">Fióre Boutique Florist</p>
+            <p className="text-xs text-stone-300 mt-0.5 leading-snug">
+              Mã khôi phục mật khẩu tài khoản Fióre của bạn là: <strong className="text-yellow-300 text-sm tracking-widest bg-stone-800 px-2 py-0.5 rounded border border-white/5 font-mono font-extrabold">{simulatedSMS.code}</strong>. Quý khách vui lòng nhập mã này vào khung xác minh.
+            </p>
+          </div>
+          <button
+            onClick={() => setSimulatedSMS(null)}
+            className="text-stone-400 hover:text-white font-bold text-xs p-1 cursor-pointer transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {currentUser ? (
         
         /* Tab 1: Logged In Account Dashboard / profile updater */
@@ -335,6 +530,171 @@ export default function AccountAuth({
 
         </div>
 
+      ) : isForgotPasswordMode ? (
+
+        /* --- FORGOT PASSWORD WORKFLOW SCENARIO --- */
+        <div className="mx-auto max-w-md rounded-3xl border border-pink-100 bg-white p-6 shadow-md sm:p-8 flex flex-col items-center animate-fade-in w-full">
+          
+          <img 
+            src={brandLogoHeader} 
+            alt="Fióre Boutique de Fleurs logo" 
+            className="h-24 w-auto object-contain mb-6"
+            referrerPolicy="no-referrer"
+          />
+          
+          <div className="text-center mb-6 w-full">
+            <h2 className="font-serif text-2xl font-bold text-gray-900">
+              Khôi Phục Mật Khẩu
+            </h2>
+            <p className="text-xs text-gray-400 mt-1 font-medium">
+              {forgotStep === 1 
+                ? 'Gửi mã khôi phục tài khoản vào số điện thoại đã đăng ký' 
+                : 'Nhập mã xác minh & thiết lập mật khẩu mới'}
+            </p>
+          </div>
+
+          {forgotStep === 1 ? (
+            <form onSubmit={handleSendForgotCode} className="space-y-4 w-full">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5 flex items-center gap-1">
+                  <Phone className="h-3 w-3 text-rose-400" />
+                  <span>Số điện thoại đăng ký</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-pink-300">
+                    <Phone className="h-4 w-4" />
+                  </span>
+                  <input
+                    type="tel"
+                    required
+                    value={forgotPhone}
+                    onChange={(e) => setForgotPhone(e.target.value)}
+                    placeholder="Nhập số điện thoại (ví dụ: 093...)"
+                    className="w-full rounded-lg border border-pink-50 bg-neutral-50/50 py-2.5 pl-10 pr-4 text-xs outline-none focus:border-rose-400 focus:bg-white transition"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full rounded-full bg-rose-600 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-rose-700 transition cursor-pointer"
+              >
+                Nhận Mã Khôi Phục
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyAndResetPassword} className="space-y-4 w-full">
+              <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 text-left mb-1.5">
+                <p className="text-[10.5px] text-amber-800 leading-normal font-medium">
+                  Hệ thống đã gửi một tin nhắn chứa mã bảo mật đến số điện thoại <strong>{forgotPhone}</strong>. Vui lòng kiểm tra và nhập mã dưới đây.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1 flex items-center gap-1">
+                  <KeyRound className="h-3 w-3 text-rose-400" />
+                  <span>Mã khôi phục tài khoản</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-pink-300">
+                    <KeyRound className="h-4 w-4" />
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    value={forgotCode}
+                    onChange={(e) => setForgotCode(e.target.value)}
+                    placeholder="Nhập mã 6 chữ số..."
+                    className="w-full rounded-lg border border-pink-50 bg-neutral-50/50 py-2.5 pl-10 pr-4 text-xs outline-none focus:border-rose-400 focus:bg-white transition font-mono tracking-widest font-extrabold text-center text-gray-950"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1 flex items-center gap-1">
+                  <Lock className="h-3 w-3 text-rose-400" />
+                  <span>Mật khẩu mới</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-pink-300">
+                    <Lock className="h-4 w-4" />
+                  </span>
+                  <input
+                    type={showForgotNewPassword ? 'text' : 'password'}
+                    required
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Tối thiểu 6 ký tự..."
+                    className="w-full rounded-lg border border-pink-50 bg-neutral-50/50 py-2.5 pl-10 pr-10 text-xs outline-none focus:border-rose-400 focus:bg-white transition"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotNewPassword(!showForgotNewPassword)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-rose-600 cursor-pointer outline-none"
+                  >
+                    {showForgotNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1 flex items-center gap-1">
+                  <Lock className="h-3 w-3 text-rose-400" />
+                  <span>Xác nhận mật khẩu mới</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-pink-300">
+                    <Lock className="h-4 w-4" />
+                  </span>
+                  <input
+                    type={showForgotNewPassword ? 'text' : 'password'}
+                    required
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    placeholder="Nhập lại mật khẩu..."
+                    className="w-full rounded-lg border border-pink-50 bg-neutral-50/50 py-2.5 pl-10 pr-10 text-xs outline-none focus:border-rose-400 focus:bg-white transition"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setForgotStep(1)}
+                  className="flex-1 rounded-full border border-gray-200 bg-white py-2.5 text-xs font-bold text-gray-500 hover:bg-neutral-50 transition cursor-pointer text-center"
+                >
+                  Quay lại
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 rounded-full bg-rose-600 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-rose-700 transition cursor-pointer"
+                >
+                  Cập Nhật Mật Khẩu
+                </button>
+              </div>
+            </form>
+          )}
+
+          <div className="mt-6 w-full border-t border-pink-50 pt-4 text-center">
+            <button
+              onClick={() => {
+                setIsForgotPasswordMode(false);
+                setForgotStep(1);
+                setForgotPhone('');
+                setForgotCode('');
+                setGeneratedCode('');
+                setNewPassword('');
+                setConfirmNewPassword('');
+                setSimulatedSMS(null);
+              }}
+              className="text-xs text-rose-500 hover:underline hover:text-rose-600 transition font-bold cursor-pointer"
+            >
+              Quay lại Đăng Nhập
+            </button>
+          </div>
+
+        </div>
+
       ) : (
 
         /* Tab 2: Standard authentication flow with preset bypasses */
@@ -440,15 +800,33 @@ export default function AccountAuth({
             </button>
           </form>
 
-          <div className="mt-4 text-center">
+          <div className="mt-4 text-center flex flex-col gap-2.5 items-center">
             <button
               onClick={() => {
                 setIsLoginMode(!isLoginMode);
               }}
-              className="text-xs text-rose-500 hover:underline hover:text-rose-600 transition"
+              className="text-xs text-rose-500 hover:underline hover:text-rose-600 transition cursor-pointer font-medium"
             >
               {isLoginMode ? 'Bạn chưa có tài khoản? Nhấp tạo mới' : 'Đã có tài khoản? Chuyển đăng nhập'}
             </button>
+            {isLoginMode && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsForgotPasswordMode(true);
+                  setForgotStep(1);
+                  setForgotPhone('0916044683');
+                  setForgotCode('');
+                  setGeneratedCode('');
+                  setNewPassword('');
+                  setConfirmNewPassword('');
+                  setSimulatedSMS(null);
+                }}
+                className="text-xs text-stone-400 hover:text-rose-600 hover:underline transition cursor-pointer font-medium"
+              >
+                Quên mật khẩu?
+              </button>
+            )}
           </div>
 
           {/* Quick tester bypass section */}
