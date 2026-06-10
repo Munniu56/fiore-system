@@ -1635,17 +1635,7 @@ export default function App() {
                     Theo dõi tiến độ đơn hàng
                   </button>
                 </li>
-                <li>
-                  <button 
-                    onClick={() => setCurrentView('auth')} 
-                    className="transition-colors duration-200 text-left cursor-pointer"
-                    style={{ color: '#F8F5EF' }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = '#C8A96B'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = '#F8F5EF'}
-                  >
-                    Đăng ký thành viên VIP
-                  </button>
-                </li>
+
                 <li>
                   <button 
                     onClick={() => { setCurrentView('contact'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
