@@ -17,6 +17,8 @@ import AdminDashboard from './components/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
 import AboutUs from './components/AboutUs';
 import ContactUs from './components/ContactUs';
+import ExpressDeliveryPolicy from './components/ExpressDeliveryPolicy';
+import FreshnessCommitment from './components/FreshnessCommitment';
 import SupportChat from './components/SupportChat';
 import brandLogoFooter from './assets/images/logo_footer_green_bg_1780554739638.png';
 import blogBirthdayRoses from './assets/images/birthday_rose_tag_1780716864748.png';
@@ -222,6 +224,14 @@ export default function App() {
   // --- COMPONENT ACTIVE VIEW ROLES CONTROL ---
   const [currentRole, setCurrentRole] = useState<'customer' | 'admin'>('customer');
   const [currentView, setCurrentView] = useState<string>('home');
+  const [showExpressDeliveryPolicyMenu, setShowExpressDeliveryPolicyMenu] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('fiore_show_express_delivery_policy_menu') === 'true';
+  });
+  const [showCommitmentMenu, setShowCommitmentMenu] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('fiore_show_commitment_menu') === 'true';
+  });
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     return localStorage.getItem('fiore_admin_authenticated') === 'true';
@@ -926,6 +936,8 @@ export default function App() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         currentView={currentView}
+        showExpressDeliveryPolicyMenu={showExpressDeliveryPolicyMenu}
+        showCommitmentMenu={showCommitmentMenu}
       />
 
       {/* MAIN VIEWPORT BODY */}
@@ -1536,6 +1548,20 @@ export default function App() {
           </div>
         )}
 
+        {/* VIEW 11: EXPRESS DELIVERY POLICY SCREEN */}
+        {currentView === 'express-delivery' && (
+          <div className="animate-fade-in">
+            <ExpressDeliveryPolicy />
+          </div>
+        )}
+
+        {/* VIEW 12: FRESHNESS COMMITMENT SCREEN */}
+        {currentView === 'commitment' && (
+          <div className="animate-fade-in">
+            <FreshnessCommitment />
+          </div>
+        )}
+
             </>
           } />
         </Routes>
@@ -1638,7 +1664,12 @@ export default function App() {
 
                 <li>
                   <button 
-                    onClick={() => { setCurrentView('contact'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
+                    onClick={() => { 
+                      setShowExpressDeliveryPolicyMenu(true);
+                      localStorage.setItem('fiore_show_express_delivery_policy_menu', 'true');
+                      setCurrentView('express-delivery'); 
+                      window.scrollTo({ top: 0, behavior: 'smooth' }); 
+                    }} 
                     className="transition-colors duration-200 text-left cursor-pointer"
                     style={{ color: '#F8F5EF' }}
                     onMouseEnter={(e) => e.currentTarget.style.color = '#C8A96B'}
@@ -1649,7 +1680,58 @@ export default function App() {
                 </li>
                 <li>
                   <button 
-                    onClick={() => { setCurrentView('about'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
+                    onClick={() => { 
+                      setShowExpressDeliveryPolicyMenu(true);
+                      localStorage.setItem('fiore_show_express_delivery_policy_menu', 'true');
+                      setCurrentView('express-delivery'); 
+                      setTimeout(() => {
+                        const el = document.getElementById('privacy-policy-title');
+                        if (el) {
+                          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        } else {
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                      }, 120);
+                    }} 
+                    className="transition-colors duration-200 text-left cursor-pointer"
+                    style={{ color: '#F8F5EF' }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = '#C8A96B'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = '#F8F5EF'}
+                  >
+                    Chính sách bảo mật thông tin
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => { 
+                      setShowExpressDeliveryPolicyMenu(true);
+                      localStorage.setItem('fiore_show_express_delivery_policy_menu', 'true');
+                      setCurrentView('express-delivery'); 
+                      setTimeout(() => {
+                        const el = document.getElementById('complaint-policy-title');
+                        if (el) {
+                          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        } else {
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                      }, 120);
+                    }} 
+                    className="transition-colors duration-200 text-left cursor-pointer"
+                    style={{ color: '#F8F5EF' }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = '#C8A96B'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = '#F8F5EF'}
+                  >
+                    Chính sách giải quyết khiếu nại
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => { 
+                      setShowCommitmentMenu(true);
+                      localStorage.setItem('fiore_show_commitment_menu', 'true');
+                      setCurrentView('commitment'); 
+                      window.scrollTo({ top: 0, behavior: 'smooth' }); 
+                    }} 
                     className="transition-colors duration-200 text-left cursor-pointer"
                     style={{ color: '#F8F5EF' }}
                     onMouseEnter={(e) => e.currentTarget.style.color = '#C8A96B'}

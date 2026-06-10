@@ -18,6 +18,8 @@ interface HeaderProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   currentView: string;
+  showExpressDeliveryPolicyMenu?: boolean;
+  showCommitmentMenu?: boolean;
 }
 
 export default function Header({
@@ -30,6 +32,8 @@ export default function Header({
   searchQuery,
   onSearchChange,
   currentView,
+  showExpressDeliveryPolicyMenu,
+  showCommitmentMenu,
 }: HeaderProps) {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -134,6 +138,30 @@ export default function Header({
             >
               Liên Hệ
             </button>
+            {showExpressDeliveryPolicyMenu && (
+              <button
+                onClick={() => onNavigate('express-delivery')}
+                className={`rounded-md px-3 py-2 transition ${
+                  currentView === 'express-delivery'
+                    ? 'text-rose-600 font-semibold bg-pink-50'
+                    : 'text-gray-600 hover:text-rose-500 hover:bg-neutral-50'
+                }`}
+              >
+                Chính sách
+              </button>
+            )}
+            {showCommitmentMenu && (
+              <button
+                onClick={() => onNavigate('commitment')}
+                className={`rounded-md px-3 py-2 transition ${
+                  currentView === 'commitment'
+                    ? 'text-rose-600 font-semibold bg-pink-50'
+                    : 'text-gray-600 hover:text-rose-500 hover:bg-neutral-50'
+                }`}
+              >
+                Cam kết
+              </button>
+            )}
             {currentUser && (
               <button
                 onClick={() => onNavigate('orders')}
@@ -318,6 +346,36 @@ export default function Header({
             >
               Liên Hệ
             </button>
+            {showExpressDeliveryPolicyMenu && (
+              <button
+                onClick={() => {
+                  onNavigate('express-delivery');
+                  setShowMobileMenu(false);
+                }}
+                className={`w-full rounded-lg px-4 py-2.5 text-left text-sm transition ${
+                  currentView === 'express-delivery'
+                    ? 'text-rose-600 bg-rose-50/50 font-bold'
+                    : 'text-gray-700 hover:text-rose-500 hover:bg-neutral-50'
+                }`}
+              >
+                Chính sách
+              </button>
+            )}
+            {showCommitmentMenu && (
+              <button
+                onClick={() => {
+                  onNavigate('commitment');
+                  setShowMobileMenu(false);
+                }}
+                className={`w-full rounded-lg px-4 py-2.5 text-left text-sm transition ${
+                  currentView === 'commitment'
+                    ? 'text-rose-600 bg-rose-50/50 font-bold'
+                    : 'text-gray-700 hover:text-rose-500 hover:bg-neutral-50'
+                }`}
+              >
+                Cam kết
+              </button>
+            )}
             {currentUser && (
               <button
                 onClick={() => {
