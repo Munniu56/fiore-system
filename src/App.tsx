@@ -1668,17 +1668,7 @@ export default function App() {
                     Cam kết tươi mới 24h
                   </button>
                 </li>
-                <li>
-                  <button 
-                    onClick={() => { navigate('/admin'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
-                    className="transition-colors duration-200 text-left cursor-pointer opacity-75 hover:opacity-100 flex items-center gap-1"
-                    style={{ color: '#F8F5EF' }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = '#C8A96B'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = '#F8F5EF'}
-                  >
-                    <Lock className="h-3 w-3" /> <span>Hệ Thống Quản Trị</span>
-                  </button>
-                </li>
+
               </ul>
             </div>
 
