@@ -76,6 +76,27 @@ export function handleFirestoreError(
   throw new Error(JSON.stringify(errInfo));
 }
 
+// --- DEEP UNDEFINED SANITIZATION HELPER ---
+export function cleanUndefined<T>(obj: T): T {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map((item) => cleanUndefined(item)) as unknown as T;
+  }
+  if (typeof obj === "object") {
+    const cleaned: any = {};
+    for (const key of Object.keys(obj)) {
+      const val = (obj as any)[key];
+      if (val !== undefined) {
+        cleaned[key] = cleanUndefined(val);
+      }
+    }
+    return cleaned as T;
+  }
+  return obj;
+}
+
 // --- DB SEEDING UTILITY ---
 export async function seedDatabaseIfNeeded(
   initialProducts: Product[],
@@ -92,7 +113,7 @@ export async function seedDatabaseIfNeeded(
       const batch = writeBatch(db);
       initialProducts.forEach((p) => {
         const docRef = doc(db, "products", p.id);
-        batch.set(docRef, p);
+        batch.set(docRef, cleanUndefined(p));
       });
       await batch.commit();
     } else {
@@ -105,7 +126,7 @@ export async function seedDatabaseIfNeeded(
           console.log(
             "Syncing special product pro-gg-1 to existing Firestore active database...",
           );
-          await setDoc(specialDocRef, targetProd);
+          await setDoc(specialDocRef, cleanUndefined(targetProd));
         }
       }
 
@@ -244,7 +265,7 @@ export async function seedDatabaseIfNeeded(
       const batch = writeBatch(db);
       initialCategories.forEach((c) => {
         const docRef = doc(db, "categories", c.id);
-        batch.set(docRef, c);
+        batch.set(docRef, cleanUndefined(c));
       });
       await batch.commit();
     }
@@ -255,7 +276,7 @@ export async function seedDatabaseIfNeeded(
       const batch = writeBatch(db);
       sampleOrders.forEach((o) => {
         const docRef = doc(db, "orders", o.id);
-        batch.set(docRef, o);
+        batch.set(docRef, cleanUndefined(o));
       });
       await batch.commit();
     }
@@ -266,7 +287,7 @@ export async function seedDatabaseIfNeeded(
       const batch = writeBatch(db);
       sampleUsers.forEach((u) => {
         const docRef = doc(db, "users", u.id);
-        batch.set(docRef, u);
+        batch.set(docRef, cleanUndefined(u));
       });
       await batch.commit();
     }
@@ -295,8 +316,8 @@ export async function seedDatabaseIfNeeded(
       const syncBatch = writeBatch(db);
       syncBatch.delete(doc(db, "coupons", "FIORE10"));
       syncBatch.delete(doc(db, "coupons", "XUAN2026"));
-      syncBatch.set(doc(db, "coupons", "KHACHVIP"), cVip);
-      syncBatch.set(doc(db, "coupons", "YEUTHUONG"), cYeuThuong);
+      syncBatch.set(doc(db, "coupons", "KHACHVIP"), cleanUndefined(cVip));
+      syncBatch.set(doc(db, "coupons", "YEUTHUONG"), cleanUndefined(cYeuThuong));
       await syncBatch.commit();
       console.log("Synchronized promo coupons in Firestore successfully!");
     } catch (syncErr) {
@@ -334,7 +355,7 @@ export function subscribeProducts(
 export async function saveProduct(product: Product) {
   const path = `products/${product.id}`;
   try {
-    await setDoc(doc(db, "products", product.id), product);
+    await setDoc(doc(db, "products", product.id), cleanUndefined(product));
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, path);
   }
@@ -374,7 +395,7 @@ export function subscribeCategories(
 export async function saveCategory(category: Category) {
   const path = `categories/${category.id}`;
   try {
-    await setDoc(doc(db, "categories", category.id), category);
+    await setDoc(doc(db, "categories", category.id), cleanUndefined(category));
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, path);
   }
@@ -419,7 +440,7 @@ export function subscribeOrders(
 export async function saveOrder(order: Order) {
   const path = `orders/${order.id}`;
   try {
-    await setDoc(doc(db, "orders", order.id), order);
+    await setDoc(doc(db, "orders", order.id), cleanUndefined(order));
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, path);
   }
@@ -463,7 +484,7 @@ export function subscribeContacts(
 export async function saveContact(contact: ContactMessage) {
   const path = `contacts/${contact.id}`;
   try {
-    await setDoc(doc(db, "contacts", contact.id), contact);
+    await setDoc(doc(db, "contacts", contact.id), cleanUndefined(contact));
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, path);
   }
@@ -503,7 +524,7 @@ export function subscribeUsers(
 export async function saveUser(user: User) {
   const path = `users/${user.id}`;
   try {
-    await setDoc(doc(db, "users", user.id), user);
+    await setDoc(doc(db, "users", user.id), cleanUndefined(user));
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, path);
   }
@@ -544,7 +565,7 @@ export function subscribeCoupons(
 export async function saveCoupon(coupon: Coupon) {
   const path = `coupons/${coupon.id}`;
   try {
-    await setDoc(doc(db, "coupons", coupon.id), coupon);
+    await setDoc(doc(db, "coupons", coupon.id), cleanUndefined(coupon));
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, path);
   }

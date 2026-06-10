@@ -517,7 +517,22 @@ export default function App() {
                   discountAmount: pending.discountAmount || null,
                 };
 
-                // Deduct inventory stocks
+                // Deduct inventory stocks and synchronize to Firestore
+                if (pending.cartItems && pending.cartItems.length > 0) {
+                  pending.cartItems.forEach((it: any) => {
+                    const match = products.find((prod) => prod.id === it.product.id);
+                    if (match) {
+                      const updatedProd = {
+                        ...match,
+                        stock: Math.max(0, match.stock - it.quantity)
+                      };
+                      saveProduct(updatedProd).catch((err) => {
+                        console.error('Error synchronizing VNPAY deducted stock to Firebase:', err);
+                      });
+                    }
+                  });
+                }
+
                 setProducts((prevProds) => {
                   return prevProds.map((p) => {
                     const itemDeducted = (pending.cartItems || []).find((it: any) => it.product.id === p.id);

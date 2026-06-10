@@ -2,7 +2,7 @@ import { verifyVnpayCallback } from '../vnpayConfig';
 import { sendEmailJSOrderPaid } from '../emailjsService';
 import { Order, Product, Category } from '../types';
 import '../index.css';
-import { saveOrder } from '../firebase';
+import { saveOrder, saveProduct } from '../firebase';
 
 // VNPAY Sandbox Error Messages Map for descriptive feedback
 const VNPAY_ERROR_CODES: Record<string, string> = {
@@ -127,13 +127,22 @@ async function handleVnpayReturnVerification() {
             } catch {}
 
             if (products.length > 0) {
-              const updatedProds = products.map((p) => {
+              const updatedProds: Product[] = [];
+              for (const p of products) {
                 const itemDeducted = (pending.cartItems || []).find((it: any) => it.product.id === p.id);
                 if (itemDeducted) {
-                  return { ...p, stock: Math.max(0, p.stock - itemDeducted.quantity) };
+                  const updatedP = { ...p, stock: Math.max(0, p.stock - itemDeducted.quantity) };
+                  try {
+                    await saveProduct(updatedP);
+                    console.log(`[VNPAY Return] Successfully deducted stock for ${p.id} to ${updatedP.stock} in Firestore`);
+                  } catch (err) {
+                    console.error(`[VNPAY Return] Failed to save deducted stock in Firestore for ${p.id}:`, err);
+                  }
+                  updatedProds.push(updatedP);
+                } else {
+                  updatedProds.push(p);
                 }
-                return p;
-              });
+              }
               localStorage.setItem('fiore_products', JSON.stringify(updatedProds));
             }
 
