@@ -1690,22 +1690,55 @@ export default function AdminDashboard({
             
             {/* Display registered users dynamically */}
             {users.map((usr) => {
-              const userOrders = orders.filter((o) => o.customerEmail === usr.email);
-              const spent = userOrders.reduce((a,c) => a + c.totalAmount, 0);
+              const userOrders = orders.filter((o) => o.customerEmail && o.customerEmail.toLowerCase() === usr.email.toLowerCase());
+              const validOrders = userOrders.filter(
+                (o) => o.status !== 'cancelled' && (o.paymentStatus === 'Paid' || o.status === 'completed' || o.paymentMethod === 'COD')
+              );
+              const totalSpent = validOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+              const roundedSpent = Math.round(totalSpent / 1000) * 1000;
+              const redeemedPointsSum = validOrders.reduce((sum, o) => sum + (o.redeemedPoints || 0), 0);
+              const earnedPoints = Math.max(0, Math.floor(roundedSpent / 50000) - redeemedPointsSum);
+
+              let tierName = 'Thẻ Bạc';
+              let tierColor = 'bg-stone-50 border-stone-200 text-stone-700';
+              if (totalSpent >= 5000000) {
+                tierName = 'Thẻ Kim Cương';
+                tierColor = 'bg-indigo-50 border-indigo-200 text-indigo-700';
+              } else if (totalSpent >= 3000000) {
+                tierName = 'Thẻ Vàng';
+                tierColor = 'bg-amber-50 border-amber-200 text-amber-800';
+              }
+
               return (
-                <div key={usr.id} className="rounded-xl border border-amber-200/50 p-4 bg-white flex items-start space-x-4">
-                  <div className="h-10 w-10 rounded-full bg-emerald-50 text-emerald-800 flex items-center justify-center font-serif text-lg font-bold">
+                <div key={usr.id} className="rounded-xl border border-amber-200/50 p-4 bg-white flex items-start space-x-4 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)]">
+                  <div className="h-10 w-10 rounded-full bg-emerald-50 text-emerald-800 flex items-center justify-center font-serif text-lg font-bold shrink-0">
                     {usr.name.charAt(0)}
                   </div>
-                  <div className="space-y-1 text-xs">
-                    <p className="font-bold text-emerald-950 text-sm">{usr.name}</p>
+                  <div className="space-y-1 text-xs flex-1">
+                    <p className="font-bold text-emerald-950 text-sm flex items-center gap-2">
+                      {usr.name}
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${tierColor}`}>
+                        {tierName}
+                      </span>
+                    </p>
                     <p className="text-stone-400">Email: {usr.email} (SĐT: {usr.phone || 'Chưa cung cấp'})</p>
                     <p className="text-stone-500">Mặc định: {usr.address || 'Chưa thiết lập'}</p>
                     
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      <span className="p-1 rounded bg-amber-50 font-bold text-amber-900 text-[10px]">Đã mua: {userOrders.length} Đơn</span>
-                      <span className="p-1 rounded bg-emerald-50 font-bold text-emerald-800 text-[10px]">Tích lũy: {formatVND(spent)}</span>
-                      {/* Gửi Gmail button removed */}
+                    <div className="flex flex-wrap gap-1.5 pt-2">
+                      <span className="px-2 py-1 rounded bg-amber-50 border border-amber-100 font-bold text-amber-900 text-[10px]">
+                        Đã mua: {userOrders.length} Đơn
+                      </span>
+                      <span className="px-2 py-1 rounded bg-emerald-50 border border-emerald-100 font-bold text-emerald-800 text-[10px]">
+                        Tích lũy: {formatVND(totalSpent)}
+                      </span>
+                      <span className="px-2 py-1 rounded bg-rose-50 border border-rose-100 font-bold text-rose-700 text-[10px]">
+                        Điểm tích lũy: {earnedPoints} điểm
+                      </span>
+                      {redeemedPointsSum > 0 && (
+                        <span className="px-2 py-1 rounded bg-stone-100 border border-stone-200 font-bold text-stone-600 text-[10px]">
+                          Đã dùng: {redeemedPointsSum} điểm
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1713,36 +1746,46 @@ export default function AdminDashboard({
             })}
 
             {/* Static high-fidelity sample buyers representing system stats */}
-            <div className="rounded-xl border border-amber-200/55 p-4 bg-white flex items-start space-x-4 opacity-80">
-              <div className="h-10 w-10 rounded-full bg-emerald-50 text-emerald-800 flex items-center justify-center font-serif text-lg font-bold">
+            <div className="rounded-xl border border-amber-200/55 p-4 bg-white flex items-start space-x-4 opacity-80 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)]">
+              <div className="h-10 w-10 rounded-full bg-emerald-50 text-emerald-800 flex items-center justify-center font-serif text-lg font-bold shrink-0">
                 T
               </div>
-              <div className="space-y-1 text-xs">
-                <p className="font-bold text-[#0F2C11] text-sm">Thùy Vân (Hà Nội)</p>
+              <div className="space-y-1 text-xs flex-1">
+                <p className="font-bold text-[#0F2C11] text-sm flex items-center gap-2">
+                  Thùy Vân (Hà Nội)
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold border bg-stone-50 border-stone-200 text-stone-700">
+                    Thẻ Bạc
+                  </span>
+                </p>
                 <p className="text-stone-400">Email: thuyvanngo35@gmail.com (SĐT: 0987654321)</p>
                 <p className="text-stone-500">Mặc định: 12 Hàng Khay, Quận Hoàn Kiếm, Hà Nội</p>
                 
-                <div className="flex flex-wrap gap-2 pt-2">
-                  <span className="p-1 rounded bg-amber-50 font-bold text-amber-900 text-[10px]">Đã mua: 4 Đơn</span>
-                  <span className="p-1 rounded bg-emerald-50 font-bold text-emerald-800 text-[10px]">Tích lũy: {formatVND(1850000)}</span>
-                  {/* Gửi Gmail button removed */}
+                <div className="flex flex-wrap gap-1.5 pt-2">
+                  <span className="px-2 py-1 rounded bg-amber-50 border border-amber-100 font-bold text-amber-900 text-[10px]">Đã mua: 4 Đơn</span>
+                  <span className="px-2 py-1 rounded bg-emerald-50 border border-emerald-100 font-bold text-emerald-800 text-[10px]">Tích lũy: {formatVND(1850000)}</span>
+                  <span className="px-2 py-1 rounded bg-rose-50 border border-rose-100 font-bold text-rose-700 text-[10px]">Điểm tích lũy: 37 điểm</span>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-xl border border-amber-200/55 p-4 bg-white flex items-start space-x-4 opacity-80">
-              <div className="h-10 w-10 rounded-full bg-emerald-50 text-emerald-800 flex items-center justify-center font-serif text-lg font-bold">
+            <div className="rounded-xl border border-amber-200/55 p-4 bg-white flex items-start space-x-4 opacity-80 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)]">
+              <div className="h-10 w-10 rounded-full bg-emerald-50 text-emerald-800 flex items-center justify-center font-serif text-lg font-bold shrink-0">
                 A
               </div>
-              <div className="space-y-1 text-xs">
-                <p className="font-bold text-[#0F2C11] text-sm">An Bình (Gia Định)</p>
+              <div className="space-y-1 text-xs flex-1">
+                <p className="font-bold text-[#0F2C11] text-sm flex items-center gap-2">
+                  An Bình (Gia Định)
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold border bg-stone-50 border-stone-200 text-stone-700">
+                    Thẻ Bạc
+                  </span>
+                </p>
                 <p className="text-stone-400">Email: anbinh@gmail.com (SĐT: 0914253648)</p>
                 <p className="text-stone-500">Mặc định: 34 Nguyễn Bỉnh Khiêm, Quận 1, TP. HCM</p>
                 
-                <div className="flex flex-wrap gap-2 pt-2">
-                  <span className="p-1 rounded bg-amber-50 font-bold text-amber-900 text-[10px]">Đã mua: 2 Đơn</span>
-                  <span className="p-1 rounded bg-emerald-50 font-bold text-emerald-800 text-[10px]">Tích lũy: {formatVND(890000)}</span>
-                  {/* Gửi Gmail button removed */}
+                <div className="flex flex-wrap gap-1.5 pt-2">
+                  <span className="px-2 py-1 rounded bg-amber-50 border border-amber-100 font-bold text-amber-900 text-[10px]">Đã mua: 2 Đơn</span>
+                  <span className="px-2 py-1 rounded bg-emerald-50 border border-emerald-100 font-bold text-emerald-800 text-[10px]">Tích lũy: {formatVND(890000)}</span>
+                  <span className="px-2 py-1 rounded bg-rose-50 border border-rose-100 font-bold text-rose-700 text-[10px]">Điểm tích lũy: 17 điểm</span>
                 </div>
               </div>
             </div>
