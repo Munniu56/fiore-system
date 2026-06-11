@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Flower, Search, ShoppingBag, User, Settings, ShoppingCart, LogOut, CheckCircle, Menu, X, Shield, CreditCard } from 'lucide-react';
+import { Flower, Search, ShoppingBag, User, Settings, ShoppingCart, LogOut, CheckCircle, Menu, X, Shield, CreditCard, MessageSquare } from 'lucide-react';
 import { User as UserType } from '../types';
 import brandLogoHeader from '../assets/images/logo_white_bg_1780554592404.png';
 
@@ -20,7 +20,7 @@ interface HeaderProps {
   currentView: string;
   showExpressDeliveryPolicyMenu?: boolean;
   showCommitmentMenu?: boolean;
-  authTab?: 'membership' | 'profile';
+  authTab?: 'membership' | 'profile' | 'feedback';
 }
 
 export default function Header({
@@ -235,6 +235,16 @@ export default function Header({
                     >
                       <ShoppingBag className="mr-2 h-4 w-4 text-pink-400" />
                       Đơn hàng của tôi
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowUserDropdown(false);
+                        onNavigate('feedback');
+                      }}
+                      className="flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-pink-50 hover:text-rose-600 transition"
+                    >
+                      <MessageSquare className="mr-2 h-4 w-4 text-pink-400" />
+                      Hòm thư phản hồi
                     </button>
                     <button
                       onClick={() => {

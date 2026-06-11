@@ -224,7 +224,7 @@ export default function App() {
   // --- COMPONENT ACTIVE VIEW ROLES CONTROL ---
   const [currentRole, setCurrentRole] = useState<'customer' | 'admin'>('customer');
   const [currentView, setCurrentView] = useState<string>('home');
-  const [authTab, setAuthTab] = useState<'membership' | 'profile'>('membership');
+  const [authTab, setAuthTab] = useState<'membership' | 'profile' | 'feedback'>('membership');
   const [showExpressDeliveryPolicyMenu, setShowExpressDeliveryPolicyMenu] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('fiore_show_express_delivery_policy_menu') === 'true';
@@ -947,6 +947,9 @@ export default function App() {
             if (v === 'membership') {
               setAuthTab('membership');
               setCurrentView('auth');
+            } else if (v === 'feedback') {
+              setAuthTab('feedback');
+              setCurrentView('auth');
             } else {
               if (v === 'auth') {
                 setAuthTab('profile');
@@ -1556,6 +1559,7 @@ export default function App() {
                 }
               }}
               orders={orders}
+              contacts={contacts}
               initialTab={authTab}
             />
           </div>

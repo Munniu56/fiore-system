@@ -4,8 +4,8 @@
  */
 
 import React, { useState } from 'react';
-import { Lock, Mail, User, Phone, MapPin, KeyRound, ShieldAlert, CheckCircle, Save, Eye, EyeOff, X, CreditCard, Award, TrendingUp, Sparkles, HelpCircle, Gift } from 'lucide-react';
-import { User as UserType, Order } from '../types';
+import { Lock, Mail, User, Phone, MapPin, KeyRound, ShieldAlert, CheckCircle, Save, Eye, EyeOff, X, CreditCard, Award, TrendingUp, Sparkles, HelpCircle, Gift, MessageSquare } from 'lucide-react';
+import { User as UserType, Order, ContactMessage } from '../types';
 import brandLogoHeader from '../assets/images/logo_white_bg_1780554592404.png';
 
 interface AccountAuthProps {
@@ -15,7 +15,8 @@ interface AccountAuthProps {
   onUpdateProfile: (updated: UserType) => void;
   onNavigate: (view: string) => void;
   orders?: Order[];
-  initialTab?: 'membership' | 'profile';
+  contacts?: ContactMessage[];
+  initialTab?: 'membership' | 'profile' | 'feedback';
 }
 
 export default function AccountAuth({
@@ -25,6 +26,7 @@ export default function AccountAuth({
   onUpdateProfile,
   onNavigate,
   orders = [],
+  contacts = [],
   initialTab = 'membership',
 }: AccountAuthProps) {
   const [isLoginMode, setIsLoginMode] = useState(true);
@@ -40,7 +42,7 @@ export default function AccountAuth({
   const [editName, setEditName] = useState(currentUser?.name || '');
   const [editPhone, setEditPhone] = useState(currentUser?.phone || '');
   const [editAddress, setEditAddress] = useState(currentUser?.address || '');
-  const [activeTab, setActiveTab] = useState<'membership' | 'profile'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'membership' | 'profile' | 'feedback'>(initialTab);
 
   React.useEffect(() => {
     setActiveTab(initialTab);
@@ -500,7 +502,7 @@ export default function AccountAuth({
               <button
                 type="button"
                 onClick={() => setActiveTab('membership')}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-xs font-bold rounded-xl transition duration-200 cursor-pointer ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-3 px-2 sm:px-4 text-xs font-bold rounded-xl transition duration-200 cursor-pointer ${
                   activeTab === 'membership'
                     ? 'bg-rose-50 text-rose-700 shadow-xs border border-rose-100/50'
                     : 'text-gray-500 hover:text-gray-900 hover:bg-neutral-50'
@@ -512,7 +514,7 @@ export default function AccountAuth({
               <button
                 type="button"
                 onClick={() => setActiveTab('profile')}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-xs font-bold rounded-xl transition duration-200 cursor-pointer ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-3 px-2 sm:px-4 text-xs font-bold rounded-xl transition duration-200 cursor-pointer ${
                   activeTab === 'profile'
                     ? 'bg-rose-50 text-rose-700 shadow-xs border border-rose-100/50'
                     : 'text-gray-500 hover:text-gray-900 hover:bg-neutral-50'
@@ -521,9 +523,21 @@ export default function AccountAuth({
                 <User className="h-4 w-4" />
                 <span>Thông Tin Cá Nhân</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('feedback')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-3 px-2 sm:px-4 text-xs font-bold rounded-xl transition duration-200 cursor-pointer ${
+                  activeTab === 'feedback'
+                    ? 'bg-rose-50 text-rose-700 shadow-xs border border-rose-100/50'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-neutral-50'
+                }`}
+              >
+                <MessageSquare className="h-4 w-4" />
+                <span>Lời Nhắn & Phản Hồi</span>
+              </button>
             </div>
 
-            {activeTab === 'membership' ? (
+            {activeTab === 'membership' && (
               <div className="rounded-2xl border border-pink-100 bg-white p-6 shadow-xs space-y-6 animate-fade-in text-left">
                 
                 {/* Section Header */}
@@ -717,7 +731,9 @@ export default function AccountAuth({
                 })()}
 
               </div>
-            ) : (
+            )}
+
+            {activeTab === 'profile' && (
               <div className="rounded-2xl border border-pink-100 bg-white p-6 shadow-xs text-left animate-fade-in">
                 <h3 className="font-serif text-lg font-bold text-gray-900 border-b border-pink-50 pb-3 mb-6">
                   Quản Lý Thông Tin Cá Nhân
@@ -765,6 +781,115 @@ export default function AccountAuth({
                     </button>
                   </div>
                 </form>
+              </div>
+            )}
+
+            {activeTab === 'feedback' && (
+              <div className="rounded-2xl border border-pink-100 bg-white p-6 shadow-xs text-left animate-fade-in space-y-6">
+                <div className="flex items-center justify-between border-b border-pink-50 pb-3">
+                  <div>
+                    <h3 className="font-serif text-lg font-bold text-gray-900">Phản Hồi Lời Nhắn Liên Hệ</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">Theo dõi câu phản hồi của Chuyên gia Fióre gửi tới hòm thư của bạn</p>
+                  </div>
+                  <MessageSquare className="h-6 w-6 text-pink-400" />
+                </div>
+
+                {(() => {
+                  const userContacts = contacts.filter(
+                    (c) => currentUser && c.email && c.email.toLowerCase() === currentUser.email.toLowerCase()
+                  );
+
+                  if (userContacts.length === 0) {
+                    return (
+                      <div className="py-12 flex flex-col items-center text-center space-y-4">
+                        <div className="h-16 w-16 bg-pink-50 text-rose-500 rounded-full flex items-center justify-center animate-bounce">
+                          <MessageSquare className="h-8 w-8" />
+                        </div>
+                        <div className="max-w-md">
+                          <p className="text-sm font-semibold text-gray-700">Bạn chưa gửi liên hệ nào</p>
+                          <p className="text-xs text-gray-400 mt-1">Hệ thống Fióre luôn lắng nghe mọi góp ý hay yêu cầu từ vấn cắm dòng hoa cao cấp của bạn.</p>
+                        </div>
+                        <button
+                          onClick={() => onNavigate('contact')}
+                          className="px-5 py-2.5 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm transition"
+                        >
+                          Gửi Lời Nhắn Ngay
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  // Sort by newest first
+                  const sortedContacts = [...userContacts].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+                  const formatDate = (dateStr: string) => {
+                    try {
+                      const d = new Date(dateStr);
+                      if (isNaN(d.getTime())) return dateStr;
+                      return d.toLocaleDateString('vi-VN', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      });
+                    } catch {
+                      return dateStr;
+                    }
+                  };
+
+                  return (
+                    <div className="space-y-4">
+                      {sortedContacts.map((contact) => (
+                        <div key={contact.id} className="p-4 rounded-xl border border-pink-100 bg-stone-50/40 space-y-3 shadow-2xs hover:border-pink-200/50 transition">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 border-b border-dashed border-stone-200 pb-2 flex-wrap">
+                            <span className="text-[10px] text-stone-400 font-mono">Thời gian gửi: {formatDate(contact.createdAt)}</span>
+                            {contact.status === 'replied' ? (
+                              <span className="self-start sm:self-auto px-2 border border-emerald-100 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[9px] flex items-center gap-1">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                Đã phản hồi
+                              </span>
+                            ) : (
+                              <span className="self-start sm:self-auto px-2 border border-amber-100 rounded-full bg-amber-50 text-amber-700 font-bold text-[9px] flex items-center gap-1">
+                                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                                Đang chờ phản hồi
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="space-y-1">
+                            <p className="text-[9px] font-bold text-stone-500 uppercase tracking-widest">
+                              Lời nhắn liên hệ của bạn:
+                            </p>
+                            <p className="text-xs text-gray-700 italic border-l-2 border-pink-300 pl-3 py-1 bg-stone-100/50 rounded-r">
+                              "{contact.message}"
+                            </p>
+                          </div>
+
+                          {contact.replyDetail ? (
+                            <div className="mt-3 bg-emerald-50/40 border border-emerald-100 rounded-lg p-3 space-y-1.5">
+                              <p className="font-serif text-[11px] font-bold text-emerald-800 flex items-center gap-1">
+                                🌸 Phản hồi từ Ban quản trị Fióre:
+                              </p>
+                              <p className="text-xs text-stone-700 leading-relaxed whitespace-pre-line text-left">
+                                {contact.replyDetail}
+                              </p>
+                              {contact.repliedAt && (
+                                <p className="text-[8.5px] text-stone-400 font-mono text-right">
+                                  Phản hồi lúc: {formatDate(contact.repliedAt)}
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="bg-stone-100/50 p-2 text-center rounded-lg border border-stone-150 text-[10px] text-stone-400 italic">
+                              Yêu cầu của bạn đã vào hàng đợi của nghệ nhân hoa. Chúng tôi sẽ trả lời tại đây trong thời gian sớm nhất!
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
