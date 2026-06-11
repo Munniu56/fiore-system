@@ -4,8 +4,8 @@
  */
 
 import React, { useState } from 'react';
-import { Lock, Mail, User, Phone, MapPin, KeyRound, ShieldAlert, CheckCircle, Save, Eye, EyeOff, X } from 'lucide-react';
-import { User as UserType } from '../types';
+import { Lock, Mail, User, Phone, MapPin, KeyRound, ShieldAlert, CheckCircle, Save, Eye, EyeOff, X, CreditCard, Award, TrendingUp, Sparkles, HelpCircle, Gift } from 'lucide-react';
+import { User as UserType, Order } from '../types';
 import brandLogoHeader from '../assets/images/logo_white_bg_1780554592404.png';
 
 interface AccountAuthProps {
@@ -14,6 +14,8 @@ interface AccountAuthProps {
   onLogout: () => void;
   onUpdateProfile: (updated: UserType) => void;
   onNavigate: (view: string) => void;
+  orders?: Order[];
+  initialTab?: 'membership' | 'profile';
 }
 
 export default function AccountAuth({
@@ -22,6 +24,8 @@ export default function AccountAuth({
   onLogout,
   onUpdateProfile,
   onNavigate,
+  orders = [],
+  initialTab = 'membership',
 }: AccountAuthProps) {
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [email, setEmail] = useState('');
@@ -36,6 +40,11 @@ export default function AccountAuth({
   const [editName, setEditName] = useState(currentUser?.name || '');
   const [editPhone, setEditPhone] = useState(currentUser?.phone || '');
   const [editAddress, setEditAddress] = useState(currentUser?.address || '');
+  const [activeTab, setActiveTab] = useState<'membership' | 'profile'>(initialTab);
+
+  React.useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   // Admin bypass password states
   const [showAdminBypassPrompt, setShowAdminBypassPrompt] = useState(false);
@@ -53,6 +62,47 @@ export default function AccountAuth({
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [showForgotNewPassword, setShowForgotNewPassword] = useState(false);
   const [simulatedSMS, setSimulatedSMS] = useState<{ phone: string; code: string } | null>(null);
+
+  // Dynamic membership & spending calculations for currently logged-in user
+  const userOrders = currentUser
+    ? orders.filter((o) => o.customerEmail && o.customerEmail.toLowerCase() === currentUser.email.toLowerCase())
+    : [];
+  const validOrders = userOrders.filter(
+    (o) => o.status !== 'cancelled' && (o.paymentStatus === 'Paid' || o.status === 'completed' || o.paymentMethod === 'COD')
+  );
+  const totalSpent = validOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+  const roundedSpent = Math.round(totalSpent / 1000) * 1000;
+  const redeemedPointsSum = validOrders.reduce((sum, o) => sum + (o.redeemedPoints || 0), 0);
+  const earnedPoints = Math.max(0, Math.floor(roundedSpent / 50000) - redeemedPointsSum);
+  const pointsWorth = earnedPoints * 1000;
+
+  let tierName = 'Thẻ Bạc';
+  let nextTierName = 'Thẻ Vàng';
+  let nextThreshold = 3000000;
+  let currentTierBase = 0;
+
+  if (totalSpent >= 5000000) {
+    tierName = 'Thẻ Kim Cương';
+    nextTierName = '';
+    nextThreshold = 5000000;
+    currentTierBase = 5000000;
+  } else if (totalSpent >= 3000000) {
+    tierName = 'Thẻ Vàng';
+    nextTierName = 'Thẻ Kim Cương';
+    nextThreshold = 5000000;
+    currentTierBase = 3000000;
+  } else {
+    tierName = 'Thẻ Bạc';
+    nextTierName = 'Thẻ Vàng';
+    nextThreshold = 3000000;
+    currentTierBase = 0;
+  }
+
+  const progressPercent = nextTierName
+    ? Math.min(100, Math.floor(((totalSpent - currentTierBase) / (nextThreshold - currentTierBase)) * 100))
+    : 100;
+
+  const neededAmount = nextThreshold - totalSpent;
 
   const triggerNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
@@ -433,42 +483,6 @@ export default function AccountAuth({
             </div>
 
             <div className="mt-6 border-t border-pink-50 pt-5">
-              <h4 className="text-[10px] font-bold uppercase text-gray-400 tracking-wider text-left mb-2 flex items-center justify-between">
-                <span>Đồng bộ Google Workspace</span>
-              </h4>
-              {localStorage.getItem('fiore_gmail_access_token') ? (
-                <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-left">
-                  <div className="flex items-center space-x-1.5 text-emerald-800 font-bold text-xs">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>Đã kích hoạt đồng bộ Gmail!</span>
-                  </div>
-                  <p className="text-[9.5px] text-emerald-600 mt-1 leading-normal">
-                    Hóa đơn mua hoa sẽ tự động được gửi về Gmail của bạn sau khi thanh toán thành công.
-                  </p>
-                </div>
-              ) : (
-                <div className="bg-pink-50/50 border border-pink-100 rounded-xl p-3 text-left">
-                  <p className="text-[9.5px] text-gray-500 leading-normal mb-2">
-                    Nhận ngay hóa đơn điện tử & trạng thái chuẩn bị hoa trực tiếp qua Gmail bằng cách tích hợp tài khoản.
-                  </p>
-                  <button
-                    onClick={() => {
-                      if (currentUser.isAdmin) {
-                        onNavigate('admin');
-                      } else {
-                        // Let admin connect it, show a friendly status info
-                        alert("Hệ thống gửi email tự động đang chờ Quản trị viên kết nối tài khoản gửi thư Google Gmail. Khi Admin kết nối, đơn hàng của bạn sẽ tự động gửi đi!");
-                      }
-                    }}
-                    className="w-full rounded-lg bg-rose-600 text-white py-1.5 text-center text-[10px] font-bold shadow-xs hover:bg-rose-700 transition cursor-pointer"
-                  >
-                    {currentUser.isAdmin ? "🔗 Kết nối Gmail của Tiệm" : "ℹ️ Xem chi tiết đồng bộ"}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-6 border-t border-pink-50 pt-5">
               <button
                 onClick={onLogout}
                 className="w-full rounded-full border border-red-100 bg-white py-2 text-xs font-bold text-red-500 hover:bg-red-50 transition cursor-pointer"
@@ -478,54 +492,282 @@ export default function AccountAuth({
             </div>
           </div>
 
-          {/* Edit Profile Information form */}
-          <div className="lg:col-span-8 rounded-2xl border border-pink-100 bg-white p-6 shadow-xs">
-            <h3 className="font-serif text-xl font-bold text-gray-900 border-b border-pink-50 pb-3 mb-6">
-              Quản Lý Thông Tin Cá Nhân
-            </h3>
+          {/* Edit Profile & Membership Card section */}
+          <div className="lg:col-span-8 space-y-6">
+            
+            {/* Elegant Tab Headers */}
+            <div className="flex border border-pink-100 bg-white p-1 rounded-2xl shadow-xs">
+              <button
+                type="button"
+                onClick={() => setActiveTab('membership')}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-xs font-bold rounded-xl transition duration-200 cursor-pointer ${
+                  activeTab === 'membership'
+                    ? 'bg-rose-50 text-rose-700 shadow-xs border border-rose-100/50'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-neutral-50'
+                }`}
+              >
+                <CreditCard className="h-4 w-4" />
+                <span>Thẻ Thành Viên</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('profile')}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-xs font-bold rounded-xl transition duration-200 cursor-pointer ${
+                  activeTab === 'profile'
+                    ? 'bg-rose-50 text-rose-700 shadow-xs border border-rose-100/50'
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-neutral-50'
+                }`}
+              >
+                <User className="h-4 w-4" />
+                <span>Thông Tin Cá Nhân</span>
+              </button>
+            </div>
 
-            <form onSubmit={handleUpdateProfileSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Họ và tên</label>
-                  <input
-                    type="text"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="w-full rounded-lg border border-pink-50 bg-neutral-50/50 px-4 py-2 text-sm outline-none focus:border-rose-300 focus:bg-white"
-                  />
+            {activeTab === 'membership' ? (
+              <div className="rounded-2xl border border-pink-100 bg-white p-6 shadow-xs space-y-6 animate-fade-in text-left">
+                
+                {/* Section Header */}
+                <div className="flex items-center justify-between border-b border-pink-50 pb-3">
+                  <div>
+                    <h3 className="font-serif text-lg font-bold text-gray-900">Thẻ Thành Viên Độc Quyền</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">Tích lũy chi tiêu thăng hạng vàng & kim cương với nhiều đặc quyền hấp dẫn</p>
+                  </div>
+                  <Award className={`h-8 w-8 ${
+                    totalSpent >= 5000000 ? 'text-indigo-600 animate-bounce' : totalSpent >= 3000000 ? 'text-amber-500' : 'text-slate-400'
+                  }`} />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Số điện thoại</label>
-                  <input
-                    type="tel"
-                    value={editPhone}
-                    onChange={(e) => setEditPhone(e.target.value)}
-                    className="w-full rounded-lg border border-pink-50 bg-neutral-50/50 px-4 py-2 text-sm outline-none focus:border-rose-300 focus:bg-white"
-                  />
-                </div>
-              </div>
 
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Địa chỉ giao hàng mặc định</label>
-                <input
-                  type="text"
-                  value={editAddress}
-                  onChange={(e) => setEditAddress(e.target.value)}
-                  className="w-full rounded-lg border border-pink-50 bg-neutral-50/50 px-4 py-2 text-sm outline-none focus:border-rose-300 focus:bg-white"
-                />
-              </div>
+                {/* VISUAL PHYSICAL MEMBERSHIP CARD */}
+                {(() => {
+                  const formatVND = (num: number) => {
+                    return new Intl.NumberFormat('vi-VN').format(num) + 'đ';
+                  };
 
-              <div className="border-t border-pink-50 pt-5 flex justify-end">
-                <button
-                  type="submit"
-                  className="inline-flex items-center rounded-full bg-rose-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-rose-700 transition cursor-pointer"
-                >
-                  <Save className="mr-2 h-4 w-4" />
-                  Cập nhật thay đổi
-                </button>
+                  // Styling definitions based on tier
+                  let bgCardClass = 'from-slate-100 via-stone-200 to-zinc-300 text-stone-900 border border-slate-200 shadow-md';
+                  let badgeRankClass = 'bg-stone-900 text-white';
+                  let sparklesClass = 'text-slate-400';
+                  let labelColor = 'text-slate-500';
+                  let cardChipClass = 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500';
+
+                  if (tierName === 'Thẻ Vàng') {
+                    bgCardClass = 'from-amber-200 via-yellow-400 to-amber-300 text-stone-950 border border-yellow-200 shadow-xl';
+                    badgeRankClass = 'bg-stone-950 text-yellow-300';
+                    sparklesClass = 'text-rose-500';
+                    labelColor = 'text-stone-700';
+                  } else if (tierName === 'Thẻ Kim Cương') {
+                    bgCardClass = 'from-indigo-950 via-purple-900 to-indigo-900 text-white border border-indigo-700/50 shadow-2xl';
+                    badgeRankClass = 'bg-cyan-400 text-indigo-950';
+                    sparklesClass = 'text-cyan-300 animate-pulse';
+                    labelColor = 'text-indigo-200';
+                    cardChipClass = 'bg-gradient-to-r from-slate-200 via-cyan-200 to-slate-100';
+                  }
+
+                  // Simulated Card raw code format
+                  const displayPhone = currentUser.phone ? currentUser.phone.replace(/[\s.-]/g, '') : '0000000000';
+                  const formattedCode = `FIORE - ${displayPhone.slice(0, 3)} - ${displayPhone.slice(3, 7)} - ${displayPhone.slice(7)}`;
+
+                  return (
+                    <div className="space-y-6">
+                      
+                      {/* Realistic CSS Membership Card */}
+                      <div className={`relative overflow-hidden rounded-2xl p-6 h-52 flex flex-col justify-between transition duration-300 hover:scale-102 hover:shadow-2xl bg-gradient-to-br select-none max-w-md mx-auto w-full border ${bgCardClass}`} style={{ contentVisibility: 'auto' }} id="fiore-membership-card-digital">
+                        
+                        {/* Decorative shines & overlays */}
+                        <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/20 pointer-events-none rounded-2xl"></div>
+                        
+                        {/* Card Top Row */}
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="font-serif italic text-lg font-black tracking-normal flex items-center gap-1.5">
+                              <span>fióre</span>
+                              <span className="text-[10px] uppercase font-sans tracking-widest font-extrabold not-italic opacity-80">Boutique</span>
+                            </span>
+                            <p className="text-[8px] uppercase tracking-wider font-extrabold opacity-70">Thẻ hội viên thân thiết</p>
+                          </div>
+
+                          <div className={`rounded-full px-3 py-1 text-[10px] font-extrabold tracking-wider uppercase shadow-xs ${badgeRankClass} flex items-center gap-1`}>
+                            <Award className="h-3.5 w-3.5" />
+                            <span>{tierName}</span>
+                          </div>
+                        </div>
+
+                        {/* Card Middle Row - Microchip & holographic element */}
+                        <div className="flex justify-between items-center">
+                          {/* Electro-gold chip mockup */}
+                          <div className={`w-10 h-7 rounded-md p-1 relative shadow-inner overflow-hidden flex flex-col justify-between ${cardChipClass}`}>
+                            <div className="grid grid-cols-3 gap-0.5 h-full opacity-60">
+                              <div className="border-r border-b border-black/30"></div>
+                              <div className="border-r border-b border-black/30"></div>
+                              <div className="border-b border-black/30"></div>
+                              <div className="border-r border-black/30"></div>
+                              <div className="border-r border-black/30"></div>
+                              <div className=""></div>
+                            </div>
+                          </div>
+
+                          <Sparkles className={`h-6 w-6 ${sparklesClass}`} />
+                        </div>
+
+                        {/* Card Bottom Row - Identifiers */}
+                        <div className="flex justify-between items-end">
+                          <div className="min-w-0">
+                            <span className={`block text-[9px] uppercase tracking-widest font-bold ${labelColor}`}>TÊN CHỦ THẺ</span>
+                            <span className="block text-sm font-extrabold font-serif tracking-wide truncate uppercase">
+                              {currentUser.name}
+                            </span>
+                          </div>
+
+                          <div className="text-right">
+                            <span className={`block text-[8px] uppercase tracking-widest font-bold ${labelColor}`}>MÃ SỐ THẺ</span>
+                            <span className="block text-xs font-mono font-bold tracking-widest">{formattedCode}</span>
+                          </div>
+                        </div>
+
+                      </div>
+
+                      {/* STATS DETAILS GRID */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-neutral-50/70 border border-pink-50 p-4 rounded-2xl flex flex-col items-center text-center">
+                          <TrendingUp className="h-5 w-5 text-rose-500 mb-1" />
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Tích lũy chi tiêu</span>
+                          <span className="text-sm font-extrabold text-gray-900 mt-1">{formatVND(totalSpent)}</span>
+                        </div>
+
+                        <div className="bg-neutral-50/70 border border-pink-50 p-4 rounded-2xl flex flex-col items-center text-center">
+                          <Award className="h-5 w-5 text-amber-500 mb-1" />
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Điểm tích lũy</span>
+                          <span className="text-sm font-extrabold text-gray-900 mt-1">{earnedPoints} điểm</span>
+                        </div>
+
+                        <div className="bg-neutral-50/70 border border-pink-50 p-4 rounded-2xl flex flex-col items-center text-center">
+                          <Gift className="h-5 w-5 text-indigo-500 mb-1" />
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Giá trị quy đổi</span>
+                          <span className="text-sm font-extrabold text-emerald-600 mt-1">{formatVND(pointsWorth)}</span>
+                        </div>
+                      </div>
+
+                      {/* PROGRESS BAR TO NEXT TIER */}
+                      <div className="bg-rose-50/30 border border-pink-100 rounded-2xl p-5 space-y-3">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-semibold text-gray-700">Hành trình thăng hạng</span>
+                          {nextTierName ? (
+                            <span className="font-bold text-rose-600">
+                              Còn {formatVND(neededAmount)} tới hạng {nextTierName}
+                            </span>
+                          ) : (
+                            <span className="font-bold text-emerald-600 flex items-center gap-1">
+                              <Sparkles className="h-3.5 w-3.5" />
+                              <span>Đã đạt thứ hạng cao nhất</span>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Progress slider bar container */}
+                        <div className="relative w-full h-3.5 bg-neutral-100 rounded-full overflow-hidden border border-neutral-200 p-0.5">
+                          <div 
+                            className={`h-full rounded-full transition-all duration-1000 bg-gradient-to-r ${
+                              tierName === 'Thẻ Kim Cương'
+                                ? 'from-cyan-400 to-indigo-600'
+                                : tierName === 'Thẻ Vàng'
+                                ? 'from-yellow-400 to-amber-500'
+                                : 'from-rose-400 to-pink-500'
+                            }`}
+                            style={{ width: `${progressPercent}%` }}
+                          ></div>
+                        </div>
+
+                        {/* Milestone Nodes labels */}
+                        <div className="flex justify-between text-[10px] font-extrabold text-gray-400 uppercase tracking-wider pt-1">
+                          <span className={tierName === 'Thẻ Bạc' ? 'text-rose-600' : 'text-gray-500'}>Bạc (0đ)</span>
+                          <span className={tierName === 'Thẻ Vàng' ? 'text-amber-600' : 'text-gray-500'}>Vàng (3.000.000đ)</span>
+                          <span className={tierName === 'Thẻ Kim Cương' ? 'text-indigo-600' : 'text-gray-500'}>Kim Cương (5.000.000đ)</span>
+                        </div>
+                      </div>
+
+                      {/* ACCUMULATION RULES CARD */}
+                      <div className="bg-neutral-50/30 border border-pink-50 rounded-2xl p-5 space-y-4">
+                        <div className="flex items-center gap-2 border-b border-pink-100 pb-2">
+                          <HelpCircle className="h-4.5 w-4.5 text-rose-500 shrink-0" />
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-gray-800">Cơ chế tích điểm & Đặc thù thăng hạng</h4>
+                        </div>
+
+                        <div className="text-xs text-stone-600 space-y-2.5 leading-relaxed">
+                          <p className="flex items-start gap-2">
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-pink-100 text-[10px] font-bold text-rose-600 mt-0.5">1</span>
+                            <span><strong>Quy chuẩn tích lũy:</strong> Cứ mỗi <strong>50.000đ</strong> chi tiêu mua hoa thành công, hệ thống sẽ tự động quy đổi thành <strong>1 điểm</strong> tích lũy (Cơ chế làm tròn chi tiêu: phần lẻ từ <strong>500đ trở lên</strong> được làm tròn thành <strong>1.000đ</strong> để tính điểm tối ưu).</span>
+                          </p>
+                          <p className="flex items-start gap-2">
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-pink-100 text-[10px] font-bold text-rose-600 mt-0.5">2</span>
+                            <span><strong>Giá trị quy đổi:</strong> <strong>1 điểm</strong> tương ứng với <strong>1.000đ</strong>. Điểm tích lũy được bảo lưu hoàn toàn làm căn cứ nâng thẻ thành viên.</span>
+                          </p>
+                          <p className="flex items-start gap-2">
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-pink-100 text-[10px] font-bold text-rose-600 mt-0.5">3</span>
+                            <span><strong>Cấp độ Thẻ Vàng (Từ 3.000.000đ):</strong> Giảm ngay trực tiếp <strong>5%</strong> trên toàn bộ hóa đơn tiếp theo, tặng hoa tươi mừng sinh nhật.</span>
+                          </p>
+                          <p className="flex items-start gap-2">
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-pink-100 text-[10px] font-bold text-rose-600 mt-0.5">4</span>
+                            <span><strong>Cấp độ Thẻ Kim Cương (Từ 5.000.000đ):</strong> Giảm ngay trực tiếp <strong>10%</strong> trên toàn bộ hóa đơn tiếp theo, miễn phí vận chuyển hỏa tốc mọi đơn hàng, ưu tiên cắm mẫu thiết kế cao cấp nhất.</span>
+                          </p>
+                        </div>
+                      </div>
+
+                    </div>
+                  );
+                })()}
+
               </div>
-            </form>
+            ) : (
+              <div className="rounded-2xl border border-pink-100 bg-white p-6 shadow-xs text-left animate-fade-in">
+                <h3 className="font-serif text-lg font-bold text-gray-900 border-b border-pink-50 pb-3 mb-6">
+                  Quản Lý Thông Tin Cá Nhân
+                </h3>
+
+                <form onSubmit={handleUpdateProfileSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Họ và tên</label>
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="w-full rounded-lg border border-pink-50 bg-neutral-50/50 px-4 py-2 text-sm outline-none focus:border-rose-300 focus:bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Số điện thoại</label>
+                      <input
+                        type="tel"
+                        value={editPhone}
+                        onChange={(e) => setEditPhone(e.target.value)}
+                        className="w-full rounded-lg border border-pink-50 bg-neutral-50/50 px-4 py-2 text-sm outline-none focus:border-rose-300 focus:bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Địa chỉ giao hàng mặc định</label>
+                    <input
+                      type="text"
+                      value={editAddress}
+                      onChange={(e) => setEditAddress(e.target.value)}
+                      className="w-full rounded-lg border border-pink-50 bg-neutral-50/50 px-4 py-2 text-sm outline-none focus:border-rose-300 focus:bg-white"
+                    />
+                  </div>
+
+                  <div className="border-t border-pink-50 pt-5 flex justify-end">
+                    <button
+                      type="submit"
+                      className="inline-flex items-center rounded-full bg-rose-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-rose-700 transition cursor-pointer"
+                    >
+                      <Save className="mr-2 h-4 w-4" />
+                      Cập nhật thay đổi
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
           </div>
 
         </div>

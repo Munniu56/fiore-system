@@ -224,6 +224,7 @@ export default function App() {
   // --- COMPONENT ACTIVE VIEW ROLES CONTROL ---
   const [currentRole, setCurrentRole] = useState<'customer' | 'admin'>('customer');
   const [currentView, setCurrentView] = useState<string>('home');
+  const [authTab, setAuthTab] = useState<'membership' | 'profile'>('membership');
   const [showExpressDeliveryPolicyMenu, setShowExpressDeliveryPolicyMenu] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('fiore_show_express_delivery_policy_menu') === 'true';
@@ -437,8 +438,16 @@ export default function App() {
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const view = searchParams.get('view');
-    if (view && ['orders', 'checkout', 'catalog', 'home', 'about', 'contact', 'auth'].includes(view)) {
-      setCurrentView(view);
+    if (view && ['orders', 'checkout', 'catalog', 'home', 'about', 'contact', 'auth', 'membership'].includes(view)) {
+      if (view === 'membership') {
+        setAuthTab('membership');
+        setCurrentView('auth');
+      } else {
+        if (view === 'auth') {
+          setAuthTab('profile');
+        }
+        setCurrentView(view);
+      }
       const newUrl = window.location.origin + window.location.pathname;
       window.history.replaceState({}, document.title, newUrl);
     }
@@ -515,6 +524,7 @@ export default function App() {
                   createdAt: new Date().toISOString(),
                   couponCode: pending.couponCode || null,
                   discountAmount: pending.discountAmount || null,
+                  redeemedPoints: pending.redeemedPoints || null,
                 };
 
                 // Deduct inventory stocks and synchronize to Firestore
@@ -731,6 +741,7 @@ export default function App() {
     totalAmount?: number;
     couponCode?: string;
     discountAmount?: number;
+    redeemedPoints?: number;
   }) => {
     const sub = cartItems.reduce((acc, curr) => acc + curr.product.price * curr.quantity, 0);
     const shipping = 30000;
@@ -752,7 +763,8 @@ export default function App() {
       status: recipientData.paymentMethod === 'COD' ? 'confirmed' : 'paid',
       createdAt: new Date().toISOString(),
       couponCode: recipientData.couponCode,
-      discountAmount: recipientData.discountAmount
+      discountAmount: recipientData.discountAmount,
+      redeemedPoints: recipientData.redeemedPoints
     };
 
     // Deduct actual products inventory stocks in Firestore
@@ -932,7 +944,15 @@ export default function App() {
           if (v === 'admin') {
             navigate('/admin');
           } else {
-            setCurrentView(v);
+            if (v === 'membership') {
+              setAuthTab('membership');
+              setCurrentView('auth');
+            } else {
+              if (v === 'auth') {
+                setAuthTab('profile');
+              }
+              setCurrentView(v);
+            }
             if (location.pathname !== '/') {
               navigate('/');
             }
@@ -953,6 +973,7 @@ export default function App() {
         currentView={currentView}
         showExpressDeliveryPolicyMenu={showExpressDeliveryPolicyMenu}
         showCommitmentMenu={showCommitmentMenu}
+        authTab={authTab}
       />
 
       {/* MAIN VIEWPORT BODY */}
@@ -1512,6 +1533,8 @@ export default function App() {
                 window.scrollTo({ top: 0, behavior: 'instant' });
               }}
               sentEmailOrderIds={sentEmailOrderIds}
+              currentUser={currentUser}
+              orders={orders}
             />
           </div>
         )}
@@ -1532,6 +1555,8 @@ export default function App() {
                   window.scrollTo({ top: 0, behavior: 'instant' });
                 }
               }}
+              orders={orders}
+              initialTab={authTab}
             />
           </div>
         )}

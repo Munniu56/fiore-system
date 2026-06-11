@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { CreditCard, Truck, ClipboardList, ShieldAlert, BadgeCheck, CheckCircle2, Tag, Ticket, Trash2 } from 'lucide-react';
-import { CartItem, Coupon } from '../types';
+import { CartItem, Coupon, User, Order } from '../types';
 import { createVnpayPaymentUrl } from '../vnpayConfig';
 import { subscribeCoupons } from '../firebase';
 
@@ -23,6 +23,7 @@ interface CheckoutViewProps {
     totalAmount?: number;
     couponCode?: string;
     discountAmount?: number;
+    redeemedPoints?: number;
     cardDetails?: {
       cardNumber: string;
       cardName: string;
@@ -32,6 +33,8 @@ interface CheckoutViewProps {
   }) => void;
   onNavigate: (view: string) => void;
   sentEmailOrderIds?: string[];
+  currentUser?: User | null;
+  orders?: Order[];
 }
 
 export default function CheckoutView({
@@ -40,6 +43,8 @@ export default function CheckoutView({
   onPlaceOrder,
   onNavigate,
   sentEmailOrderIds = [],
+  currentUser = null,
+  orders = [],
 }: CheckoutViewProps) {
   
   // Recipient details state
@@ -137,8 +142,77 @@ export default function CheckoutView({
     }
   };
 
+  // Points redemption states
+  const [redeemedPointsInput, setRedeemedPointsInput] = useState('');
+  const [appliedRedeemedPoints, setAppliedRedeemedPoints] = useState(0);
+  const [pointsRedeemError, setPointsRedeemError] = useState<string | null>(null);
+  const [pointsRedeemSuccess, setPointsRedeemSuccess] = useState<string | null>(null);
+
+  // Dynamic membership & spending calculations for currently logged-in user
+  const userOrders = currentUser && orders
+    ? orders.filter((o) => o.customerEmail && o.customerEmail.toLowerCase() === currentUser.email.toLowerCase())
+    : [];
+  const validOrders = userOrders.filter(
+    (o) => o.status !== 'cancelled' && (o.paymentStatus === 'Paid' || o.status === 'completed' || o.paymentMethod === 'COD')
+  );
+  const totalSpent = validOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+  const roundedSpent = Math.round(totalSpent / 1000) * 1000;
+  const redeemedPointsSum = validOrders.reduce((sum, o) => sum + (o.redeemedPoints || 0), 0);
+  const earnedPoints = Math.max(0, Math.floor(roundedSpent / 50000) - redeemedPointsSum);
+
+  const pointsDiscount = appliedRedeemedPoints * 1000;
   const currentDiscount = calculateDiscount();
-  const totalAmount = calculateSubtotal() + SHIPPING_FEE - currentDiscount;
+  const totalBeforePoints = calculateSubtotal() + SHIPPING_FEE - currentDiscount;
+  const totalAmount = Math.max(0, totalBeforePoints - pointsDiscount);
+
+  // Ensure safe boundaries if cart changes or coupon is modified
+  useEffect(() => {
+    if (appliedRedeemedPoints > 0) {
+      const equivalentVnd = appliedRedeemedPoints * 1000;
+      if (equivalentVnd > totalBeforePoints) {
+        setAppliedRedeemedPoints(0);
+        setPointsRedeemSuccess(null);
+        setPointsRedeemError('Số điểm quy đổi đã được thiết lập lại do tổng hóa đơn thay đổi.');
+      }
+    }
+  }, [cartItems, appliedCoupon]);
+
+  const handleApplyPoints = () => {
+    setPointsRedeemError(null);
+    setPointsRedeemSuccess(null);
+
+    if (!currentUser) {
+      setPointsRedeemError('Vui lòng đăng nhập để sử dụng tính năng này.');
+      return;
+    }
+
+    const points = parseInt(redeemedPointsInput.trim(), 10);
+    if (isNaN(points) || points <= 0) {
+      setPointsRedeemError('Vui lòng nhập số điểm hợp lệ lớn hơn 0.');
+      return;
+    }
+
+    if (points > earnedPoints) {
+      setPointsRedeemError(`Số điểm bạn nhập vượt quá số điểm hiện có (${earnedPoints} điểm).`);
+      return;
+    }
+
+    const equivalentVnd = points * 1000;
+    if (equivalentVnd > totalBeforePoints) {
+      setPointsRedeemError(`Số tiền quy đổi (${formatVND(equivalentVnd)}) không được vượt quá số tiền cần thanh toán (${formatVND(totalBeforePoints)}).`);
+      return;
+    }
+
+    setAppliedRedeemedPoints(points);
+    setPointsRedeemSuccess(`Đã áp dụng quy đổi thành công ${points} điểm (giảm ${formatVND(equivalentVnd)}).`);
+  };
+
+  const handleRemovePoints = () => {
+    setAppliedRedeemedPoints(0);
+    setRedeemedPointsInput('');
+    setPointsRedeemSuccess(null);
+    setPointsRedeemError(null);
+  };
 
   const handleApplyCoupon = (codeToApply: string) => {
     setCouponError(null);
@@ -255,7 +329,8 @@ export default function CheckoutView({
         totalAmount,
         recipientEmail: recipientEmail || 'guest@fiore.vn',
         couponCode: appliedCoupon?.code || null,
-        discountAmount: currentDiscount || null
+        discountAmount: (currentDiscount || 0) + (pointsDiscount || 0) || null,
+        redeemedPoints: appliedRedeemedPoints || null
       };
       localStorage.setItem('fiore_pending_vnpay_order', JSON.stringify(pendingOrder));
       
@@ -277,7 +352,8 @@ export default function CheckoutView({
         paymentMethod,
         totalAmount,
         couponCode: appliedCoupon?.code || undefined,
-        discountAmount: currentDiscount || undefined,
+        discountAmount: (currentDiscount || 0) + (pointsDiscount || 0) || undefined,
+        redeemedPoints: appliedRedeemedPoints || undefined,
         cardDetails: paymentMethod === 'VISA' ? { cardNumber, cardName, expiry, cvv } : undefined,
       });
       setIsSubmitting(false);
@@ -840,6 +916,84 @@ export default function CheckoutView({
                 )}
               </div>
 
+              {/* Nhập giá trị quy đổi của thẻ thành viên */}
+              <div className="my-5 border-t border-pink-50 pt-4">
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1">
+                  <CreditCard className="h-4 w-4 text-rose-500 animate-pulse" />
+                  Nhập giá trị quy đổi của thẻ thành viên
+                </label>
+
+                {!currentUser ? (
+                  <div className="bg-stone-50 border border-stone-100 rounded-xl p-3 text-[10px] text-stone-500 text-left">
+                    <p>Vui lòng đăng nhập để sử dụng tính năng quy đổi điểm của Thẻ thành viên.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    <p className="text-[10px] text-gray-500 leading-normal">
+                      Tài khoản: <strong className="text-gray-800">{currentUser.name}</strong> 
+                      <span className="block mt-0.5">Điểm hiện có: <strong className="text-rose-600">{earnedPoints} điểm</strong> (quy đổi tương đương {formatVND(earnedPoints * 1000)})</span>
+                    </p>
+
+                    {appliedRedeemedPoints > 0 ? (
+                      <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                          <div>
+                            <p className="font-bold text-emerald-800">Đã quy đổi: {appliedRedeemedPoints} điểm</p>
+                            <p className="text-[10px] text-emerald-600 leading-tight">Giảm giá thành công -{formatVND(appliedRedeemedPoints * 1000)}</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRemovePoints}
+                          className="text-red-500 hover:text-red-700 transition cursor-pointer p-1 rounded-full hover:bg-rose-50 text-[10px] font-bold"
+                        >
+                          Hủy
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        {earnedPoints > 0 ? (
+                          <div className="space-y-2">
+                            <div className="flex gap-2">
+                              <input
+                                type="number"
+                                min={1}
+                                max={earnedPoints}
+                                placeholder="Nhập số điểm cần quy đổi..."
+                                value={redeemedPointsInput}
+                                onChange={(e) => {
+                                  setRedeemedPointsInput(e.target.value);
+                                  setPointsRedeemError(null);
+                                }}
+                                className="flex-1 rounded-lg border border-pink-100 bg-neutral-50/50 px-3 py-2 text-xs outline-none transition focus:bg-white focus:border-rose-400 font-medium text-gray-700"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleApplyPoints}
+                                className="bg-rose-500 text-white rounded-lg px-3.5 py-2 text-xs font-semibold hover:bg-rose-600 transition active:scale-95 cursor-pointer shrink-0"
+                              >
+                                Áp dụng
+                              </button>
+                            </div>
+                            {pointsRedeemError && (
+                              <p className="text-[10px] text-red-500 font-semibold">{pointsRedeemError}</p>
+                            )}
+                            {pointsRedeemSuccess && (
+                              <p className="text-[10px] text-emerald-600 font-bold">{pointsRedeemSuccess}</p>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="bg-stone-50 border border-stone-100 rounded-xl p-3 text-[10px] text-stone-500 text-left">
+                            <p>Tài khoản thẻ thành viên của bạn chưa có đủ điểm tích lũy quy đổi (quy tắc 50.000đ = 1 điểm, có hỗ trợ làm tròn phần lẻ từ 500đ lên 1.000đ).</p>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-2 border-t border-pink-50 pt-4 text-xs text-gray-650">
                 <div className="flex justify-between">
                   <span>Trị giá bó hoa</span>
@@ -853,6 +1007,12 @@ export default function CheckoutView({
                   <div className="flex justify-between text-emerald-600">
                     <span>Mã ưu đãi {appliedCoupon ? `(${appliedCoupon.code})` : ''}</span>
                     <span className="font-bold">-{formatVND(currentDiscount)}</span>
+                  </div>
+                )}
+                {pointsDiscount > 0 && (
+                  <div className="flex justify-between text-emerald-600">
+                    <span>Thẻ thành viên (giảm trừ {appliedRedeemedPoints} điểm)</span>
+                    <span className="font-bold">-{formatVND(pointsDiscount)}</span>
                   </div>
                 )}
                 

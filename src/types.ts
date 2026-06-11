@@ -52,6 +52,7 @@ export interface Order {
   vnp_Amount?: string;
   couponCode?: string;
   discountAmount?: number;
+  redeemedPoints?: number;
 }
 
 export interface User {
