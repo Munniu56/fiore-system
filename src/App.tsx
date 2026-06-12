@@ -48,8 +48,66 @@ import {
 
 import { Product, Category, CartItem, Order, User, OrderStatus, ContactMessage } from './types';
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES } from './data';
-import { Sparkles, Flower, Phone, Mail, Clock, MapPin, Heart, ArrowRight, Facebook, Instagram, Calendar, Star, FileText, Lock, CheckCircle, ShoppingBag } from 'lucide-react';
+import { Sparkles, Flower, Phone, Mail, Clock, MapPin, Heart, ArrowRight, Facebook, Instagram, Calendar, Star, FileText, Lock, CheckCircle, ShoppingBag, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+
+interface Article {
+  id: string;
+  title: string;
+  date: string;
+  category: string;
+  image: string;
+  shortDesc: string;
+  content: string[];
+}
+
+const ARTICLES: Article[] = [
+  {
+    id: 'birthday-roses',
+    title: 'Nghệ thuật chọn hoa cho ngày sinh nhật',
+    date: '02/06/2026',
+    category: 'Hướng dẫn',
+    image: blogBirthdayRoses,
+    shortDesc: 'Mỗi đóa hoa mang một thông điệp riêng biệt. Khám phá bí quyết chọn loài hoa chuẩn xác theo độ tuổi và cung hoàng đạo của người bạn thương yêu.',
+    content: [
+      'Mỗi đóa hoa mang một thông điệp riêng biệt, phản ánh tinh tế tấm lòng của người tặng. Ngày sinh nhật là dịp quan trọng nhất để chúng ta bày tỏ sự quan tâm chân thành, tôn vinh cá tính và vị thế của người nhận thông qua những loài hoa phù hợp nhất.',
+      'Khi lựa chọn hoa sinh nhật cho phái đẹp (như mẹ, vợ hoặc người yêu), những đóa hoa có tông màu lãng mạn như hồng pastel, đỏ nhung cổ điển hay cát tường dịu dàng luôn được ưu tiên hàng đầu. Theo nghệ nhân cắm hoa của Fióre, sắc hồng thể hiện sự trân quý, ngọt ngào, còn sắc đỏ tượng trưng cho tình yêu mãnh liệt, nồng nàn không phai mờ.',
+      'Đối với đối tác hoặc cấp trên, việc ưu tiên các dòng hoa mang ý nghĩa thịnh vượng, may mắn là vô cùng khôn khéo. Các loài hoa như Lan hồ điệp sang trọng, Đồng tiền rực rỡ hay Hoa hướng dương hướng về phía mặt trời sẽ truyền tải trọn vẹn lời chúc mãnh liệt về sự thành công, thăng tiến và vững chãi.',
+      'Mẹo nhỏ thú vị từ nghệ gia Fióre: Hãy thử chọn hoa theo cung hoàng đạo hoặc tháng sinh của người nhận! Ví dụ: Bạch Dương tràn đầy năng lượng rất hợp với hoa hồng đỏ kiêu sa; Kim Ngưu yêu thích sự tinh tế sẽ rung động trước cát tường thanh lịch; hay Song Ngư sâu sắc mộng mơ sẽ cực kỳ kết nối với những bông cẩm tú cầu dịu mát.',
+      'Dù chọn loài hoa nào, yếu tố tươi mới và sự chỉn chu trong thiết kế thiết kế luôn là chìa khóa. Fióre cam kết tinh tuyển từng cành hoa đạt chuẩn độ nở và hương thơm ngọt ngào nhất để gửi gắm trọn vẹn khoảnh khắc hạnh phúc cho ngày sinh nhật của người bạn thương yêu.'
+    ]
+  },
+  {
+    id: 'love-flowers',
+    title: 'Ý nghĩa các loài hoa trong tình yêu',
+    date: '30/05/2026',
+    category: 'Ý nghĩa hoa',
+    image: blogRedRoses,
+    shortDesc: 'Từ sắc đỏ rực rỡ của hoa hồng đến sắc tím thủy chung của cát tường, cùng tìm hiểu ngôn ngữ không lời thêu dệt nên buổi hẹn hò lãng mạn.',
+    content: [
+      'Người ta vẫn thường nói hoa tươi là ngôn ngữ không lời thêu dệt nên những buổi hẹn hò lãng mạn nhất. Kể từ thế kỷ 18, mỗi loài hoa đã được trao cho những mật mã riêng biệt để bộc lộ những tình cảm sâu kín nhất của các cặp đôi tình nhân.',
+      'Đứng đầu danh sách chắc chắn là Hoa hồng đỏ - biểu tượng bất diệt của thần tình yêu Aphrodite. Nhưng bạn có biết mỗi sắc độ của hoa hồng lại đại diện cho một nấc thang cảm xúc khác nhau? Hồng đỏ rực rỡ là tình cảm cuồng nhiệt, say đắm; Hồng nhạt nhẹ nhàng đại diện cho lời tỏ tình chúm chím thuở ban đầu; trong khi Hồng cam lại biểu thị sự ngưỡng mộ và khao khát kết nối tâm hồn sâu sắc.',
+      'Bên cạnh hoa hồng, Hoa Cát tường cũng mang một vị trí trang trọng trong lòng các đôi lứa. Loài hoa nhỏ nhắn với lớp cánh xếp nếp duyên dáng này tượng trưng cho sự dịu dàng, may mắn và gắn kết tự nhiên. Tặng cát tường là cách tinh tế nhất để gửi gắm thông điệp: "Mong tình yêu chúng ta luôn bình yên, thấu hiểu và hạnh phúc dài lâu".',
+      'Không thể không nhắc tới Cẩm chướng trắng - loài hoa đại diện cho sự ngây thơ, thuần khiết và chân thành vẹn nguyên. Hay những cành Baby trắng thướt tha như những giọt sương mai, tuy mộc mạc nhưng lại là trợ thủ tuyệt vời tạo điểm nhấn lung linh cho mọi hộp hoa tỏ tình, biểu đạt tình yêu nhẹ nhàng nhưng bền bỉ và thủy chung.',
+      'Bày tỏ tình yêu không cần những lời thề non hẹn biển phô trương, chỉ cần một bó hoa tinh tế được cắm tỉa đầy tâm huyết từ đôi tay lành nghề của nghệ nhân Fióre cũng đủ làm rung động trái tim ai đó. Hãy cùng để Fióre giúp bạn ghi dấu ấn khắc khoải ngàn năm.'
+    ]
+  },
+  {
+    id: 'fresh-tips',
+    title: 'Cách giữ hoa tươi lâu tại nhà',
+    date: '28/05/2026',
+    category: 'Mẹo hay',
+    image: blogRosesGlassVase,
+    shortDesc: 'Hướng dẫn chi tiết từ nghệ nhân chăm sóc hoa của Fióre cách cắt tỉa gốc, pha dưỡng chất định kỳ giúp bình hoa tươi suốt 2 tuần vẫn vẹn sắc.',
+    content: [
+      'Một bình hoa tươi tắn rực rỡ trong không gian sống không chỉ làm đẹp ngôi nhà mà còn mang lại sinh khí hữu hiệu giúp giải tỏa căng thẳng cho gia chủ. Tuy nhiên, làm sao để giữ bình hoa xinh đẹp tươi suốt hai tuần lại là câu hỏi khiến nhiều người bỡ ngỡ.',
+      'Bước quan trọng đầu tiên nằm ở khâu xử lý gốc cành. Khi nhận hoa từ Fióre, bạn hãy dùng kéo sắc cắt xéo một góc 45 độ ngay dưới vòi nước chảy hoặc trong chậu nước sạch. Việc cắt vát 45 độ giúp tối đa hóa diện tích tiếp xúc của vết cắt với nước, đồng thời việc cắt trong nước ngăn chặn bọt khí chặn đứng các ống dẫn mạch của cành.',
+      'Tiếp theo là công tác dọn dẹp lá gốc. Hãy tỉa bỏ hết tất cả những chiếc lá nằm ở phần cành ngập dưới nước. Lá ngập trong nước rất dễ thối rữa nhanh chóng, tạo điều kiện thuận lợi cho vi khuẩn sinh sôi nảy nở làm đục nước bình và đẩy nhanh quá trình hoa héo rũ.',
+      'Về nước cắm hoa: Luôn sử dụng bình nước sạch tinh khiết. Nghệ gia Fióre mách bạn một mẹo cổ điển nhưng vô cùng hiệu quả: Hãy pha thêm vào nước bình một muỗng đường nhỏ (để cung cấp năng lượng cho hoa tiếp tục nở) kết hợp cùng vài giọt nước cốt chanh hoặc giấm trắng (để tăng tính axit, ức chế vi khuẩn). Nếu có gói dưỡng hoa Chrysal kèm theo từ Fióre, hãy hòa tan theo đúng liều lượng chỉ định nhé.',
+      'Cuối cùng, vị trí đặt bình hoa chính là mấu chốt. Tránh đặt bình hoa trực tiếp dưới ánh nắng mặt trời gay gắt, luồng gió phả ra từ điều hòa, gần các thiết bị tỏa nhiệt lớn hay gần các giỏ trái cây chín (trái cây chín tỏa ra khí Ethylene thúc đẩy hoa nhanh tàn). Hãy thay nước bình hoa 2 ngày một lần để giữ nước luôn sạch mát, loại bỏ ngay bông héo để bảo vệ sức khỏe cho những đóa hoa còn lại.'
+    ]
+  }
+];
 
 export default function App() {
   
@@ -234,6 +292,7 @@ export default function App() {
     return localStorage.getItem('fiore_show_commitment_menu') === 'true';
   });
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [selectedArticle, setSelectedArticle] = useState<any | null>(null);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     return localStorage.getItem('fiore_admin_authenticated') === 'true';
   });
@@ -1151,106 +1210,43 @@ export default function App() {
               </div>
 
               <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-                
-                {/* Article 1 */}
-                <div className="group flex flex-col overflow-hidden rounded-2xl border border-[#E8E1D6] bg-white shadow-[0_4px_20px_rgba(31,61,43,0.03)] hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(31,61,43,0.07)] transition-all duration-300">
-                   <div className="relative overflow-hidden aspect-video h-52">
-                    <img 
-                      src={blogBirthdayRoses} 
-                      alt="Nghệ thuật chọn hoa cho ngày sinh nhật" 
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="absolute top-3 left-3 bg-[#1F3D2B]/90 text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-xs">
-                      Hướng dẫn
+                {ARTICLES.map((article) => (
+                  <div 
+                    key={article.id}
+                    onClick={() => setSelectedArticle(article)}
+                    className="group flex flex-col overflow-hidden rounded-2xl border border-[#E8E1D6] bg-white shadow-[0_4px_20px_rgba(31,61,43,0.03)] hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(31,61,43,0.07)] transition-all duration-300 cursor-pointer"
+                  >
+                    <div className="relative overflow-hidden aspect-video h-52">
+                      <img 
+                        src={article.image} 
+                        alt={article.title} 
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute top-3 left-3 bg-[#1F3D2B]/90 text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-xs">
+                        {article.category}
+                      </div>
+                    </div>
+                    <div className="flex flex-1 flex-col p-6">
+                      <div className="flex items-center space-x-2 text-[11px] text-[#4F4F4F]/70 mb-2">
+                        <Calendar className="h-3.5 w-3.5 text-[#C8A96B]" />
+                        <span>{article.date}</span>
+                      </div>
+                      <h3 className="font-serif text-lg font-bold text-[#1F3D2B] h-14 line-clamp-2 leading-snug group-hover:text-[#C8A96B] transition-colors duration-200">
+                        {article.title}
+                      </h3>
+                      <p className="mt-2 text-xs text-[#4F4F4F] line-clamp-3 leading-relaxed flex-grow">
+                        {article.shortDesc}
+                      </p>
+                      <div className="mt-5 border-t border-[#E8E1D6]/60 pt-4">
+                        <span className="inline-flex items-center text-xs font-bold text-[#C8A96B] group-hover:text-[#B28D49] transition-colors cursor-pointer">
+                          Đọc thêm
+                          <ArrowRight className="ml-1 h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex flex-1 flex-col p-6">
-                    <div className="flex items-center space-x-2 text-[11px] text-[#4F4F4F]/70 mb-2">
-                      <Calendar className="h-3.5 w-3.5 text-[#C8A96B]" />
-                      <span>02/06/2026</span>
-                    </div>
-                    <h3 className="font-serif text-lg font-bold text-[#1F3D2B] h-14 line-clamp-2 leading-snug group-hover:text-[#C8A96B] transition-colors duration-200">
-                      Nghệ thuật chọn hoa cho ngày sinh nhật
-                    </h3>
-                    <p className="mt-2 text-xs text-[#4F4F4F] line-clamp-3 leading-relaxed flex-grow">
-                      Mỗi đóa hoa mang một thông điệp riêng biệt. Khám phá bí quyết chọn loài hoa chuẩn xác theo độ tuổi và cung hoàng đạo của người bạn thương yêu.
-                    </p>
-                    <div className="mt-5 border-t border-[#E8E1D6]/60 pt-4">
-                      <button className="inline-flex items-center text-xs font-bold text-[#C8A96B] group-hover:text-[#B28D49] transition-colors cursor-pointer">
-                        Đọc thêm
-                        <ArrowRight className="ml-1 h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Article 2 */}
-                <div className="group flex flex-col overflow-hidden rounded-2xl border border-[#E8E1D6] bg-white shadow-[0_4px_20px_rgba(31,61,43,0.03)] hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(31,61,43,0.07)] transition-all duration-300">
-                   <div className="relative overflow-hidden aspect-video h-52">
-                    <img 
-                      src={blogRedRoses} 
-                      alt="Ý nghĩa các loài hoa trong tình yêu" 
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="absolute top-3 left-3 bg-[#1F3D2B]/90 text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-xs">
-                      Ý nghĩa hoa
-                    </div>
-                  </div>
-                  <div className="flex flex-1 flex-col p-6">
-                    <div className="flex items-center space-x-2 text-[11px] text-[#4F4F4F]/70 mb-2">
-                      <Calendar className="h-3.5 w-3.5 text-[#C8A96B]" />
-                      <span>30/05/2026</span>
-                    </div>
-                    <h3 className="font-serif text-lg font-bold text-[#1F3D2B] h-14 line-clamp-2 leading-snug group-hover:text-[#C8A96B] transition-colors duration-200">
-                      Ý nghĩa các loài hoa trong tình yêu
-                    </h3>
-                    <p className="mt-2 text-xs text-[#4F4F4F] line-clamp-3 leading-relaxed flex-grow">
-                      Từ sắc đỏ rực rỡ của hoa hồng đến sắc tím thủy chung của cát tường, cùng tìm hiểu ngôn ngữ không lời thêu dệt nên buổi hẹn hò lãng mạn.
-                    </p>
-                    <div className="mt-5 border-t border-[#E8E1D6]/60 pt-4">
-                      <button className="inline-flex items-center text-xs font-bold text-[#C8A96B] group-hover:text-[#B28D49] transition-colors cursor-pointer">
-                        Đọc thêm
-                        <ArrowRight className="ml-1 h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Article 3 */}
-                <div className="group flex flex-col overflow-hidden rounded-2xl border border-[#E8E1D6] bg-white shadow-[0_4px_20px_rgba(31,61,43,0.03)] hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(31,61,43,0.07)] transition-all duration-300">
-                   <div className="relative overflow-hidden aspect-video h-52">
-                    <img 
-                      src={blogRosesGlassVase} 
-                      alt="Cách giữ hoa tươi lâu tại nhà" 
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="absolute top-3 left-3 bg-[#1F3D2B]/90 text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-xs">
-                      Mẹo hay
-                    </div>
-                  </div>
-                  <div className="flex flex-1 flex-col p-6">
-                    <div className="flex items-center space-x-2 text-[11px] text-[#4F4F4F]/70 mb-2">
-                      <Calendar className="h-3.5 w-3.5 text-[#C8A96B]" />
-                      <span>28/05/2026</span>
-                    </div>
-                    <h3 className="font-serif text-lg font-bold text-[#1F3D2B] h-14 line-clamp-2 leading-snug group-hover:text-[#C8A96B] transition-colors duration-200">
-                      Cách giữ hoa tươi lâu tại nhà
-                    </h3>
-                    <p className="mt-2 text-xs text-[#4F4F4F] line-clamp-3 leading-relaxed flex-grow">
-                      Hướng dẫn chi tiết từ nghệ nhân chăm sóc hoa của Fióre cách cắt tỉa gốc, pha dưỡng chất định kỳ giúp bình hoa tươi suốt 2 tuần vẫn vẹn sắc.
-                    </p>
-                    <div className="mt-5 border-t border-[#E8E1D6]/60 pt-4">
-                      <button className="inline-flex items-center text-xs font-bold text-[#C8A96B] group-hover:text-[#B28D49] transition-colors cursor-pointer">
-                        Đọc thêm
-                        <ArrowRight className="ml-1 h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
+                ))}
               </div>
             </section>
 
@@ -1901,6 +1897,94 @@ export default function App() {
             >
               ✕
             </button>
+          </motion.div>
+        )}
+
+        {/* Article Full View Modal overlay */}
+        {selectedArticle && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-stone-950/65 backdrop-blur-xs"
+            onClick={() => setSelectedArticle(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ type: 'spring', duration: 0.4 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-3xl bg-white shadow-2xl border border-[#E8E1D6] flex flex-col"
+            >
+              {/* Cover Image Container */}
+              <div className="relative h-56 sm:h-72 w-full shrink-0">
+                <img 
+                  src={selectedArticle.image} 
+                  alt={selectedArticle.title} 
+                  className="h-full w-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/40 to-transparent" />
+                
+                {/* Header Overlay */}
+                <div className="absolute bottom-5 left-5 right-5 text-white text-left">
+                  <span className="inline-block bg-[#C8A96B] text-white text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider mb-2">
+                    {selectedArticle.category}
+                  </span>
+                  <h2 className="font-serif text-xl sm:text-2xl font-bold tracking-tight leading-snug">
+                    {selectedArticle.title}
+                  </h2>
+                  <div className="flex items-center space-x-2.5 text-[10px] text-stone-200/90 mt-2 font-medium">
+                    <Calendar className="h-3.5 w-3.5 text-[#C8A96B]" />
+                    <span>{selectedArticle.date}</span>
+                    <span>•</span>
+                    <span>Tác giả: Nghệ nhân Fióre</span>
+                  </div>
+                </div>
+
+                {/* Close Button on Top Right */}
+                <button
+                  onClick={() => setSelectedArticle(null)}
+                  className="absolute top-4 right-4 h-8 w-8 flex items-center justify-center rounded-full bg-stone-900/50 text-white hover:bg-stone-900/85 transition cursor-pointer backdrop-blur-xs border border-white/10"
+                  aria-label="Đóng"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Scrollable Content Body */}
+              <div className="p-5 sm:p-7 space-y-5 overflow-y-auto text-left flex-1">
+                <p className="text-[#1F3D2B] font-medium text-xs sm:text-sm border-l-4 border-[#C8A96B] pl-3.5 italic leading-relaxed py-0.5">
+                  "{selectedArticle.shortDesc}"
+                </p>
+
+                <div className="space-y-3.5 text-stone-600 text-xs sm:text-sm leading-relaxed font-sans">
+                  {selectedArticle.content.map((paragraph: string, idx: number) => (
+                    <p key={idx}>{paragraph}</p>
+                  ))}
+                </div>
+
+                {/* Article Footer Signature decoration */}
+                <div className="pt-5 border-t border-[#E8E1D6]/60 flex items-center justify-between">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="h-8 w-8 rounded-full bg-pink-50 flex items-center justify-center text-[#C8A96B] shrink-0">
+                      <Flower className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-[#1F3D2B] leading-none">Ban biên tập Fióre</p>
+                      <p className="text-[9px] text-stone-400 mt-1 leading-none">Kiến tạo không gian sống đầy cảm hứng</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedArticle(null)}
+                    className="px-4 py-2 rounded-full bg-[#1F3D2B] hover:bg-[#152a1d] text-white font-bold text-xs shadow-xs transition cursor-pointer"
+                  >
+                    Đóng bài viết
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
