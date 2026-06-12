@@ -99,6 +99,25 @@
         "isActive": { "type": "boolean" }
       },
       "required": ["id", "code", "description", "discountType", "discountValue", "minOrderValue", "isActive"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Customer feedback and product rating review",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "author": { "type": "string" },
+        "email": { "type": "string" },
+        "rating": { "type": "number" },
+        "date": { "type": "string" },
+        "comment": { "type": "string" },
+        "isVerified": { "type": "boolean" },
+        "likes": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "productId", "productName", "author", "email", "rating", "date", "comment", "likes", "createdAt"]
     }
   },
   "firestore": {
@@ -125,6 +144,10 @@
     "coupons/{id}": {
       "schema": "Coupon",
       "description": "Discount coupons collection"
+    },
+    "reviews/{id}": {
+      "schema": "Review",
+      "description": "Product reviews and ratings collection"
     }
   }
 }

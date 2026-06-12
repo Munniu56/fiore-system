@@ -46,5 +46,10 @@ service cloud.firestore {
     match /coupons/{couponId} {
       allow read, write: if true; // Clients can validate coupons, admin can manage
     }
+
+    // Reviews Rules
+    match /reviews/{reviewId} {
+      allow read, write: if true; // Anyone can read and write reviews, admin can manage
+    }
   }
 }

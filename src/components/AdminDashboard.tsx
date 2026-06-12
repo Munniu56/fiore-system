@@ -3,15 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
   BarChart2, Gift, DollarSign, Package, Users, Plus, Edit2, 
   Trash2, Layers, Check, ShoppingBag, Eye, X, RefreshCw, Star, Info, TrendingUp, Search, LogOut, Mail, Lock, ShieldAlert,
-  Menu, Shield, Download, FileText, Database
+  Menu, Shield, Download, FileText, Database, MessageSquare
 } from 'lucide-react';
-import { Product, Category, Order, User, OrderStatus, ContactMessage, Coupon } from '../types';
-import { subscribeCoupons, saveCoupon, removeCoupon } from '../firebase';
+import { Product, Category, Order, User, OrderStatus, ContactMessage, Coupon, Review } from '../types';
+import { subscribeCoupons, saveCoupon, removeCoupon, subscribeReviews, removeReview, saveReview } from '../firebase';
 import { convertProductsToCSV, convertProductsToMerchantXML, downloadFile } from '../utils/productExporter';
 // Gmail manager removed specifically for isolated admin portal
 
@@ -51,11 +51,11 @@ export default function AdminDashboard({
   onAdminLogout,
 }: AdminDashboardProps) {
   
-  const [activeTab, setActiveTab ] = useState<'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts' | 'coupons'>('stats');
+  const [activeTab, setActiveTab ] = useState<'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts' | 'coupons' | 'reviews'>('stats');
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const setContacts = onUpdateContacts;
 
-  const handleTabChange = (tab: 'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts' | 'coupons') => {
+  const handleTabChange = (tab: 'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts' | 'coupons' | 'reviews') => {
     setActiveTab(tab);
     if (tab === 'contacts') {
       const saved = localStorage.getItem('fiore_contacts');
@@ -87,6 +87,129 @@ export default function AdminDashboard({
   const [confirmNewPw, setConfirmNewPw] = useState('');
   const [pwError, setPwError] = useState<string | null>(null);
   const [pwSuccess, setPwSuccess] = useState<string | null>(null);
+
+  // Review management states
+  const [dbReviews, setDbReviews] = useState<Review[]>([]);
+  const [reviewSearchQuery, setReviewSearchQuery] = useState('');
+  const [selectedRatingFilter, setSelectedRatingFilter] = useState<number | 'all'>('all');
+  const [reviewSortOrder, setReviewSortOrder] = useState<'newest' | 'oldest' | 'rating-high' | 'rating-low'>('newest');
+  const [selectedReviewForDetail, setSelectedReviewForDetail] = useState<Review | null>(null);
+  const [reviewActionSuccess, setReviewActionSuccess] = useState<string | null>(null);
+
+  // Subscribe to reviews in Firestore
+  useEffect(() => {
+    const unsub = subscribeReviews((data) => {
+      setDbReviews(data || []);
+    });
+    return () => unsub();
+  }, []);
+
+  // State and Helpers for Deleted Mock reviews, Deletion and Verification
+  const [deletedMockReviewIds, setDeletedMockReviewIds] = useState<string[]>(() => {
+    const saved = localStorage.getItem('fiore_deleted_mock_reviews');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const getMockReviewsForProduct = (prod: Product): Review[] => {
+    const templates = [
+      {
+        id: `${prod.id}-r1`,
+        productId: prod.id,
+        productName: prod.name,
+        author: 'Nguyễn Thị Tuyết Mai',
+        email: 'tuyetmai.nguyen@gmail.com',
+        rating: 5,
+        date: '08/06/2026',
+        comment: `Mình đặt bó "${prod.name}" này tặng sinh nhật mẹ. Hoa giao tới cực kỳ tươi, màu sắc phối nhã nhặn, sang trọng vô cùng. Mẹ thích lắm, chụp ảnh khoe khắp nhà. Dịch vụ cắm hoa của Fióre rất chỉn chu, tỉ mỉ và chu đáo!`,
+        isVerified: true,
+        likes: 5,
+        createdAt: '2026-06-08T12:00:00.000Z'
+      },
+      {
+        id: `${prod.id}-r2`,
+        productId: prod.id,
+        productName: prod.name,
+        author: 'Lê Hoàng Nam',
+        email: 'namle.design@gmail.com',
+        rating: 5,
+        date: '03/06/2026',
+        comment: `Nghệ thuật cắm hoa đỉnh cao thực sự, giữ dáng hoa lâu, mùi hương lan tỏa tự nhiên khắp phòng khách. Đã cắm được 5 ngày rồi mà hoa vẫn tươi rói và nở đều nhờ sử dụng gói bột dưỡng đi kèm tiệm tặng. Sẽ ủng hộ Fióre lâu dài!`,
+        isVerified: true,
+        likes: 3,
+        createdAt: '2026-06-03T14:30:00.000Z'
+      },
+      {
+        id: `${prod.id}-r3`,
+        productId: prod.id,
+        productName: prod.name,
+        author: 'Trần Minh Quân',
+        email: 'quan.tran@vnpay.vn',
+        rating: 4,
+        date: '28/05/2026',
+        comment: `Sản phẩm "${prod.name}" giao hỏa tốc cực kỳ đúng giờ dù hôm đó trời mưa to. Bạn shipper lịch sự, bọc ruy băng lụa cẩn thận chống ẩm sương cho hoa. Rất hài lòng về sự tận tâm của đội ngũ!`,
+        isVerified: true,
+        likes: 2,
+        createdAt: '2026-05-28T09:15:00.000Z'
+      }
+    ];
+    return templates.slice(0, Math.min(templates.length, prod.reviewsCount || 3)) as Review[];
+  };
+
+  const handleDeleteReview = async (review: any) => {
+    if (window.confirm(`Bạn có chắc chắn muốn xóa nhận xét đánh giá này của khách hàng "${review.author}" trên sản phẩm "${review.productName}"?`)) {
+      if (review.isCustom) {
+        try {
+          await removeReview(review.id);
+          setReviewActionSuccess(`Đã xóa thành công đánh giá của ${review.author} khỏi cơ sở dữ liệu.`);
+          setTimeout(() => setReviewActionSuccess(null), 3000);
+          if (selectedReviewForDetail?.id === review.id) {
+            setSelectedReviewForDetail(null);
+          }
+        } catch (err) {
+          alert('Lỗi khi xóa đánh giá: ' + String(err));
+        }
+      } else {
+        const updated = [...deletedMockReviewIds, review.id];
+        setDeletedMockReviewIds(updated);
+        localStorage.setItem('fiore_deleted_mock_reviews', JSON.stringify(updated));
+        setReviewActionSuccess(`Đã xóa thành công đánh giá hệ thống của ${review.author}.`);
+        setTimeout(() => setReviewActionSuccess(null), 3000);
+        if (selectedReviewForDetail?.id === review.id) {
+          setSelectedReviewForDetail(null);
+        }
+      }
+    }
+  };
+
+  const handleToggleVerify = async (review: any) => {
+    if (review.isCustom) {
+      try {
+        const updated: Review = {
+          id: review.id,
+          productId: review.productId,
+          productName: review.productName,
+          author: review.author,
+          email: review.email,
+          rating: review.rating,
+          date: review.date,
+          comment: review.comment,
+          likes: review.likes || 0,
+          createdAt: review.createdAt || new Date().toISOString(),
+          isVerified: !review.isVerified
+        };
+        await saveReview(updated);
+        setReviewActionSuccess(`Đã cập nhật trạng thái kiểm duyệt của khách hàng ${review.author}.`);
+        setTimeout(() => setReviewActionSuccess(null), 3000);
+        if (selectedReviewForDetail?.id === review.id) {
+          setSelectedReviewForDetail({ ...selectedReviewForDetail, isVerified: !review.isVerified });
+        }
+      } catch (err) {
+        alert('Lỗi khi kiểm duyệt đánh giá: ' + String(err));
+      }
+    } else {
+      alert('Đánh giá mẫu hệ thống mặc định luôn được kiểm duyệt xác minh!');
+    }
+  };
 
   const handlePasswordChange = (e: React.FormEvent) => {
     e.preventDefault();
@@ -516,6 +639,7 @@ export default function AdminDashboard({
                   {activeTab === 'customers' && 'Khách hàng'}
                   {activeTab === 'coupons' && 'Ưu đãi & Khuyến mãi'}
                   {activeTab === 'contacts' && 'Liên hệ'}
+                  {activeTab === 'reviews' && 'Đánh giá'}
                   {activeTab === 'security' && 'Bảo mật/MK'}
                 </span>
               </h2>
@@ -601,6 +725,14 @@ export default function AdminDashboard({
               {unreadContactsCount > 0 && (
                 <span className="px-1.5 py-0.5 text-[9px] bg-amber-500 text-emerald-950 rounded-full font-bold animate-pulse">{unreadContactsCount}</span>
               )}
+            </button>
+            <button
+              onClick={() => { handleTabChange('reviews'); setIsMobileNavOpen(false); }}
+              className={`w-full rounded-xl px-4 py-3 flex items-center text-xs font-semibold transition cursor-pointer ${
+                activeTab === 'reviews' ? 'bg-emerald-100/60 text-emerald-950 font-bold' : 'text-stone-700 hover:bg-amber-100/40'
+              }`}
+            >
+              <MessageSquare className="mr-2.5 h-4 w-4 shrink-0" /> Quản lý đánh giá
             </button>
             <button
               onClick={() => { handleTabChange('security'); setIsMobileNavOpen(false); }}
@@ -712,6 +844,15 @@ export default function AdminDashboard({
                 {unreadContactsCount > 0 && (
                   <span className="px-1.5 py-0.5 text-[9px] bg-amber-500 text-emerald-950 rounded-full font-bold animate-pulse">{unreadContactsCount}</span>
                 )}
+              </button>
+              <button
+                onClick={() => handleTabChange('reviews')}
+                className={`w-full rounded-lg px-3.5 py-2 flex items-center transition cursor-pointer ${
+                  activeTab === 'reviews' ? 'bg-emerald-100/60 text-emerald-950 font-bold shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
+                }`}
+                id="admin-reviews-tab"
+              >
+                <MessageSquare className="mr-2 h-4 w-4 shrink-0 text-amber-600" /> Quản lý đánh giá
               </button>
               <button
                 onClick={() => handleTabChange('security')}
@@ -2392,6 +2533,422 @@ export default function AdminDashboard({
           </div>
         </div>
       )}
+
+      {/* --- TAB 9: CUSTOMER REVIEWS MANAGEMENT (QUẢN LÝ ĐÁNH GIÁ) --- */}
+      {activeTab === 'reviews' && (() => {
+        // Compute all combined reviews (Firestore + Mock reviews)
+        const allCustomReviews = dbReviews.map(r => ({
+          ...r,
+          isCustom: true
+        }));
+
+        const allMockReviews: any[] = [];
+        products.forEach(p => {
+          allMockReviews.push(...getMockReviewsForProduct(p));
+        });
+
+        const allReviewsCombined = [...allCustomReviews, ...allMockReviews];
+        const visibleCombinedReviews = allReviewsCombined.filter(r => !deletedMockReviewIds.includes(r.id));
+
+        // Computing statistics
+        const totalReviewsCount = visibleCombinedReviews.length;
+        const avgRatingValue = totalReviewsCount > 0 
+          ? visibleCombinedReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviewsCount
+          : 5.0;
+        const averageRating = avgRatingValue.toFixed(1);
+
+        const star5Count = visibleCombinedReviews.filter(r => r.rating === 5).length;
+        const star4Count = visibleCombinedReviews.filter(r => r.rating === 4).length;
+        const star3Count = visibleCombinedReviews.filter(r => r.rating === 3).length;
+        const star2Count = visibleCombinedReviews.filter(r => r.rating <= 2).length;
+
+        const star5Percent = totalReviewsCount > 0 ? `${Math.round((star5Count / totalReviewsCount) * 100)}%` : '0%';
+        const star4Percent = totalReviewsCount > 0 ? `${Math.round((star4Count / totalReviewsCount) * 100)}%` : '0%';
+        const star3Percent = totalReviewsCount > 0 ? `${Math.round((star3Count / totalReviewsCount) * 100)}%` : '0%';
+        const star2Percent = totalReviewsCount > 0 ? `${Math.round((star2Count / totalReviewsCount) * 100)}%` : '0%';
+
+        // Filtering
+        const filteredReviews = visibleCombinedReviews.filter(r => {
+          const matchesSearch = 
+            r.author.toLowerCase().includes(reviewSearchQuery.toLowerCase()) ||
+            r.email.toLowerCase().includes(reviewSearchQuery.toLowerCase()) ||
+            r.productName.toLowerCase().includes(reviewSearchQuery.toLowerCase()) ||
+            r.comment.toLowerCase().includes(reviewSearchQuery.toLowerCase());
+
+          const matchesRating = selectedRatingFilter === 'all' || r.rating === Number(selectedRatingFilter);
+
+          return matchesSearch && matchesRating;
+        });
+
+        // Sorting
+        const sortedReviews = [...filteredReviews].sort((a, b) => {
+          if (reviewSortOrder === 'newest') {
+            return new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime();
+          }
+          if (reviewSortOrder === 'oldest') {
+            return new Date(a.createdAt || a.date).getTime() - new Date(b.createdAt || b.date).getTime();
+          }
+          if (reviewSortOrder === 'rating-high') {
+            return b.rating - a.rating;
+          }
+          if (reviewSortOrder === 'rating-low') {
+            return a.rating - b.rating;
+          }
+          return 0;
+        });
+
+        return (
+          <div className="space-y-6 animate-fade-in w-full">
+            
+            {/* Header section with Stats Cards */}
+            <div className="rounded-2xl border border-amber-200/60 bg-white p-6 shadow-xs space-y-4">
+              <div>
+                <h3 className="font-serif text-lg font-bold text-emerald-950 flex items-center gap-2">
+                  <MessageSquare className="text-emerald-800 h-5 w-5 shrink-0" />
+                  <span>Quản Lý Nhận Xét & Đánh Giá</span>
+                </h3>
+                <p className="text-xs text-stone-450 mt-1">
+                  Xem và xóa bỏ các nội dung phản hồi, đánh giá sao của quý khách hàng về chất lượng hoa nghệ thuật Fióre
+                </p>
+              </div>
+
+              {reviewActionSuccess && (
+                <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-2.5 text-xs text-emerald-800 font-semibold animate-pulse">
+                  ✓ {reviewActionSuccess}
+                </div>
+              )}
+
+              {/* Statistics Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
+                {/* Score Card */}
+                <div className="rounded-xl bg-[#FBF9F4] border border-[#E8E1D6] p-4.5 flex items-center justify-between shadow-2xs">
+                  <div>
+                    <span className="text-[10px] uppercase tracking-wider text-stone-400 font-bold">Điểm số trung bình</span>
+                    <h4 className="text-3xl font-bold font-serif text-emerald-950 mt-1 flex items-baseline gap-1.5">
+                      {averageRating}
+                      <span className="text-xs text-stone-450 font-sans font-medium mb-0.5">/ 5.0</span>
+                    </h4>
+                    <div className="flex items-center space-x-0.5 mt-2">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star 
+                          key={s} 
+                          className={`h-4 w-4 ${s <= Math.round(Number(averageRating)) ? 'text-amber-400 fill-amber-400' : 'text-stone-200'}`} 
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="h-12 w-12 bg-amber-100/50 rounded-2xl flex items-center justify-center text-amber-650 font-serif font-black text-lg select-none">
+                    ★
+                  </div>
+                </div>
+
+                {/* total reviews count */}
+                <div className="rounded-xl bg-[#FBF9F4] border border-[#E8E1D6] p-4.5 flex items-center justify-between shadow-2xs">
+                  <div>
+                    <span className="text-[10px] uppercase tracking-wider text-stone-400 font-bold">Tổng số nhận xét</span>
+                    <h4 className="text-3xl font-bold font-serif text-emerald-950 mt-1">{totalReviewsCount}</h4>
+                    <p className="text-[11px] text-[#1F3D2B] font-medium mt-1">
+                      Mẫu hoa có nhiều phản hồi nhất
+                    </p>
+                  </div>
+                  <div className="h-12 w-12 bg-emerald-100/40 rounded-2xl flex items-center justify-center text-emerald-800">
+                    <MessageSquare className="h-5 w-5" />
+                  </div>
+                </div>
+
+                {/* Rating score details */}
+                <div className="rounded-xl bg-[#FBF9F4] border border-[#E8E1D6] p-4.5 space-y-1 text-xs text-stone-600 shadow-2xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="w-12 font-semibold">5 sao</span>
+                    <div className="h-1.5 w-full rounded-full bg-stone-200 overflow-hidden">
+                      <div className="h-full bg-amber-400 rounded-full" style={{ width: star5Percent }}></div>
+                    </div>
+                    <span className="w-8 text-right font-mono text-[10px] text-stone-450">{star5Count}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="w-12 font-semibold">4 sao</span>
+                    <div className="h-1.5 w-full rounded-full bg-stone-200 overflow-hidden">
+                      <div className="h-full bg-amber-400 rounded-full" style={{ width: star4Percent }}></div>
+                    </div>
+                    <span className="w-8 text-right font-mono text-[10px] text-stone-450">{star4Count}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="w-12 font-semibold">3 sao</span>
+                    <div className="h-1.5 w-full rounded-full bg-stone-200 overflow-hidden">
+                      <div className="h-full bg-amber-400 rounded-full" style={{ width: star3Percent }}></div>
+                    </div>
+                    <span className="w-8 text-right font-mono text-[10px] text-stone-450">{star3Count}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="w-12 font-semibold">≤ 2 sao</span>
+                    <div className="h-1.5 w-full rounded-full bg-stone-200 overflow-hidden">
+                      <div className="h-full bg-amber-400 rounded-full" style={{ width: star2Percent }}></div>
+                    </div>
+                    <span className="w-8 text-right font-mono text-[10px] text-stone-450">{star2Count}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Filter and Content List */}
+            <div className="rounded-2xl border border-amber-200/60 bg-white p-6 shadow-xs space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pb-2 border-b border-stone-100">
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-stone-500">Danh sách phản hồi</span>
+                  <span className="bg-stone-100 text-stone-800 text-[10px] font-bold px-2 py-0.5 rounded-full font-mono">{filteredReviews.length} kết quả</span>
+                </div>
+                
+                {/* Multi search and filters */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Search Input */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2 h-3.5 w-3.5 text-stone-400" />
+                    <input
+                      type="text"
+                      placeholder="Tìm người gửi, email, mẫu hoa..."
+                      value={reviewSearchQuery}
+                      onChange={(e) => setReviewSearchQuery(e.target.value)}
+                      className="rounded-lg border border-amber-200 bg-white pl-8.5 pr-3 py-1.5 text-xs outline-none focus:border-emerald-700 w-52"
+                    />
+                  </div>
+
+                  {/* Star Rating Select */}
+                  <select
+                    value={selectedRatingFilter}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSelectedRatingFilter(val === 'all' ? 'all' : Number(val));
+                    }}
+                    className="rounded-lg border border-amber-200 bg-white px-2.5 py-1.5 text-xs outline-none focus:border-emerald-700 font-medium"
+                  >
+                    <option value="all">Tất cả số sao</option>
+                    <option value="5">Yêu thích nhất (5★)</option>
+                    <option value="4">Tốt (4★)</option>
+                    <option value="3">Trung bình (3★)</option>
+                    <option value="2">Yếu / Chưa đạt (≤2★)</option>
+                  </select>
+
+                  {/* Sorting Select */}
+                  <select
+                    value={reviewSortOrder}
+                    onChange={(e) => setReviewSortOrder(e.target.value as any)}
+                    className="rounded-lg border border-amber-200 bg-white px-2.5 py-1.5 text-xs outline-none focus:border-emerald-700 font-medium"
+                  >
+                    <option value="newest">Ngày gửi mới nhất</option>
+                    <option value="oldest">Cũ nhất trước</option>
+                    <option value="rating-high">Đánh giá cao trước</option>
+                    <option value="rating-low">Đánh giá thấp trước</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Reviews Table / Cards Grid */}
+              {sortedReviews.length === 0 ? (
+                <div className="text-center py-12 text-stone-400 space-y-2">
+                  <MessageSquare className="h-8 w-8 mx-auto text-stone-350 shrink-0" />
+                  <p className="text-xs font-semibold">Chưa có kết quả đánh giá nào phù hợp với điều kiện lọc</p>
+                  <p className="text-[10px] text-stone-400">Bạn có thể đổi từ khóa tìm kiếm hoặc bỏ bộ lọc sao.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-xl border border-stone-200">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-[#FAF7F0] border-b border-stone-200 text-stone-500 font-serif font-bold h-10">
+                        <th className="px-4 py-2 w-48">Sản Phẩm & Tiêu đề</th>
+                        <th className="px-4 py-2 w-48">Khách Hàng & Thông Tin</th>
+                        <th className="px-4 py-2 w-16 text-center">Số Sao</th>
+                        <th className="px-4 py-2">Nội dung đánh giá</th>
+                        <th className="px-4 py-2 w-24 text-center">Trạng Thái</th>
+                        <th className="px-4 py-2 w-20 text-center font-serif font-bold">Hành Động</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-stone-100">
+                      {sortedReviews.map((rev) => (
+                        <tr key={rev.id} className="hover:bg-amber-50/10 transition-colors">
+                          <td className="px-4 py-3">
+                            <span className="font-semibold text-emerald-950 block max-w-[170px] truncate" title={rev.productName}>
+                              {rev.productName}
+                            </span>
+                            <span className="text-[10px] text-stone-400 font-mono mt-0.5 block truncate">
+                              ID: {rev.productId}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="font-bold text-gray-800 block truncate max-w-[170px]">
+                              {rev.author}
+                            </span>
+                            <span className="text-[10px] text-stone-500 font-mono block truncate max-w-[170px]" title={rev.email}>
+                              {rev.email}
+                            </span>
+                            <span className="text-[10px] text-stone-400 block mt-0.5">
+                              {rev.date}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="inline-flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded border border-amber-100">
+                              <Star className="h-3 w-3 text-amber-500 fill-amber-500 shrink-0" />
+                              <span className="font-mono font-bold text-amber-700">{rev.rating}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-stone-600 leading-relaxed font-sans max-w-sm">
+                            <p className="line-clamp-2 text-[11px]" title={rev.comment}>
+                              {rev.comment}
+                            </p>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex flex-col items-center gap-1">
+                              {rev.isCustom ? (
+                                <span className="bg-emerald-50 text-emerald-800 border border-emerald-100 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                                  Khách mua thật
+                                </span>
+                              ) : (
+                                <span className="bg-stone-50 text-stone-500 border border-stone-200 px-1.5 py-0.5 rounded text-[10px] font-medium">
+                                  Mẫu hệ thống
+                                </span>
+                              )}
+                              
+                              <button
+                                onClick={() => handleToggleVerify(rev)}
+                                className={`px-2 py-0.5 rounded text-[9px] font-bold border transition cursor-pointer ${
+                                  rev.isVerified 
+                                    ? 'bg-emerald-600 text-white border-transparent hover:bg-emerald-700' 
+                                    : 'bg-white text-stone-500 border-stone-300 hover:bg-stone-50'
+                                }`}
+                                title="Bấm để thay đổi trạng thái kiểm duyệt"
+                              >
+                                {rev.isVerified ? '✓ Đã Duyệt' : '✗ Chờ Duyệt'}
+                              </button>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                onClick={() => setSelectedReviewForDetail(rev)}
+                                className="h-7 w-7 rounded-md text-emerald-850 hover:bg-emerald-50 border border-emerald-200 flex items-center justify-center transition cursor-pointer"
+                                title="Xem chi tiết"
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteReview(rev)}
+                                className="h-7 w-7 rounded-md text-red-650 hover:bg-red-50 border border-red-200 flex items-center justify-center transition cursor-pointer"
+                                title="Xóa đánh giá này"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Review detail modal popup */}
+            {selectedReviewForDetail && (
+              <div className="fixed inset-0 bg-stone-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+                <div className="bg-white rounded-2xl border border-amber-200 max-w-md w-full p-6 space-y-4 shadow-xl relative animate-fade-in">
+                  <button
+                    onClick={() => setSelectedReviewForDetail(null)}
+                    className="absolute right-4 top-4 text-stone-400 hover:text-stone-700 h-8 w-8 rounded-full hover:bg-stone-100 flex items-center justify-center transition cursor-pointer"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+
+                  <div className="border-b border-amber-100 pb-2">
+                    <h4 className="font-serif text-[14px] font-bold text-[#1F3D2B]">Chi tiết nhận xét đánh giá</h4>
+                    <p className="text-[10px] text-stone-400 font-mono mt-0.5">ID: {selectedReviewForDetail.id}</p>
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div className="grid grid-cols-2 gap-3 bg-amber-50/20 p-3 rounded-lg border border-amber-100">
+                      <div>
+                        <span className="text-[10px] text-stone-400 uppercase font-bold block mb-0.5">Sản phẩm nghệ thuật</span>
+                        <span className="font-serif font-bold text-emerald-950 block text-[12px] truncate">{selectedReviewForDetail.productName}</span>
+                        <span className="text-[9px] text-stone-450 font-mono block">ID: {selectedReviewForDetail.productId}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-stone-400 uppercase font-bold block mb-0.5">Số sao đánh giá</span>
+                        <div className="flex items-center space-x-1 mt-0.5">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star 
+                              key={s} 
+                              className={`h-3.5 w-3.5 ${s <= selectedReviewForDetail.rating ? 'text-amber-400 fill-amber-400' : 'text-stone-200'}`} 
+                            />
+                          ))}
+                          <span className="font-mono font-bold text-stone-750 ml-0.5">({selectedReviewForDetail.rating}★)</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#FAF7F0] p-3 rounded-lg border border-stone-200 space-y-1">
+                      <span className="text-[10px] text-stone-400 uppercase font-bold block mb-1">Thông tin người đánh giá</span>
+                      <p className="text-stone-600">
+                        <strong>Họ tên:</strong> {selectedReviewForDetail.author}
+                      </p>
+                      <p className="text-stone-600">
+                        <strong>Hòm thư:</strong> <span className="font-mono">{selectedReviewForDetail.email}</span>
+                      </p>
+                      <p className="text-stone-600">
+                        <strong>Thời gian:</strong> {selectedReviewForDetail.date}
+                      </p>
+                      <div className="flex items-center gap-1 mt-1">
+                        <strong>Nguồn gốc:</strong>
+                        {(selectedReviewForDetail as any).isCustom ? (
+                          <span className="bg-emerald-50 text-emerald-800 border border-emerald-100 px-1.5 py-0.5 rounded text-[9px] font-bold">
+                            Chính chủ (Đã mua thật)
+                          </span>
+                        ) : (
+                          <span className="bg-stone-50 text-stone-500 border border-stone-200 px-1.5 py-0.5 rounded text-[9px] font-medium">
+                            Hệ thống mẫu
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1 p-0.5">
+                      <span className="text-[10px] text-stone-400 uppercase font-bold block">Ý kiến phản hồi</span>
+                      <div className="bg-white p-3 rounded-lg border border-stone-200 text-stone-800 font-sans italic leading-relaxed text-[11px] whitespace-pre-line shadow-2xs">
+                        "{selectedReviewForDetail.comment}"
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center pt-3 border-t border-amber-100 gap-3">
+                    <button
+                      onClick={() => handleToggleVerify(selectedReviewForDetail)}
+                      className={`text-[11px] px-3 py-1.5 font-bold rounded-full border transition cursor-pointer flex items-center justify-center gap-1 ${
+                        selectedReviewForDetail.isVerified 
+                          ? 'bg-amber-100 border-[#E8E1D6] text-emerald-950 hover:bg-amber-200/40' 
+                          : 'bg-[#1F3D2B] border-transparent text-white hover:bg-emerald-900'
+                      }`}
+                    >
+                      {selectedReviewForDetail.isVerified ? '✗ Hủy kiểm duyệt' : '✓ Duyệt đánh giá'}
+                    </button>
+                    
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleDeleteReview(selectedReviewForDetail)}
+                        className="rounded-full px-3.5 py-1.5 border border-red-200 bg-red-50 text-red-650 text-[11px] font-bold hover:bg-red-100 flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 animate-pulse" /> Xóa hẳn
+                      </button>
+                      <button
+                        onClick={() => setSelectedReviewForDetail(null)}
+                        className="rounded-full px-3.5 py-1.5 border text-stone-500 hover:bg-neutral-50 text-[11px] font-bold cursor-pointer"
+                      >
+                        Đóng
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* --- TAB 8: UNIFIED PROMOTIONS & COUPONS MANAGEMENT (QUẢN LÝ ƯU ĐÃI) --- */}
       {activeTab === 'coupons' && (

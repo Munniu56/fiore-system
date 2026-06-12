@@ -15,7 +15,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import firebaseConfig from "../firebase-applet-config.json";
-import { Product, Category, Order, User, ContactMessage, Coupon } from "./types";
+import { Product, Category, Order, User, ContactMessage, Coupon, Review } from "./types";
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 export const db = initializeFirestore(
@@ -580,3 +580,49 @@ export async function removeCoupon(couponId: string) {
     handleFirestoreError(err, OperationType.DELETE, path);
   }
 }
+
+// Reviews Async Firestore CRUD & Subscribe
+export function subscribeReviews(
+  onChange: (reviews: Review[]) => void,
+  onError?: (err: any) => void,
+) {
+  const collectionRef = collection(db, "reviews");
+  return onSnapshot(
+    collectionRef,
+    (snapshot) => {
+      const list: Review[] = [];
+      snapshot.forEach((doc) => {
+        list.push(doc.data() as Review);
+      });
+      // Sort reviews descending by createdAt
+      list.sort(
+        (a, b) =>
+          new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime(),
+      );
+      onChange(list);
+    },
+    (err) => {
+      if (onError) onError(err);
+      handleFirestoreError(err, OperationType.GET, "reviews");
+    },
+  );
+}
+
+export async function saveReview(review: Review) {
+  const path = `reviews/${review.id}`;
+  try {
+    await setDoc(doc(db, "reviews", review.id), cleanUndefined(review));
+  } catch (err) {
+    handleFirestoreError(err, OperationType.WRITE, path);
+  }
+}
+
+export async function removeReview(reviewId: string) {
+  const path = `reviews/${reviewId}`;
+  try {
+    await deleteDoc(doc(db, "reviews", reviewId));
+  } catch (err) {
+    handleFirestoreError(err, OperationType.DELETE, path);
+  }
+}
+

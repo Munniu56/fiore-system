@@ -99,3 +99,18 @@ export interface Coupon {
   isActive: boolean;
 }
 
+export interface Review {
+  id: string;
+  productId: string;
+  productName: string;
+  author: string;
+  email: string;
+  rating: number;
+  date: string;
+  comment: string;
+  isVerified?: boolean;
+  likes: number;
+  createdAt: string;
+}
+
+

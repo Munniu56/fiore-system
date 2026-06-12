@@ -247,9 +247,11 @@ export const sendOrderNotificationEmail = async (order: Order, recipientEmail: s
     if (!response.ok) {
       if (response.status === 401) {
         handleUnauthorized();
+        console.warn('Phiên đăng nhập Gmail (Google Access Token) đã hết hạn. Đã tự động đăng xuất và xóa cache token. Xin hãy đăng nhập lại bằng Google để tiếp tục.');
+      } else {
+        const errTxt = await response.text();
+        console.warn('Không thể gửi thư qua Gmail API:', errTxt);
       }
-      const errTxt = await response.text();
-      console.error('Lỗi khi gửi email qua Gmail API:', errTxt);
       return false;
     }
 
@@ -277,8 +279,11 @@ export const fetchRecentGmailLogs = async () => {
     if (!response.ok) {
       if (response.status === 401) {
         handleUnauthorized();
+        console.warn('Phiên đăng nhập Gmail đã hết hạn. Đã tự động giải phóng cấu hình.');
+      } else {
+        const errText = await response.text();
+        console.warn('Không thể tải nhật ký thư từ Gmail API:', errText);
       }
-      console.error('Lỗi fetch messages:', await response.text());
       return [];
     }
 
