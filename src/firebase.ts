@@ -1,7 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import {
-  getFirestore,
+  initializeFirestore,
   collection,
   doc,
   setDoc,
@@ -18,8 +18,9 @@ import firebaseConfig from "../firebase-applet-config.json";
 import { Product, Category, Order, User, ContactMessage, Coupon } from "./types";
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-export const db = getFirestore(
+export const db = initializeFirestore(
   app,
+  { experimentalForceLongPolling: true },
   firebaseConfig.firestoreDatabaseId,
 ); /* CRITICAL: The app will break without this line */
 export const auth = getAuth(app);
