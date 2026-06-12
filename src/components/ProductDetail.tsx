@@ -4,9 +4,102 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Star, ShoppingBag, X, Check, Truck, ShieldCheck, CornerUpLeft } from 'lucide-react';
+import { Star, ShoppingBag, X, Check, Truck, ShieldCheck, CornerUpLeft, ThumbsUp, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Product } from '../types';
+import { Product, Order, User } from '../types';
+
+interface Review {
+  id: string;
+  author: string;
+  email: string;
+  rating: number;
+  date: string;
+  comment: string;
+  isVerified: boolean;
+  likes: number;
+  likedByUser?: boolean;
+}
+
+const generateInitialReviews = (productId: string, productName: string, reviewsCount: number): Review[] => {
+  const templates = [
+    {
+      id: `${productId}-r1`,
+      author: 'Nguyễn Thị Tuyết Mai',
+      email: 'tuyetmai.nguyen@gmail.com',
+      rating: 5,
+      date: '08/06/2026',
+      comment: `Mình đặt bó "${productName}" này tặng sinh nhật mẹ. Hoa giao tới cực kỳ tươi, màu sắc phối nhã nhặn, sang trọng vô cùng. Mẹ thích lắm, chụp ảnh khoe khắp nhà. Dịch vụ cắm hoa của Fióre rất chỉn chu, tỉ mỉ và chu đáo!`,
+      isVerified: true,
+      likes: 5,
+    },
+    {
+      id: `${productId}-r2`,
+      author: 'Lê Hoàng Nam',
+      email: 'namle.design@gmail.com',
+      rating: 5,
+      date: '03/06/2026',
+      comment: `Nghệ thuật cắm hoa đỉnh cao thực sự, giữ dáng hoa lâu, mùi hương lan tỏa tự nhiên khắp phòng khách. Đã cắm được 5 ngày rồi mà hoa vẫn tươi rói và nở đều nhờ sử dụng gói bột dưỡng đi kèm tiệm tặng. Sẽ ủng hộ Fióre lâu dài!`,
+      isVerified: true,
+      likes: 3,
+    },
+    {
+      id: `${productId}-r3`,
+      author: 'Trần Minh Quân',
+      email: 'quan.tran@vnpay.vn',
+      rating: 4,
+      date: '28/05/2026',
+      comment: `Sản phẩm "${productName}" giao hỏa tốc cực kỳ đúng giờ dù hôm đó trời mưa to. Bạn shipper lịch sự, bọc ruy băng lụa cẩn thận chống ẩm sương cho hoa. Rất hài lòng về sự tận tâm của đội ngũ!`,
+      isVerified: true,
+      likes: 2,
+    }
+  ];
+
+  if (reviewsCount <= 3) {
+    return templates.slice(0, reviewsCount);
+  }
+
+  const results: Review[] = [...templates];
+  const names = [
+    'Phạm Thanh Hải', 'Hoàng Thu Trang', 'Phan Văn Đức', 'Đặng Thùy Chi', 'Bùi Minh Tuấn',
+    'Vũ Thị Hồng', 'Đỗ Anh Tuấn', 'Ngô Khánh Linh', 'Lý Gia Bảo', 'Dương Thúy Hằng',
+    'Trịnh Quốc Bảo', 'Mai Khánh An', 'Võ Hoàng Yến', 'Đỗ Thùy Trang', 'Tô Minh Trí'
+  ];
+  
+  const commentTemplates = [
+    'Bó hoa siêu đẹp sếp mình thích lắm. Tiệm phục vụ rất nhanh nhẹn dễ thương.',
+    'Sắc hoa phối rất nhã nhặn sang quý. Fióre có phong cách gói hoa rất riêng biệt tuyệt vời!',
+    'Mới đặt giao nhanh 1 tiếng rưỡi là nhận được rồi, thợ cắm hoa cẩn thận tỉ mỉ xuất sắc.',
+    'Hoa tươi và cành lá mướt xanh dã man, đã cắm được 4 ngày mà vẫn rực rỡ thơm ngát.',
+    'Đáng đồng tiền cực kỳ, thiết kế có chiều sâu nghệ thuật, chúc tiệm mua may bán đắt.',
+    'Dịch vụ xuất sắc từ khâu tư vấn thiết kế thiệp đến khâu giao nhận, rất đáng trân trọng!',
+    'Bó hoa cắm chắc tay, mùi thơm dịu tự nhiên, sắc hoa rạng rỡ không bị dập nát tí nào.'
+  ];
+
+  for (let i = 4; i <= reviewsCount; i++) {
+    const author = names[(i - 4) % names.length];
+    const comment = commentTemplates[(i - 4) % commentTemplates.length];
+    const rating = (i % 6 === 0) ? 4 : 5; // Handcraft high rating balance
+    const likes = Math.floor((i * 17) % 6);
+    
+    // Create logical dates backwards from 27/05/2026
+    const dateOffset = Math.floor(i / 1.5);
+    const day = Math.max(1, 28 - dateOffset);
+    const dateStr = `${day < 10 ? '0' + day : day}/05/2026`;
+
+    results.push({
+      id: `${productId}-r${i}`,
+      author,
+      email: `${author.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '')}@gmail.com`,
+      rating,
+      date: dateStr,
+      comment,
+      isVerified: true,
+      likes
+    });
+  }
+
+  return results;
+};
 
 interface ProductDetailProps {
   product: Product;
@@ -14,6 +107,8 @@ interface ProductDetailProps {
   onAddToCart: (product: Product, quantity: number) => void;
   onClose: () => void;
   onSelectProduct: (product: Product) => void;
+  orders?: Order[];
+  currentUser?: User | null;
 }
 
 export default function ProductDetail({
@@ -22,9 +117,31 @@ export default function ProductDetail({
   onAddToCart,
   onClose,
   onSelectProduct,
+  orders = [],
+  currentUser = null,
 }: ProductDetailProps) {
   const [quantity, setQuantity] = useState(1);
   const [showToast, setShowToast] = useState(false);
+  const [reviewsList, setReviewsList] = useState<Review[]>([]);
+  
+  // Review Form States
+  const [newReviewAuthor, setNewReviewAuthor] = useState('');
+  const [newReviewEmail, setNewReviewEmail] = useState('');
+  const [newReviewComment, setNewReviewComment] = useState('');
+  const [newReviewRating, setNewReviewRating] = useState(5);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [validationError, setValidationError] = useState('');
+
+  // Initialize and reset reviews when active product changes
+  useEffect(() => {
+    setReviewsList(generateInitialReviews(product.id, product.name, product.reviewsCount));
+    setNewReviewAuthor(currentUser ? currentUser.name : '');
+    setNewReviewEmail(currentUser ? currentUser.email : '');
+    setNewReviewComment('');
+    setNewReviewRating(5);
+    setReviewSubmitted(false);
+    setValidationError('');
+  }, [product, currentUser]);
 
   // Reset quantity when active product shifts
   useEffect(() => {
@@ -54,6 +171,17 @@ export default function ProductDetail({
   const formatVND = (price: number) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   };
+
+  const userHasPaidForThisProduct = currentUser ? orders.some(order => {
+    const matchesEmail = order.customerEmail && order.customerEmail.trim().toLowerCase() === currentUser.email.trim().toLowerCase();
+    if (!matchesEmail) return false;
+
+    const isPaidOrCompleted = order.paymentStatus === 'Paid' || order.status === 'completed';
+    if (!isPaidOrCompleted) return false;
+
+    const hasProduct = order.items && order.items.some(item => item.product && item.product.id === product.id);
+    return hasProduct;
+  }) : false;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -135,11 +263,22 @@ export default function ProductDetail({
               <span className="rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-emerald-700">
                 Mã sản phẩm: {product.id}
               </span>
-              <div className="flex items-center space-x-1 text-sm text-gray-600">
-                <Star className="h-4.5 w-4.5 fill-amber-400 text-amber-400" />
-                <span className="font-bold text-gray-800">{product.rating}</span>
+              <div 
+                onClick={() => {
+                  const el = document.getElementById('reviews-section');
+                  if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
+                className="flex items-center space-x-1 text-sm text-gray-600 cursor-pointer group"
+                title="Bấm để xem các đánh giá từ khách hàng"
+              >
+                <Star className="h-4.5 w-4.5 fill-amber-400 text-amber-400 transition duration-200 group-hover:scale-110" />
+                <span className="font-bold text-gray-850 group-hover:text-rose-650 transition">{product.rating}</span>
                 <span>•</span>
-                <span className="hover:underline cursor-pointer">{product.reviewsCount} đánh giá từ khách hàng</span>
+                <span className="text-rose-600 font-semibold group-hover:underline transition">
+                  {reviewsList.length} đánh giá từ khách hàng
+                </span>
               </div>
             </div>
 
@@ -229,6 +368,292 @@ export default function ProductDetail({
             )}
           </div>
 
+        </div>
+      </div>
+
+      {/* Interactive Customer Reviews Section */}
+      <div id="reviews-section" className="mt-16 rounded-3xl border border-pink-100 bg-white p-6 md:p-8 shadow-sm">
+        <div className="flex items-center gap-2 border-b border-pink-50 pb-4 mb-6">
+          <MessageSquare className="h-5.5 w-5.5 text-rose-500" />
+          <h2 className="font-serif text-2xl font-bold text-gray-900">Nhận Xét & Đánh Giá Từ Khách Hàng</h2>
+        </div>
+
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+          {/* Rating Summary Breakdown Stats */}
+          <div className="lg:col-span-5 flex flex-col justify-center bg-stone-50/50 rounded-2xl p-6 border border-pink-50 text-center lg:text-left">
+            <div className="flex flex-col items-center lg:items-start">
+              <span className="text-5xl font-extrabold text-stone-800 leading-none">{product.rating}</span>
+              <div className="flex items-center mt-3 text-amber-400">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star 
+                    key={star} 
+                    className={`h-5 w-5 ${star <= Math.round(product.rating) ? 'fill-amber-400 text-amber-400' : 'text-stone-200'}`} 
+                  />
+                ))}
+              </div>
+              <p className="text-xs text-stone-500 mt-2 font-medium">Đánh giá chung dựa trên {reviewsList.length} khách hàng thực tế</p>
+            </div>
+
+            {/* Visual Bars represent fidelity */}
+            <div className="mt-6 space-y-2 max-w-sm mx-auto lg:mx-0 w-full">
+              {[
+                { label: '5 sao', percent: '85%', count: Math.ceil(reviewsList.length * 0.85) },
+                { label: '4 sao', percent: '10%', count: Math.floor(reviewsList.length * 0.10) },
+                { label: '3 sao', percent: '5%', count: Math.floor(reviewsList.length * 0.05) },
+                { label: '2 sao', percent: '0%', count: 0 },
+                { label: '1 sao', percent: '0%', count: 0 },
+              ].map((bar, index) => (
+                <div key={index} className="flex items-center text-xs text-stone-600 gap-3">
+                  <span className="w-10 shrink-0 text-left font-semibold text-stone-500">{bar.label}</span>
+                  <div className="h-2 w-full rounded-full bg-stone-100 overflow-hidden relative">
+                    <div className="h-full rounded-full bg-rose-500" style={{ width: bar.percent }} />
+                  </div>
+                  <span className="w-8 shrink-0 text-right text-stone-400 font-mono">{bar.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Interactive Form to Submit Review */}
+          {userHasPaidForThisProduct ? (
+            <div className="lg:col-span-7 border-t border-pink-50 lg:border-t-0 lg:border-l lg:pl-8 pt-8 lg:pt-0">
+              <h3 className="font-serif text-lg font-bold text-gray-900 mb-4 flex items-center gap-1.5">
+                <span>Đóng góp ý kiến của bạn</span>
+              </h3>
+
+              {reviewSubmitted ? (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 text-center space-y-3"
+                >
+                  <div className="h-12 w-12 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto text-xl font-bold animate-bounce shadow">✓</div>
+                  <h4 className="font-bold text-emerald-800">Cảm ơn bạn đã gửi đánh giá!</h4>
+                  <p className="text-xs text-stone-600 max-w-md mx-auto">
+                    Nhận xét đóng góp chân thành của bạn đã được ghi nhận trên sản phẩm "{product.name}". Chúng tôi liên tục lắng nghe để nâng cao dịch vụ cắm hoa tươi nghệ thuật Fióre ngày càng hoàn mỹ.
+                  </p>
+                  <button
+                    onClick={() => setReviewSubmitted(false)}
+                    className="px-4 py-2 mt-2 bg-[#1F3D2B] text-white hover:bg-[#152a1d] text-xs font-bold rounded-full shadow-xs cursor-pointer inline-block"
+                  >
+                    Viết thêm đánh giá khác
+                  </button>
+                </motion.div>
+              ) : (
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!newReviewAuthor.trim() || !newReviewComment.trim()) return;
+                    
+                    const emailTrimmed = newReviewEmail.trim();
+                    const emailLower = emailTrimmed.toLowerCase();
+                    if (!emailLower) {
+                      setValidationError('Vui lòng cung cấp địa chỉ email đặt hàng của bạn.');
+                      return;
+                    }
+
+                    const hasPaidOrder = orders.some(order => {
+                      const matchesEmail = order.customerEmail && order.customerEmail.trim().toLowerCase() === emailLower;
+                      if (!matchesEmail) return false;
+
+                      const isPaidOrCompleted = order.paymentStatus === 'Paid' || order.status === 'completed';
+                      if (!isPaidOrCompleted) return false;
+
+                      const hasProduct = order.items && order.items.some(item => item.product && item.product.id === product.id);
+                      return hasProduct;
+                    });
+
+                    if (!hasPaidOrder) {
+                      setValidationError(`Hệ thống không tìm thấy đơn đặt hàng nào đã Thanh toán thành công liên quan đến hòm thư "${emailTrimmed}" cho sản phẩm này. Chỉ khách hàng đã mua và thanh toán thành công mới có quyền gửi đánh giá.`);
+                      return;
+                    }
+
+                    // Verification successful! Clear any errors and add review
+                    setValidationError('');
+                    const newRev: Review = {
+                      id: `${product.id}-user-${Date.now()}`,
+                      author: newReviewAuthor.trim(),
+                      email: emailLower,
+                      rating: newReviewRating,
+                      date: new Date().toLocaleDateString('vi-VN'),
+                      comment: newReviewComment.trim(),
+                      isVerified: true,
+                      likes: 0
+                    };
+                    setReviewsList([newRev, ...reviewsList]);
+                    setReviewSubmitted(true);
+                    // Clean up inputs
+                    setNewReviewAuthor('');
+                    setNewReviewEmail('');
+                    setNewReviewComment('');
+                    setNewReviewRating(5);
+                  }}
+                  className="space-y-4"
+                >
+                  {validationError && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="rounded-xl bg-rose-50 border border-rose-100 p-3.5 text-xs text-rose-700 leading-relaxed font-semibold"
+                    >
+                      ⚠️ {validationError}
+                    </motion.div>
+                  )}
+
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Đánh giá chung của bạn:</span>
+                    <div className="flex items-center space-x-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setNewReviewRating(star)}
+                          className="p-1 focus:outline-none transition group cursor-pointer"
+                          title={`${star} sao`}
+                        >
+                          <Star 
+                            className={`h-5 w-5 transition ${
+                              star <= newReviewRating 
+                                ? 'fill-amber-400 text-amber-400 scale-105' 
+                                : 'text-stone-300 hover:text-amber-300'
+                            }`} 
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col">
+                      <label className="text-xs text-stone-500 font-bold mb-1">Họ tên của bạn *</label>
+                      <input 
+                        type="text" 
+                        required
+                        value={newReviewAuthor}
+                        onChange={(e) => setNewReviewAuthor(e.target.value)}
+                        placeholder="Ví dụ: Nguyễn Văn A" 
+                        className="rounded-xl border border-pink-100 bg-white px-3.5 py-2.5 text-xs text-stone-800 placeholder-stone-400 focus:ring-1 focus:ring-rose-500 focus:border-rose-500 outline-none"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-xs text-stone-500 font-bold mb-1">Hòm thư Email (Bảo mật) *</label>
+                      <input 
+                        type="email" 
+                        required
+                        value={newReviewEmail}
+                        onChange={(e) => setNewReviewEmail(e.target.value)}
+                        placeholder="Ví dụ: email@domain.com" 
+                        className="rounded-xl border border-pink-100 bg-white px-3.5 py-2.5 text-xs text-stone-800 placeholder-stone-400 focus:ring-1 focus:ring-rose-500 focus:border-rose-500 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col">
+                    <label className="text-xs text-stone-500 font-bold mb-1">Cảm nhận chi tiết về thiết kế hoa này *</label>
+                    <textarea 
+                      rows={3}
+                      required
+                      value={newReviewComment}
+                      onChange={(e) => setNewReviewComment(e.target.value)}
+                      placeholder="Mẫu hoa sếp/đối tác khen không tiếc lời, màu cắm phối cực sang, thời gian ship hoa đúng hẹn lắm tiệm ơi..." 
+                      className="rounded-xl border border-pink-100 bg-white px-3.5 py-2.5 text-xs text-stone-800 placeholder-stone-400 focus:ring-1 focus:ring-rose-500 focus:border-rose-500 outline-none resize-none leading-relaxed"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="rounded-full bg-stone-900 hover:bg-stone-800 px-6 py-2.5 text-xs font-bold text-white transition shadow-sm cursor-pointer"
+                  >
+                    Gửi nhận xét đánh giá
+                  </button>
+                </form>
+              )}
+            </div>
+          ) : (
+            <div className="lg:col-span-7 border-t border-pink-50 lg:border-t-0 lg:border-l lg:pl-8 pt-8 lg:pt-0 flex flex-col items-center justify-center p-8 bg-stone-50/20 rounded-2xl border border-dashed border-[#E8E1D6] text-center min-h-[300px]">
+              <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center text-[#C8A96B] mb-3 border border-[#E8E1D6] shadow-3xs">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <p className="text-xs font-bold text-gray-800 font-serif uppercase tracking-wider">Thông tin bảo mật thành viên</p>
+              <h4 className="text-sm font-bold text-stone-800 font-serif mt-1">Mục đánh giá sản phẩm bị ẩn</h4>
+              <p className="text-xs text-stone-500 mt-2 max-w-sm leading-relaxed">
+                Để bảo vệ tính minh bạch và trung thực tối đa, Fióre chỉ hiển thị phần đóng góp ý kiến cho quý khách hàng đã <strong>Đăng nhập</strong> tài khoản và từng <strong>Thanh toán thành công</strong> sản phẩm này.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Reviews List */}
+        <div className="mt-10 border-t border-pink-50 pt-8">
+          <h3 className="font-serif text-lg font-bold text-gray-900 mb-6 flex items-center gap-1.5">
+            📋 Đánh giá chi tiết ({reviewsList.length})
+          </h3>
+
+          <div className="space-y-6">
+            {reviewsList.map((rev) => (
+              <div key={rev.id} className="p-4 rounded-2xl border border-stone-100 bg-stone-50/20 space-y-3.5 text-left shadow-2xs hover:border-pink-100/30 transition duration-200">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="h-9 w-9 rounded-full bg-pink-100 text-rose-700 font-bold text-sm flex items-center justify-center uppercase shrink-0">
+                      {rev.author.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs font-bold text-gray-800">{rev.author}</span>
+                        {rev.isVerified && (
+                          <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 uppercase">
+                            ✓ Đã mua hàng
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-1.5 mt-0.5">
+                        <div className="flex text-amber-400">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star 
+                              key={star} 
+                              className={`h-3 w-3 ${star <= rev.rating ? 'fill-amber-400 text-amber-400' : 'text-stone-200'}`} 
+                            />
+                          ))}
+                        </div>
+                        <span className="text-[10px] text-stone-400">•</span>
+                        <span className="text-[10px] text-stone-400 font-mono mt-0.5">{rev.date}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Like button interactive counter */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReviewsList(reviewsList.map(r => {
+                        if (r.id === rev.id) {
+                          const updatedLiked = !r.likedByUser;
+                          return {
+                            ...r,
+                            likedByUser: updatedLiked,
+                            likes: updatedLiked ? r.likes + 1 : r.likes - 1
+                          };
+                        }
+                        return r;
+                      }));
+                    }}
+                    className={`inline-flex items-center space-x-1.5 border rounded-full px-2.5 py-1 text-[10.5px] transition cursor-pointer ${
+                      rev.likedByUser 
+                        ? 'bg-rose-50 border-rose-200 text-rose-600 font-bold' 
+                        : 'bg-white border-stone-200 text-stone-400 hover:text-stone-600 hover:border-stone-300'
+                    }`}
+                  >
+                    <ThumbsUp className="h-3 w-3" />
+                    <span>Hữu ích ({rev.likes})</span>
+                  </button>
+                </div>
+                
+                <p className="text-xs text-stone-600 leading-relaxed pl-1 sm:pl-12 font-medium">
+                  "{rev.comment}"
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

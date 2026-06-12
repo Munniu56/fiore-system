@@ -1496,6 +1496,8 @@ export default function App() {
               onAddToCart={(product, quantity) => handleAddToCart(product, quantity)}
               onClose={() => setCurrentView('catalog')}
               onSelectProduct={(p) => setSelectedProductId(p.id)}
+              orders={orders}
+              currentUser={currentUser}
             />
           </div>
         )}
