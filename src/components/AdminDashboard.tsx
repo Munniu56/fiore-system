@@ -94,6 +94,7 @@ export default function AdminDashboard({
   const [selectedRatingFilter, setSelectedRatingFilter] = useState<number | 'all'>('all');
   const [reviewSortOrder, setReviewSortOrder] = useState<'newest' | 'oldest' | 'rating-high' | 'rating-low'>('newest');
   const [selectedReviewForDetail, setSelectedReviewForDetail] = useState<Review | null>(null);
+  const [reviewModalY, setReviewModalY] = useState<number>(150);
   const [reviewActionSuccess, setReviewActionSuccess] = useState<string | null>(null);
 
   // Subscribe to reviews in Firestore
@@ -523,6 +524,12 @@ export default function AdminDashboard({
     setProdIsFeatured(false);
     setProdIsNew(true);
     setShowProductModal(true);
+    setTimeout(() => {
+      const el = document.getElementById('admin-product-inline-form-box') || document.getElementById('admin-btn-add-product');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 80);
   };
 
   const openEditProduct = (p: Product) => {
@@ -538,6 +545,12 @@ export default function AdminDashboard({
     setProdIsFeatured(p.isFeatured);
     setProdIsNew(p.isNew);
     setShowProductModal(true);
+    setTimeout(() => {
+      const el = document.getElementById('admin-product-inline-form-box');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 80);
   };
 
   const handleProductSubmit = (e: React.FormEvent) => {
@@ -1498,12 +1511,228 @@ export default function AdminDashboard({
             
             <button
               onClick={openAddProduct}
-              className="inline-flex items-center justify-center rounded-full bg-emerald-800 px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-900 transition cursor-pointer"
+              className="inline-flex items-center justify-center rounded-full bg-emerald-800 px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-990 transition cursor-pointer"
               id="admin-btn-add-product"
             >
               <Plus className="mr-1.5 h-4 w-4" /> Thêm sản phẩm mới
             </button>
           </div>
+
+          {/* Inline Add/Edit Product panel */}
+          {showProductModal && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.2 }}
+              className="mb-8 rounded-2xl border-2 border-emerald-805/20 bg-[#FAF9F5] p-6 shadow-sm overflow-hidden"
+              id="admin-product-inline-form-box"
+            >
+              <div className="flex items-center justify-between border-b border-amber-100 pb-3 mb-5">
+                <h4 className="font-serif text-base font-bold text-[#1F3D2B] flex items-center gap-2">
+                  <Plus className="h-4 w-4 text-emerald-800" />
+                  <span>{editProdItem ? `Chỉnh Sửa Mẫu "${editProdItem.name}"` : 'Thêm Mẫu Thiết Kế Mới'}</span>
+                </h4>
+                <button
+                  onClick={() => setShowProductModal(false)}
+                  className="rounded-full px-3 py-1 text-[11px] text-gray-500 hover:bg-stone-200 hover:text-gray-950 font-bold transition flex items-center gap-1 cursor-pointer"
+                >
+                  ✕ Hủy bỏ / Đóng
+                </button>
+              </div>
+
+              <form onSubmit={handleProductSubmit} className="space-y-4 text-xs">
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-bold text-stone-500 uppercase tracking-wide mb-1">Tên bó hoa *</label>
+                    <input
+                      type="text"
+                      required
+                      value={prodName}
+                      onChange={(e) => setProdName(e.target.value)}
+                      placeholder="Ví dụ: Bó Hoa Sữa Trắng Trẻ"
+                      className="w-full rounded-lg border border-amber-200 bg-white p-2.5 outline-none focus:border-[#1F3D2B]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-stone-500 uppercase tracking-wide mb-1">Danh mục chuyên mục *</label>
+                    <select
+                      value={prodCategory}
+                      onChange={(e) => setProdCategory(e.target.value)}
+                      className="w-full rounded-lg border border-amber-200 p-2.5 bg-white outline-none focus:border-[#1F3D2B]"
+                    >
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block font-bold text-stone-500 uppercase tracking-wide mb-1">Đơn Giá (VND) *</label>
+                    <input
+                      type="number"
+                      required
+                      value={prodPrice}
+                      onChange={(e) => setProdPrice(Number(e.target.value))}
+                      className="w-full rounded-lg border border-amber-200 bg-white p-2.5 outline-none focus:border-[#1F3D2B]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-stone-500 uppercase tracking-wide mb-1">Kho sẵn có (Số lượng) *</label>
+                    <input
+                      type="number"
+                      required
+                      value={prodStock}
+                      onChange={(e) => setProdStock(Number(e.target.value))}
+                      className="w-full rounded-lg border border-amber-200 bg-white p-2.5 outline-none focus:border-[#1F3D2B]"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block font-bold text-stone-500 uppercase tracking-wide text-xs">Ảnh bìa (URL) *</label>
+                      <label className="text-[10px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded cursor-pointer hover:bg-emerald-100 flex items-center space-x-0.5 transition font-sans">
+                        <Plus className="h-2.5 w-2.5" />
+                        <span>Tải ảnh từ máy</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              if (file.size > 2 * 1024 * 1024) {
+                                alert("Kích thước ảnh vượt quá 2MB. Vui lòng chọn ảnh nhỏ hơn.");
+                                return;
+                              }
+                              const reader = new FileReader();
+                              reader.onload = (evt) => {
+                                if (evt.target?.result) {
+                                  setProdImage(evt.target.result as string);
+                                  setImageLoadError(false);
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      value={prodImage}
+                      onChange={(e) => {
+                        setProdImage(e.target.value);
+                        setImageLoadError(false);
+                      }}
+                      placeholder="Dán liên kết URL hoặc chọn tải ảnh từ máy"
+                      className="w-full rounded-lg border border-amber-200 bg-white p-2.5 outline-none focus:border-[#1F3D2B] text-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Live Image Preview & Other Metadata */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                  <div className="md:col-span-4 rounded-xl border border-dashed border-amber-200 bg-[#FAF7F0] p-3 flex flex-col items-center">
+                    <span className="block font-bold text-[#1F3D2B] uppercase tracking-wide mb-1.5 text-[10px] self-start font-sans">Xem trước ảnh sản phẩm hiển thị</span>
+                    <div className="relative w-full h-32 rounded-lg bg-white border border-amber-100 flex items-center justify-center overflow-hidden shadow-xs select-none">
+                      {prodImage ? (
+                        <img
+                          src={imageLoadError ? 'https://images.unsplash.com/photo-1596436889106-be35e843f974?auto=format&fit=crop&q=80&w=600' : prodImage}
+                          alt="Xem trước ảnh sản phẩm"
+                          className="w-full h-full object-cover transition-all"
+                          referrerPolicy="no-referrer"
+                          onError={() => setImageLoadError(true)}
+                        />
+                      ) : (
+                        <div className="text-gray-400 text-center flex flex-col items-center p-4">
+                          <svg className="w-8 h-8 text-amber-200 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span className="text-[11px]">Chưa nhập địa chỉ liên kết ảnh sản phẩm</span>
+                        </div>
+                      )}
+
+                      {imageLoadError && (
+                        <div className="absolute inset-0 bg-red-50/95 flex flex-col items-center justify-center p-2 text-center">
+                          <span className="text-red-700 font-bold text-[10px]">Lỗi tải ảnh URL.</span>
+                          <span className="text-stone-500 text-[9px] mt-0.5">Đặt về mẫu hoa hệ thống mặc định</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-8 space-y-3">
+                    <div>
+                      <label className="block font-bold text-stone-500 uppercase tracking-wide mb-1">Mô tả ngắn (Hiển thị thẻ bán)</label>
+                      <input
+                        type="text"
+                        value={prodShortDesc}
+                        onChange={(e) => setProdShortDesc(e.target.value)}
+                        placeholder="Ví dụ: Bó gồm 10 cúc trắng tinh nghịch..."
+                        className="w-full rounded-lg border border-amber-200 bg-white p-2.5 outline-none focus:border-[#1F3D2B]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-stone-500 uppercase tracking-wide mb-1">Mô tả chi tiết sản phẩm</label>
+                      <textarea
+                        value={prodDesc}
+                        onChange={(e) => setProdDesc(e.target.value)}
+                        rows={3}
+                        className="w-full rounded-lg border border-amber-200 bg-white p-2.5 outline-none focus:border-[#1F3D2B]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-4 border-t border-amber-100 pt-4">
+                  <div className="flex gap-4">
+                    <label className="flex items-center space-x-1.5 font-bold text-stone-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={prodIsNew}
+                        onChange={(e) => setProdIsNew(e.target.checked)}
+                        className="h-4 w-4 rounded text-emerald-800 focus:ring-emerald-700"
+                      />
+                      <span>Mẫu hoa MỚI ra mắt</span>
+                    </label>
+
+                    <label className="flex items-center space-x-1.5 font-bold text-stone-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={prodIsFeatured}
+                        onChange={(e) => setProdIsFeatured(e.target.checked)}
+                        className="h-4 w-4 rounded text-emerald-800 focus:ring-emerald-700"
+                      />
+                      <span>Mẫu hoa NỔI BẬT trang chủ</span>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowProductModal(false)}
+                      className="rounded-full px-5 py-2 border text-gray-500 hover:bg-neutral-150 transition cursor-pointer font-bold bg-white"
+                    >
+                      Hủy bỏ
+                    </button>
+                    <button
+                      type="submit"
+                      className="rounded-full bg-emerald-800 hover:bg-emerald-990 px-6 py-2 text-white font-bold transition cursor-pointer shadow-xs"
+                      id="admin-submit-product-btn"
+                    >
+                      {editProdItem ? 'Cập nhật sản phẩm' : 'Đăng bán sản phẩm'}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </motion.div>
+          )}
 
           {/* Grid visual list for administration */}
           <div className="overflow-x-auto">
@@ -2286,12 +2515,14 @@ export default function AdminDashboard({
                               />
                               <div className="flex justify-end gap-2">
                                 <button
+                                  type="button"
                                   onClick={() => { setReplyingToId(null); setReplyText(''); }}
                                   className="px-2.5 py-1 text-[11px] text-stone-500 hover:text-stone-700 transition cursor-pointer"
                                 >
                                   Hủy bỏ
                                 </button>
                                 <button
+                                  type="button"
                                   onClick={() => {
                                     if (!replyText.trim()) return;
                                     setContacts(prev => prev.map(c => {
@@ -2309,7 +2540,7 @@ export default function AdminDashboard({
                                     setReplyingToId(null);
                                   }}
                                   disabled={!replyText.trim()}
-                                  className="px-3.5 py-1 bg-emerald-800 hover:bg-emerald-900 disabled:opacity-50 text-white font-bold rounded-md text-[11px] transition cursor-pointer"
+                                  className="px-3.5 py-1 bg-emerald-800 hover:bg-emerald-990 disabled:opacity-50 text-white font-bold rounded-md text-[11px] transition cursor-pointer"
                                 >
                                   Lưu phản hồi & Gửi đi
                                 </button>
@@ -2323,214 +2554,6 @@ export default function AdminDashboard({
                 })}
             </div>
           )}
-        </div>
-      )}
-
-      {/* --- ADD / EDIT PRODUCT POPUP DIA LOG --- */}
-      {showProductModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl border border-amber-200 min-h-[500px] max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-amber-100 pb-3 mb-4">
-              <h4 className="font-serif text-lg font-bold text-emerald-950">
-                {editProdItem ? `Chỉnh Sửa Mẫu "${editProdItem.name}"` : 'Thêm Mẫu Thiết Kế Mới'}
-              </h4>
-              <button
-                onClick={() => setShowProductModal(false)}
-                className="rounded-full p-1 text-gray-400 hover:bg-neutral-100 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleProductSubmit} className="space-y-3.5 text-xs">
-              
-              <div>
-                <label className="block font-bold text-stone-500 uppercase tracking-wide mb-1">Tên bó hoa *</label>
-                <input
-                  type="text"
-                  required
-                  value={prodName}
-                  onChange={(e) => setProdName(e.target.value)}
-                  placeholder="Ví dụ: Bó Hoa Sữa Trắng Trẻ"
-                  className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3.5">
-                <div>
-                  <label className="block font-bold text-stone-500 uppercase tracking-wide mb-1">Đơn Giá (VND) *</label>
-                  <input
-                     type="number"
-                    required
-                    value={prodPrice}
-                    onChange={(e) => setProdPrice(Number(e.target.value))}
-                    className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-stone-500 uppercase tracking-wide mb-1">Kho sẵn có (Số lượng) *</label>
-                  <input
-                    type="number"
-                    required
-                    value={prodStock}
-                    onChange={(e) => setProdStock(Number(e.target.value))}
-                    className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3.5">
-                <div>
-                  <label className="block font-bold text-stone-500 uppercase tracking-wide mb-1">Danh mục chuyên mục *</label>
-                  <select
-                    value={prodCategory}
-                    onChange={(e) => setProdCategory(e.target.value)}
-                    className="w-full rounded-lg border border-amber-200 p-2.5 bg-white outline-none focus:border-emerald-700"
-                  >
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block font-bold text-stone-500 uppercase tracking-wide text-xs">Ảnh bìa sản phẩm (URL) *</label>
-                    <label className="text-[10px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded cursor-pointer hover:bg-emerald-100 flex items-center space-x-0.5 transition">
-                      <Plus className="h-2.5 w-2.5" />
-                      <span>Tải ảnh từ máy</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            if (file.size > 2 * 1024 * 1024) {
-                              alert("Kích thước ảnh vượt quá 2MB. Vui lòng chọn ảnh nhỏ hơn.");
-                              return;
-                            }
-                            const reader = new FileReader();
-                            reader.onload = (evt) => {
-                              if (evt.target?.result) {
-                                setProdImage(evt.target.result as string);
-                                setImageLoadError(false);
-                              }
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                      />
-                    </label>
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    value={prodImage}
-                    onChange={(e) => {
-                      setProdImage(e.target.value);
-                      setImageLoadError(false);
-                    }}
-                    placeholder="Dán liên kết URL hoặc chọn tải ảnh từ máy"
-                    className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700 text-xs"
-                  />
-                </div>
-              </div>
-
-              {/* LIVE PRODUCT IMAGE PREVIEW SECTION */}
-              <div className="rounded-xl border border-dashed border-amber-200 bg-stone-50 p-3.5 flex flex-col items-center">
-                <span className="block font-bold text-emerald-950 uppercase tracking-wide mb-2 text-[10px] self-start">Xem trước ảnh sản phẩm hiển thị</span>
-                <div className="relative w-full max-w-[320px] h-44 rounded-lg bg-white border border-amber-100 flex items-center justify-center overflow-hidden shadow-xs select-none">
-                  {prodImage ? (
-                    <img
-                      src={imageLoadError ? 'https://images.unsplash.com/photo-1596436889106-be35e843f974?auto=format&fit=crop&q=80&w=600' : prodImage}
-                      alt="Xem trước ảnh sản phẩm"
-                      className="w-full h-full object-cover transition-all"
-                      referrerPolicy="no-referrer"
-                      onError={() => setImageLoadError(true)}
-                    />
-                  ) : (
-                    <div className="text-gray-400 text-center flex flex-col items-center p-4">
-                      <svg className="w-8 h-8 text-amber-200 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <span className="text-[11px]">Chưa nhập địa chỉ liên kết ảnh sản phẩm</span>
-                    </div>
-                  )}
-
-                  {imageLoadError && (
-                    <div className="absolute inset-0 bg-red-50/95 flex flex-col items-center justify-center p-4 text-center">
-                      <svg className="w-8 h-8 text-red-500 mb-2 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                      <span className="text-red-700 font-bold text-xs">Không thể tải hình ảnh từ URL này.</span>
-                      <span className="text-stone-500 text-[10px] mt-1">Hệ thống tự động quy về ảnh bó hoa tươi mặc định</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-bold text-stone-500 uppercase tracking-wide mb-1">Mô tả ngắn (Hiển thị thẻ bán)</label>
-                <input
-                  type="text"
-                  value={prodShortDesc}
-                  onChange={(e) => setProdShortDesc(e.target.value)}
-                  placeholder="Ví dụ: Bó gồm 10 cúc trắng tinh nghịch..."
-                  className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-stone-500 uppercase tracking-wide mb-1">Mô tả chi tiết sản phẩm</label>
-                <textarea
-                  value={prodDesc}
-                  onChange={(e) => setProdDesc(e.target.value)}
-                  rows={3}
-                  className="w-full rounded-lg border border-amber-200 p-2.5 outline-none focus:border-emerald-700"
-                />
-              </div>
-
-              <div className="flex gap-4 border-t border-amber-100 pt-3">
-                <label className="flex items-center space-x-1.5 font-bold text-stone-600">
-                  <input
-                    type="checkbox"
-                    checked={prodIsNew}
-                    onChange={(e) => setProdIsNew(e.target.checked)}
-                    className="h-4 w-4 rounded text-emerald-800 focus:ring-emerald-700"
-                  />
-                  <span>Mẫu hoa MỚI ra mắt</span>
-                </label>
-
-                <label className="flex items-center space-x-1.5 font-bold text-stone-600">
-                  <input
-                    type="checkbox"
-                    checked={prodIsFeatured}
-                    onChange={(e) => setProdIsFeatured(e.target.checked)}
-                    className="h-4 w-4 rounded text-emerald-800 focus:ring-emerald-700"
-                  />
-                  <span>Mẫu hoa NỔI BẬT trang chủ</span>
-                </label>
-              </div>
-
-              <div className="flex justify-end space-x-2 pt-4 border-t border-amber-100">
-                <button
-                  type="button"
-                  onClick={() => setShowProductModal(false)}
-                  className="rounded-full px-4 py-2 border text-gray-500 hover:bg-neutral-50"
-                >
-                  Thoát
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-full bg-emerald-800 px-5 py-2 text-white font-bold hover:bg-emerald-990 cursor-pointer"
-                  id="admin-submit-product-btn"
-                >
-                  {editProdItem ? 'Cập nhật' : 'Thêm mới'}
-                </button>
-              </div>
-
-            </form>
-          </div>
         </div>
       )}
 
@@ -2598,7 +2621,7 @@ export default function AdminDashboard({
         });
 
         return (
-          <div className="space-y-6 animate-fade-in w-full">
+          <div className="space-y-6 animate-fade-in w-full relative" id="admin-reviews-tab-box">
             
             {/* Header section with Stats Cards */}
             <div className="rounded-2xl border border-amber-200/60 bg-white p-6 shadow-xs space-y-4">
@@ -2823,7 +2846,18 @@ export default function AdminDashboard({
                           <td className="px-4 py-3 text-center">
                             <div className="flex items-center justify-center gap-1.5">
                               <button
-                                onClick={() => setSelectedReviewForDetail(rev)}
+                                onClick={(e) => {
+                                  setSelectedReviewForDetail(rev);
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  const container = document.getElementById('admin-reviews-tab-box');
+                                  if (container) {
+                                    const containerRect = container.getBoundingClientRect();
+                                    const relativeY = rect.top - containerRect.top;
+                                    setReviewModalY(Math.max(20, relativeY - 140));
+                                  } else {
+                                    setReviewModalY(120);
+                                  }
+                                }}
                                 className="h-7 w-7 rounded-md text-emerald-850 hover:bg-emerald-50 border border-emerald-200 flex items-center justify-center transition cursor-pointer"
                                 title="Xem chi tiết"
                               >
@@ -2848,8 +2882,11 @@ export default function AdminDashboard({
 
             {/* Review detail modal popup */}
             {selectedReviewForDetail && (
-              <div className="fixed inset-0 bg-stone-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-                <div className="bg-white rounded-2xl border border-amber-200 max-w-md w-full p-6 space-y-4 shadow-xl relative animate-fade-in">
+              <div className="absolute inset-0 bg-stone-900/40 z-50 flex items-start justify-center p-4 backdrop-blur-xs rounded-2xl">
+                <div 
+                  className="bg-white rounded-2xl border border-amber-200 max-w-md w-full p-6 space-y-4 shadow-xl relative animate-fade-in text-stone-700"
+                  style={{ marginTop: `${reviewModalY}px` }}
+                >
                   <button
                     onClick={() => setSelectedReviewForDetail(null)}
                     className="absolute right-4 top-4 text-stone-400 hover:text-stone-700 h-8 w-8 rounded-full hover:bg-stone-100 flex items-center justify-center transition cursor-pointer"
