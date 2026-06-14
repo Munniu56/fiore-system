@@ -21,6 +21,7 @@ interface HeaderProps {
   showExpressDeliveryPolicyMenu?: boolean;
   showCommitmentMenu?: boolean;
   authTab?: 'membership' | 'profile' | 'feedback';
+  unreadFeedbackCount?: number;
 }
 
 export default function Header({
@@ -36,6 +37,7 @@ export default function Header({
   showExpressDeliveryPolicyMenu,
   showCommitmentMenu,
   authTab = 'membership',
+  unreadFeedbackCount = 0,
 }: HeaderProps) {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -140,30 +142,7 @@ export default function Header({
             >
               Liên Hệ
             </button>
-            {showExpressDeliveryPolicyMenu && (
-              <button
-                onClick={() => onNavigate('express-delivery')}
-                className={`rounded-md px-3 py-2 transition ${
-                  currentView === 'express-delivery'
-                    ? 'text-rose-600 font-semibold bg-pink-50'
-                    : 'text-gray-600 hover:text-rose-500 hover:bg-neutral-50'
-                }`}
-              >
-                Chính sách
-              </button>
-            )}
-            {showCommitmentMenu && (
-              <button
-                onClick={() => onNavigate('commitment')}
-                className={`rounded-md px-3 py-2 transition ${
-                  currentView === 'commitment'
-                    ? 'text-rose-600 font-semibold bg-pink-50'
-                    : 'text-gray-600 hover:text-rose-500 hover:bg-neutral-50'
-                }`}
-              >
-                Cam kết
-              </button>
-            )}
+
             {currentUser && (
               <button
                 onClick={() => onNavigate('orders')}
@@ -241,10 +220,15 @@ export default function Header({
                         setShowUserDropdown(false);
                         onNavigate('feedback');
                       }}
-                      className="flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-pink-50 hover:text-rose-600 transition"
+                      className="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-gray-700 hover:bg-pink-50 hover:text-rose-600 transition"
                     >
-                      <MessageSquare className="mr-2 h-4 w-4 text-pink-400" />
-                      Hòm thư phản hồi
+                      <span className="flex items-center">
+                        <MessageSquare className="mr-2 h-4 w-4 text-pink-400" />
+                        Hòm thư phản hồi
+                      </span>
+                      {unreadFeedbackCount > 0 && (
+                        <span className="px-1.5 py-0.5 text-[9px] bg-red-500 text-white rounded-full font-bold animate-pulse">{unreadFeedbackCount}</span>
+                      )}
                     </button>
                     <button
                       onClick={() => {
@@ -368,36 +352,7 @@ export default function Header({
             >
               Liên Hệ
             </button>
-            {showExpressDeliveryPolicyMenu && (
-              <button
-                onClick={() => {
-                  onNavigate('express-delivery');
-                  setShowMobileMenu(false);
-                }}
-                className={`w-full rounded-lg px-4 py-2.5 text-left text-sm transition ${
-                  currentView === 'express-delivery'
-                    ? 'text-rose-600 bg-rose-50/50 font-bold'
-                    : 'text-gray-700 hover:text-rose-500 hover:bg-neutral-50'
-                }`}
-              >
-                Chính sách
-              </button>
-            )}
-            {showCommitmentMenu && (
-              <button
-                onClick={() => {
-                  onNavigate('commitment');
-                  setShowMobileMenu(false);
-                }}
-                className={`w-full rounded-lg px-4 py-2.5 text-left text-sm transition ${
-                  currentView === 'commitment'
-                    ? 'text-rose-600 bg-rose-50/50 font-bold'
-                    : 'text-gray-700 hover:text-rose-500 hover:bg-neutral-50'
-                }`}
-              >
-                Cam kết
-              </button>
-            )}
+
             {currentUser && (
               <button
                 onClick={() => {
@@ -426,6 +381,24 @@ export default function Header({
                 }`}
               >
                 Thẻ Thành Viên
+              </button>
+            )}
+            {currentUser && (
+              <button
+                onClick={() => {
+                  onNavigate('feedback');
+                  setShowMobileMenu(false);
+                }}
+                className={`w-full rounded-lg px-4 py-2.5 text-left text-sm transition flex items-center justify-between ${
+                  currentView === 'auth' && authTab === 'feedback'
+                    ? 'text-rose-600 bg-rose-50/50 font-bold'
+                    : 'text-gray-700 hover:text-rose-500 hover:bg-neutral-50'
+                }`}
+              >
+                <span>Hòm Thư Phản Hồi</span>
+                {unreadFeedbackCount > 0 && (
+                  <span className="px-1.5 py-0.5 text-[9px] bg-red-500 text-white rounded-full font-bold animate-pulse">{unreadFeedbackCount}</span>
+                )}
               </button>
             )}
             

@@ -17,6 +17,7 @@ interface AccountAuthProps {
   orders?: Order[];
   contacts?: ContactMessage[];
   initialTab?: 'membership' | 'profile' | 'feedback';
+  onMarkFeedbacksAsRead?: () => void;
 }
 
 export default function AccountAuth({
@@ -28,6 +29,7 @@ export default function AccountAuth({
   orders = [],
   contacts = [],
   initialTab = 'membership',
+  onMarkFeedbacksAsRead,
 }: AccountAuthProps) {
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [email, setEmail] = useState('');
@@ -47,6 +49,12 @@ export default function AccountAuth({
   React.useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
+
+  React.useEffect(() => {
+    if (activeTab === 'feedback' && onMarkFeedbacksAsRead) {
+      onMarkFeedbacksAsRead();
+    }
+  }, [activeTab, onMarkFeedbacksAsRead, contacts]);
 
   // Admin bypass password states
   const [showAdminBypassPrompt, setShowAdminBypassPrompt] = useState(false);

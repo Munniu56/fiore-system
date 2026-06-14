@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import LandingHero from './components/LandingHero';
@@ -355,6 +355,39 @@ export default function App() {
     localStorage.setItem('fiore_contacts', JSON.stringify(sampleContacts));
     return sampleContacts;
   });
+
+  const [seenReplyIds, setSeenReplyIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('fiore_seen_replies');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('fiore_seen_replies', JSON.stringify(seenReplyIds));
+  }, [seenReplyIds]);
+
+  const unreadFeedbackCount = useMemo(() => {
+    if (!currentUser || !contacts || contacts.length === 0) return 0;
+    const userContacts = contacts.filter(
+      (c) => c.email && c.email.toLowerCase() === currentUser.email.toLowerCase()
+    );
+    const userRepliedContacts = userContacts.filter(c => c.status === 'replied');
+    return userRepliedContacts.filter(c => !seenReplyIds.includes(c.id)).length;
+  }, [currentUser, contacts, seenReplyIds]);
+
+  const markFeedbacksAsRead = useCallback(() => {
+    if (!currentUser || !contacts || contacts.length === 0) return;
+    const userContacts = contacts.filter(
+      (c) => c.email && c.email.toLowerCase() === currentUser.email.toLowerCase()
+    );
+    const repliedIds = userContacts.filter(c => c.status === 'replied').map(c => c.id);
+    if (repliedIds.length > 0) {
+      setSeenReplyIds(prev => Array.from(new Set([...prev, ...repliedIds])));
+    }
+  }, [currentUser, contacts]);
 
   // --- FIRESTORE REAL-TIME SYNCHRONIZATION EVENT ---
   useEffect(() => {
@@ -1023,6 +1056,7 @@ export default function App() {
         currentUser={currentUser}
         currentRole={currentRole}
         cartCount={cartItems.reduce((acc, curr) => acc + curr.quantity, 0)}
+        unreadFeedbackCount={unreadFeedbackCount}
         onNavigate={(v) => {
           if (v === 'admin') {
             navigate('/admin');
@@ -1033,6 +1067,7 @@ export default function App() {
             } else if (v === 'feedback') {
               setAuthTab('feedback');
               setCurrentView('auth');
+              markFeedbacksAsRead();
             } else {
               if (v === 'auth') {
                 setAuthTab('profile');
@@ -1583,6 +1618,7 @@ export default function App() {
               orders={orders}
               contacts={contacts}
               initialTab={authTab}
+              onMarkFeedbacksAsRead={markFeedbacksAsRead}
             />
           </div>
         )}
