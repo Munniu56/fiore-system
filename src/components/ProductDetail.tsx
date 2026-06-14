@@ -37,6 +37,7 @@ export default function ProductDetail({
   const [quantity, setQuantity] = useState(1);
   const [showToast, setShowToast] = useState(false);
   const [reviewsList, setReviewsList] = useState<ExtendedReview[]>([]);
+  const [allReviewsList, setAllReviewsList] = useState<Review[]>([]);
   
   // Review Form States
   const [newReviewAuthor, setNewReviewAuthor] = useState('');
@@ -56,6 +57,7 @@ export default function ProductDetail({
     setValidationError('');
 
     const unsubscribe = subscribeReviews((allReviews) => {
+      setAllReviewsList(allReviews);
       const filtered = allReviews.filter(r => 
         r.productId === product.id && 
         (r.isVerified !== false || (currentUser && r.email.trim().toLowerCase() === currentUser.email.trim().toLowerCase()))
@@ -112,6 +114,11 @@ export default function ProductDetail({
     const hasProduct = order.items && order.items.some(item => item.product && item.product.id === product.id);
     return hasProduct;
   }) : false;
+
+  const alreadyReviewed = currentUser ? allReviewsList.some(r => 
+    r.productId === product.id && 
+    r.email && r.email.trim().toLowerCase() === currentUser.email.trim().toLowerCase()
+  ) : false;
 
   const count5 = reviewsList.filter(r => r.rating === 5).length;
   const count4 = reviewsList.filter(r => r.rating === 4).length;
@@ -355,7 +362,7 @@ export default function ProductDetail({
           </div>
 
           {/* Interactive Form to Submit Review */}
-          {userHasPaidForThisProduct ? (
+          {userHasPaidForThisProduct && !alreadyReviewed ? (
             <div className="lg:col-span-7 border-t border-pink-50 lg:border-t-0 lg:border-l lg:pl-8 pt-8 lg:pt-0">
               <h3 className="font-serif text-lg font-bold text-gray-900 mb-4 flex items-center gap-1.5">
                 <span>Đóng góp ý kiến của bạn</span>
@@ -405,6 +412,17 @@ export default function ProductDetail({
 
                     if (!hasPaidOrder) {
                       setValidationError(`Hệ thống không tìm thấy đơn đặt hàng nào đã Thanh toán thành công liên quan đến hòm thư "${emailTrimmed}" cho sản phẩm này. Chỉ khách hàng đã mua và thanh toán thành công mới có quyền gửi đánh giá.`);
+                      return;
+                    }
+
+                    // Check if they already reviewed this product
+                    const alreadyReviewed = allReviewsList.some(r => 
+                      r.productId === product.id && 
+                      r.email && r.email.trim().toLowerCase() === emailLower
+                    );
+
+                    if (alreadyReviewed) {
+                      setValidationError(`Hòm thư email "${emailTrimmed}" đã gửi nhận xét đánh giá cho sản phẩm này trước đó. Mỗi sản phẩm đã mua chỉ được đánh giá tối đa 1 lần duy nhất.`);
                       return;
                     }
 
@@ -520,7 +538,11 @@ export default function ProductDetail({
               <p className="text-xs font-bold text-gray-800 font-serif uppercase tracking-wider">Thông tin bảo mật thành viên</p>
               <h4 className="text-sm font-bold text-stone-800 font-serif mt-1">Mục đánh giá sản phẩm bị ẩn</h4>
               <p className="text-xs text-stone-500 mt-2 max-w-sm leading-relaxed">
-                Để bảo vệ tính minh bạch và trung thực tối đa, Fióre chỉ hiển thị phần đóng góp ý kiến cho quý khách hàng đã <strong>Đăng nhập</strong> tài khoản và từng <strong>Thanh toán thành công</strong> sản phẩm này.
+                {alreadyReviewed ? (
+                  <>Hệ thống ghi nhận bạn đã gửi nhận xét đánh giá cho sản phẩm này trước đó. Để đảm bảo tính khách quan và minh bạch, mỗi sản phẩm đã mua chỉ được phép gửi đánh giá một lần duy nhất.</>
+                ) : (
+                  <>Để bảo vệ tính minh bạch và trung thực tối đa, Fióre chỉ hiển thị phần đóng góp ý kiến cho quý khách hàng đã <strong>Đăng nhập</strong> tài khoản và từng <strong>Thanh toán thành công</strong> sản phẩm này.</>
+                )}
               </p>
             </div>
           )}
