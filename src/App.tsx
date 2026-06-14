@@ -43,10 +43,11 @@ import {
   saveOrder,
   saveContact,
   removeContact,
-  saveUser
+  saveUser,
+  subscribeReviews
 } from './firebase';
 
-import { Product, Category, CartItem, Order, User, OrderStatus, ContactMessage } from './types';
+import { Product, Category, CartItem, Order, User, OrderStatus, ContactMessage, Review } from './types';
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES } from './data';
 import { Sparkles, Flower, Phone, Mail, Clock, MapPin, Heart, ArrowRight, Facebook, Instagram, Calendar, Star, FileText, Lock, CheckCircle, ShoppingBag, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -112,7 +113,7 @@ const ARTICLES: Article[] = [
 export default function App() {
   
   // --- LOCAL PERSISTENCE STATE INITIALIZERS ---
-  const [products, setProducts] = useState<Product[]>(() => {
+  const [rawProducts, setRawProducts] = useState<Product[]>(() => {
     const saved = localStorage.getItem('fiore_products');
     if (saved) {
       try {
@@ -134,6 +135,24 @@ export default function App() {
     }
     return INITIAL_PRODUCTS;
   });
+
+  const [globalReviews, setGlobalReviews] = useState<Review[]>([]);
+
+  const products = useMemo(() => {
+    return rawProducts.map(prod => {
+      // Average rating and review count from the live Firestore reviews database
+      const prodReviews = globalReviews.filter(r => r.productId === prod.id && r.isVerified !== false);
+      const reviewsCount = prodReviews.length;
+      const rating = reviewsCount > 0
+        ? Number((prodReviews.reduce((sum, r) => sum + r.rating, 0) / reviewsCount).toFixed(1))
+        : 0;
+      return {
+        ...prod,
+        rating,
+        reviewsCount
+      };
+    });
+  }, [rawProducts, globalReviews]);
 
   const [categories, setCategories] = useState<Category[]>(() => {
     const saved = localStorage.getItem('fiore_categories');
@@ -428,9 +447,14 @@ export default function App() {
 
       // 2. Attach real-time onSnapshot collection listeners
       const unsubProducts = subscribeProducts((prods) => {
-        if (prods.length > 0) setProducts(prods);
+        if (prods.length > 0) setRawProducts(prods);
       });
       cleanups.push(unsubProducts);
+
+      const unsubReviews = subscribeReviews((revs) => {
+        setGlobalReviews(revs);
+      });
+      cleanups.push(unsubReviews);
 
       const unsubCategories = subscribeCategories((cats) => {
         if (cats.length > 0) setCategories(cats);
@@ -602,7 +626,7 @@ export default function App() {
                   });
                 }
 
-                setProducts((prevProds) => {
+                setRawProducts((prevProds) => {
                   return prevProds.map((p) => {
                     const itemDeducted = (pending.cartItems || []).find((it: any) => it.product.id === p.id);
                     if (itemDeducted) {

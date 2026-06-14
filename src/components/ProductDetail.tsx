@@ -6,100 +6,14 @@
 import React, { useState, useEffect } from 'react';
 import { Star, ShoppingBag, X, Check, Truck, ShieldCheck, CornerUpLeft, ThumbsUp, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Product, Order, User } from '../types';
+import { Product, Order, User, Review } from '../types';
+import { subscribeReviews, saveReview } from '../firebase';
 
-interface Review {
-  id: string;
-  author: string;
-  email: string;
-  rating: number;
-  date: string;
-  comment: string;
-  isVerified: boolean;
-  likes: number;
+interface ExtendedReview extends Review {
   likedByUser?: boolean;
 }
 
-const generateInitialReviews = (productId: string, productName: string, reviewsCount: number): Review[] => {
-  const templates = [
-    {
-      id: `${productId}-r1`,
-      author: 'Nguyễn Thị Tuyết Mai',
-      email: 'tuyetmai.nguyen@gmail.com',
-      rating: 5,
-      date: '08/06/2026',
-      comment: `Mình đặt bó "${productName}" này tặng sinh nhật mẹ. Hoa giao tới cực kỳ tươi, màu sắc phối nhã nhặn, sang trọng vô cùng. Mẹ thích lắm, chụp ảnh khoe khắp nhà. Dịch vụ cắm hoa của Fióre rất chỉn chu, tỉ mỉ và chu đáo!`,
-      isVerified: true,
-      likes: 5,
-    },
-    {
-      id: `${productId}-r2`,
-      author: 'Lê Hoàng Nam',
-      email: 'namle.design@gmail.com',
-      rating: 5,
-      date: '03/06/2026',
-      comment: `Nghệ thuật cắm hoa đỉnh cao thực sự, giữ dáng hoa lâu, mùi hương lan tỏa tự nhiên khắp phòng khách. Đã cắm được 5 ngày rồi mà hoa vẫn tươi rói và nở đều nhờ sử dụng gói bột dưỡng đi kèm tiệm tặng. Sẽ ủng hộ Fióre lâu dài!`,
-      isVerified: true,
-      likes: 3,
-    },
-    {
-      id: `${productId}-r3`,
-      author: 'Trần Minh Quân',
-      email: 'quan.tran@vnpay.vn',
-      rating: 4,
-      date: '28/05/2026',
-      comment: `Sản phẩm "${productName}" giao hỏa tốc cực kỳ đúng giờ dù hôm đó trời mưa to. Bạn shipper lịch sự, bọc ruy băng lụa cẩn thận chống ẩm sương cho hoa. Rất hài lòng về sự tận tâm của đội ngũ!`,
-      isVerified: true,
-      likes: 2,
-    }
-  ];
-
-  if (reviewsCount <= 3) {
-    return templates.slice(0, reviewsCount);
-  }
-
-  const results: Review[] = [...templates];
-  const names = [
-    'Phạm Thanh Hải', 'Hoàng Thu Trang', 'Phan Văn Đức', 'Đặng Thùy Chi', 'Bùi Minh Tuấn',
-    'Vũ Thị Hồng', 'Đỗ Anh Tuấn', 'Ngô Khánh Linh', 'Lý Gia Bảo', 'Dương Thúy Hằng',
-    'Trịnh Quốc Bảo', 'Mai Khánh An', 'Võ Hoàng Yến', 'Đỗ Thùy Trang', 'Tô Minh Trí'
-  ];
-  
-  const commentTemplates = [
-    'Bó hoa siêu đẹp sếp mình thích lắm. Tiệm phục vụ rất nhanh nhẹn dễ thương.',
-    'Sắc hoa phối rất nhã nhặn sang quý. Fióre có phong cách gói hoa rất riêng biệt tuyệt vời!',
-    'Mới đặt giao nhanh 1 tiếng rưỡi là nhận được rồi, thợ cắm hoa cẩn thận tỉ mỉ xuất sắc.',
-    'Hoa tươi và cành lá mướt xanh dã man, đã cắm được 4 ngày mà vẫn rực rỡ thơm ngát.',
-    'Đáng đồng tiền cực kỳ, thiết kế có chiều sâu nghệ thuật, chúc tiệm mua may bán đắt.',
-    'Dịch vụ xuất sắc từ khâu tư vấn thiết kế thiệp đến khâu giao nhận, rất đáng trân trọng!',
-    'Bó hoa cắm chắc tay, mùi thơm dịu tự nhiên, sắc hoa rạng rỡ không bị dập nát tí nào.'
-  ];
-
-  for (let i = 4; i <= reviewsCount; i++) {
-    const author = names[(i - 4) % names.length];
-    const comment = commentTemplates[(i - 4) % commentTemplates.length];
-    const rating = (i % 6 === 0) ? 4 : 5; // Handcraft high rating balance
-    const likes = Math.floor((i * 17) % 6);
-    
-    // Create logical dates backwards from 27/05/2026
-    const dateOffset = Math.floor(i / 1.5);
-    const day = Math.max(1, 28 - dateOffset);
-    const dateStr = `${day < 10 ? '0' + day : day}/05/2026`;
-
-    results.push({
-      id: `${productId}-r${i}`,
-      author,
-      email: `${author.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '')}@gmail.com`,
-      rating,
-      date: dateStr,
-      comment,
-      isVerified: true,
-      likes
-    });
-  }
-
-  return results;
-};
+// Removed generateInitialReviews function to support 0 mock/sample reviews as requested
 
 interface ProductDetailProps {
   product: Product;
@@ -122,7 +36,7 @@ export default function ProductDetail({
 }: ProductDetailProps) {
   const [quantity, setQuantity] = useState(1);
   const [showToast, setShowToast] = useState(false);
-  const [reviewsList, setReviewsList] = useState<Review[]>([]);
+  const [reviewsList, setReviewsList] = useState<ExtendedReview[]>([]);
   
   // Review Form States
   const [newReviewAuthor, setNewReviewAuthor] = useState('');
@@ -132,16 +46,32 @@ export default function ProductDetail({
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [validationError, setValidationError] = useState('');
 
-  // Initialize and reset reviews when active product changes
+  // Initialize and reset reviews when active product changes through Firestore Sub
   useEffect(() => {
-    setReviewsList(generateInitialReviews(product.id, product.name, product.reviewsCount));
     setNewReviewAuthor(currentUser ? currentUser.name : '');
     setNewReviewEmail(currentUser ? currentUser.email : '');
     setNewReviewComment('');
     setNewReviewRating(5);
     setReviewSubmitted(false);
     setValidationError('');
+
+    const unsubscribe = subscribeReviews((allReviews) => {
+      const filtered = allReviews.filter(r => 
+        r.productId === product.id && 
+        (r.isVerified !== false || (currentUser && r.email.trim().toLowerCase() === currentUser.email.trim().toLowerCase()))
+      );
+      setReviewsList(filtered as ExtendedReview[]);
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, [product, currentUser]);
+
+  const reviewsCount = reviewsList.length;
+  const averageRating = reviewsCount > 0
+    ? Number((reviewsList.reduce((sum, r) => sum + r.rating, 0) / reviewsCount).toFixed(1))
+    : 0;
 
   // Reset quantity when active product shifts
   useEffect(() => {
@@ -182,6 +112,22 @@ export default function ProductDetail({
     const hasProduct = order.items && order.items.some(item => item.product && item.product.id === product.id);
     return hasProduct;
   }) : false;
+
+  const count5 = reviewsList.filter(r => r.rating === 5).length;
+  const count4 = reviewsList.filter(r => r.rating === 4).length;
+  const count3 = reviewsList.filter(r => r.rating === 3).length;
+  const count2 = reviewsList.filter(r => r.rating === 2).length;
+  const count1 = reviewsList.filter(r => r.rating === 1).length;
+
+  const totalReviews = reviewsList.length;
+
+  const starBars = [
+    { label: '5 sao', percent: totalReviews > 0 ? `${(count5 / totalReviews * 100).toFixed(0)}%` : '0%', count: count5 },
+    { label: '4 sao', percent: totalReviews > 0 ? `${(count4 / totalReviews * 100).toFixed(0)}%` : '0%', count: count4 },
+    { label: '3 sao', percent: totalReviews > 0 ? `${(count3 / totalReviews * 100).toFixed(0)}%` : '0%', count: count3 },
+    { label: '2 sao', percent: totalReviews > 0 ? `${(count2 / totalReviews * 100).toFixed(0)}%` : '0%', count: count2 },
+    { label: '1 sao', percent: totalReviews > 0 ? `${(count1 / totalReviews * 100).toFixed(0)}%` : '0%', count: count1 },
+  ];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -274,7 +220,7 @@ export default function ProductDetail({
                 title="Bấm để xem các đánh giá từ khách hàng"
               >
                 <Star className="h-4.5 w-4.5 fill-amber-400 text-amber-400 transition duration-200 group-hover:scale-110" />
-                <span className="font-bold text-gray-850 group-hover:text-rose-650 transition">{product.rating}</span>
+                <span className="font-bold text-gray-850 group-hover:text-rose-650 transition">{averageRating}</span>
                 <span>•</span>
                 <span className="text-rose-600 font-semibold group-hover:underline transition">
                   {reviewsList.length} đánh giá từ khách hàng
@@ -382,12 +328,12 @@ export default function ProductDetail({
           {/* Rating Summary Breakdown Stats */}
           <div className="lg:col-span-5 flex flex-col justify-center bg-stone-50/50 rounded-2xl p-6 border border-pink-50 text-center lg:text-left">
             <div className="flex flex-col items-center lg:items-start">
-              <span className="text-5xl font-extrabold text-stone-800 leading-none">{product.rating}</span>
+              <span className="text-5xl font-extrabold text-stone-800 leading-none">{averageRating}</span>
               <div className="flex items-center mt-3 text-amber-400">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star 
                     key={star} 
-                    className={`h-5 w-5 ${star <= Math.round(product.rating) ? 'fill-amber-400 text-amber-400' : 'text-stone-200'}`} 
+                    className={`h-5 w-5 ${star <= Math.round(averageRating) ? 'fill-amber-400 text-amber-400' : 'text-stone-200'}`} 
                   />
                 ))}
               </div>
@@ -396,13 +342,7 @@ export default function ProductDetail({
 
             {/* Visual Bars represent fidelity */}
             <div className="mt-6 space-y-2 max-w-sm mx-auto lg:mx-0 w-full">
-              {[
-                { label: '5 sao', percent: '85%', count: Math.ceil(reviewsList.length * 0.85) },
-                { label: '4 sao', percent: '10%', count: Math.floor(reviewsList.length * 0.10) },
-                { label: '3 sao', percent: '5%', count: Math.floor(reviewsList.length * 0.05) },
-                { label: '2 sao', percent: '0%', count: 0 },
-                { label: '1 sao', percent: '0%', count: 0 },
-              ].map((bar, index) => (
+              {starBars.map((bar, index) => (
                 <div key={index} className="flex items-center text-xs text-stone-600 gap-3">
                   <span className="w-10 shrink-0 text-left font-semibold text-stone-500">{bar.label}</span>
                   <div className="h-2 w-full rounded-full bg-stone-100 overflow-hidden relative">
@@ -472,15 +412,18 @@ export default function ProductDetail({
                     setValidationError('');
                     const newRev: Review = {
                       id: `${product.id}-user-${Date.now()}`,
+                      productId: product.id,
+                      productName: product.name,
                       author: newReviewAuthor.trim(),
                       email: emailLower,
                       rating: newReviewRating,
                       date: new Date().toLocaleDateString('vi-VN'),
+                      createdAt: new Date().toISOString(),
                       comment: newReviewComment.trim(),
                       isVerified: true,
                       likes: 0
                     };
-                    setReviewsList([newRev, ...reviewsList]);
+                    saveReview(newRev);
                     setReviewSubmitted(true);
                     // Clean up inputs
                     setNewReviewAuthor('');
@@ -625,17 +568,22 @@ export default function ProductDetail({
                   <button
                     type="button"
                     onClick={() => {
-                      setReviewsList(reviewsList.map(r => {
+                      const updatedObjList = reviewsList.map(r => {
                         if (r.id === rev.id) {
                           const updatedLiked = !r.likedByUser;
-                          return {
+                          const newLikes = updatedLiked ? r.likes + 1 : r.likes - 1;
+                          const updatedObj = {
                             ...r,
                             likedByUser: updatedLiked,
-                            likes: updatedLiked ? r.likes + 1 : r.likes - 1
+                            likes: newLikes
                           };
+                          const { likedByUser, ...cleanObj } = updatedObj;
+                          saveReview(cleanObj);
+                          return updatedObj;
                         }
                         return r;
-                      }));
+                      });
+                      setReviewsList(updatedObjList);
                     }}
                     className={`inline-flex items-center space-x-1.5 border rounded-full px-2.5 py-1 text-[10.5px] transition cursor-pointer ${
                       rev.likedByUser 

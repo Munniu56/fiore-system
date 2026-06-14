@@ -2559,25 +2559,20 @@ export default function AdminDashboard({
 
       {/* --- TAB 9: CUSTOMER REVIEWS MANAGEMENT (QUẢN LÝ ĐÁNH GIÁ) --- */}
       {activeTab === 'reviews' && (() => {
-        // Compute all combined reviews (Firestore + Mock reviews)
+        // Compute all customized reviews from Firestore (no mock reviews as requested)
         const allCustomReviews = dbReviews.map(r => ({
           ...r,
           isCustom: true
         }));
 
-        const allMockReviews: any[] = [];
-        products.forEach(p => {
-          allMockReviews.push(...getMockReviewsForProduct(p));
-        });
-
-        const allReviewsCombined = [...allCustomReviews, ...allMockReviews];
+        const allReviewsCombined = [...allCustomReviews];
         const visibleCombinedReviews = allReviewsCombined.filter(r => !deletedMockReviewIds.includes(r.id));
 
         // Computing statistics
         const totalReviewsCount = visibleCombinedReviews.length;
         const avgRatingValue = totalReviewsCount > 0 
           ? visibleCombinedReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviewsCount
-          : 5.0;
+          : 0.0;
         const averageRating = avgRatingValue.toFixed(1);
 
         const star5Count = visibleCombinedReviews.filter(r => r.rating === 5).length;
