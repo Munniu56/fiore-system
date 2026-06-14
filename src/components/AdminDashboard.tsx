@@ -2841,17 +2841,8 @@ export default function AdminDashboard({
                           <td className="px-4 py-3 text-center">
                             <div className="flex items-center justify-center gap-1.5">
                               <button
-                                onClick={(e) => {
+                                onClick={() => {
                                   setSelectedReviewForDetail(rev);
-                                  const rect = e.currentTarget.getBoundingClientRect();
-                                  const container = document.getElementById('admin-reviews-tab-box');
-                                  if (container) {
-                                    const containerRect = container.getBoundingClientRect();
-                                    const relativeY = rect.top - containerRect.top;
-                                    setReviewModalY(Math.max(20, relativeY - 140));
-                                  } else {
-                                    setReviewModalY(120);
-                                  }
                                 }}
                                 className="h-7 w-7 rounded-md text-emerald-850 hover:bg-emerald-50 border border-emerald-200 flex items-center justify-center transition cursor-pointer"
                                 title="Xem chi tiết"
@@ -2877,10 +2868,9 @@ export default function AdminDashboard({
 
             {/* Review detail modal popup */}
             {selectedReviewForDetail && (
-              <div className="absolute inset-0 bg-stone-900/40 z-50 flex items-start justify-center p-4 backdrop-blur-xs rounded-2xl">
+              <div className="fixed inset-0 bg-stone-900/60 z-[999] flex items-center justify-center p-4 backdrop-blur-xs">
                 <div 
                   className="bg-white rounded-2xl border border-amber-200 max-w-md w-full p-6 space-y-4 shadow-xl relative animate-fade-in text-stone-700"
-                  style={{ marginTop: `${reviewModalY}px` }}
                 >
                   <button
                     onClick={() => setSelectedReviewForDetail(null)}
