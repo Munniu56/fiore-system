@@ -177,7 +177,7 @@ export default function ContactUs({ onNewContact }: ContactUsProps) {
               <div>
                 <h4 className="font-bold text-xs uppercase tracking-wider text-emerald-950">Gửi Liên Hệ Thành Công!</h4>
                 <p className="text-xs text-emerald-700/90 mt-1">
-                  Cảm ơn bạn đã liên hệ với Fióre. Đội ngũ tư vấn sẽ nhanh chóng liên hệ lại qua email hoặc số điện thoại của bạn sớm nhất có thể. Chúc bạn một ngày ngát hương hoa!
+                  Cảm ơn bạn đã liên hệ với Fióre. Đội ngũ tư vấn sẽ nhanh chóng liên hệ lại qua Hòm thư phản hồi của bạn sớm nhất có thể. Chúc bạn một ngày ngát hương hoa!
                 </p>
               </div>
             </div>
