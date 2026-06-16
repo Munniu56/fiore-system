@@ -51,11 +51,11 @@ export default function AdminDashboard({
   onAdminLogout,
 }: AdminDashboardProps) {
   
-  const [activeTab, setActiveTab ] = useState<'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts' | 'coupons' | 'reviews'>('stats');
+  const [activeTab, setActiveTab ] = useState<'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts' | 'coupons' | 'reviews' | 'inventory'>('stats');
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const setContacts = onUpdateContacts;
 
-  const handleTabChange = (tab: 'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts' | 'coupons' | 'reviews') => {
+  const handleTabChange = (tab: 'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts' | 'coupons' | 'reviews' | 'inventory') => {
     setActiveTab(tab);
     if (tab === 'contacts') {
       const saved = localStorage.getItem('fiore_contacts');
@@ -110,6 +110,14 @@ export default function AdminDashboard({
     const saved = localStorage.getItem('fiore_deleted_mock_reviews');
     return saved ? JSON.parse(saved) : [];
   });
+
+  // State for Inventory Management Tab
+  const [inventorySearchQuery, setInventorySearchQuery] = useState('');
+  const [inventoryStatusFilter, setInventoryStatusFilter] = useState<'all' | 'low' | 'out'>('all');
+  const [inventoryCategoryFilter, setInventoryCategoryFilter] = useState('all');
+  const [lowStockThreshold, setLowStockThreshold] = useState(5);
+  const [tempStockValues, setTempStockValues] = useState<Record<string, number>>({});
+  const [inventoryUpdateSuccess, setInventoryUpdateSuccess] = useState<string | null>(null);
 
   const getMockReviewsForProduct = (prod: Product): Review[] => {
     const templates = [
@@ -654,6 +662,7 @@ export default function AdminDashboard({
                   {activeTab === 'contacts' && 'Liên hệ'}
                   {activeTab === 'reviews' && 'Đánh giá'}
                   {activeTab === 'security' && 'Bảo mật/MK'}
+                  {activeTab === 'inventory' && 'Quản lý tồn kho'}
                 </span>
               </h2>
             </div>
@@ -686,6 +695,14 @@ export default function AdminDashboard({
               }`}
             >
               <Package className="mr-2.5 h-4 w-4 shrink-0" /> Quản lý sản phẩm
+            </button>
+            <button
+              onClick={() => { handleTabChange('inventory'); setIsMobileNavOpen(false); }}
+              className={`w-full rounded-xl px-4 py-3 flex items-center text-xs font-semibold transition cursor-pointer ${
+                activeTab === 'inventory' ? 'bg-emerald-100/60 text-emerald-950 font-bold' : 'text-stone-700 hover:bg-amber-100/40'
+              }`}
+            >
+              <Database className="mr-2.5 h-4 w-4 shrink-0" /> Quản lý tồn kho
             </button>
             <button
               onClick={() => { handleTabChange('categories'); setIsMobileNavOpen(false); }}
@@ -802,6 +819,15 @@ export default function AdminDashboard({
                 }`}
               >
                 <Package className="mr-2 h-4 w-4 shrink-0" /> Quản lý sản phẩm
+              </button>
+              <button
+                onClick={() => handleTabChange('inventory')}
+                className={`w-full rounded-lg px-3.5 py-2 flex items-center transition cursor-pointer ${
+                  activeTab === 'inventory' ? 'bg-emerald-100/60 text-emerald-950 font-bold shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
+                }`}
+                id="admin-inventory-tab"
+              >
+                <Database className="mr-2 h-4 w-4 shrink-0 text-emerald-700" /> Quản lý tồn kho
               </button>
               <button
                 onClick={() => handleTabChange('categories')}
@@ -2971,6 +2997,435 @@ export default function AdminDashboard({
           </div>
         );
       })()}
+
+
+      {/* --- TAB 10: INVENTORY MANAGEMENT (QUẢN LÝ TỒN KHO) --- */}
+      {activeTab === 'inventory' && (
+        <div className="space-y-6 animate-fade-in">
+          {/* Header & Alert center */}
+          <div className="rounded-2xl border border-amber-200/60 bg-white p-6 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-amber-100 pb-4 gap-4">
+              <div>
+                <h3 className="font-serif text-lg font-bold text-emerald-950 flex items-center gap-2">
+                  <Database className="text-emerald-800 h-5 w-5 shrink-0" />
+                  <span>Theo Dõi & Quản Lý Tồn Kho</span>
+                </h3>
+                <p className="text-xs text-stone-400 mt-1">
+                  Đo lường lượng tồn thực tế của các tác phẩm hoa nghệ thuật, thiết lập ngưỡng cảnh báo sắp hết hàng và cập nhật nhanh số lượng sản phẩm.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 bg-amber-50/50 border border-amber-200/60 p-2.5 rounded-xl shrink-0">
+                <span className="text-xs font-semibold text-stone-600">Ngưỡng cảnh báo:</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={lowStockThreshold}
+                  onChange={(e) => setLowStockThreshold(Math.max(0, parseInt(e.target.value) || 0))}
+                  className="w-16 text-center text-xs font-bold rounded border border-amber-200 bg-white py-1 outline-none focus:border-emerald-700"
+                />
+                <span className="text-xs text-stone-500 font-medium font-serif">đơn vị</span>
+              </div>
+            </div>
+
+            {/* Warning Alert Banner */}
+            {(() => {
+              const lowStockProducts = products.filter(p => (p.stock || 0) > 0 && (p.stock || 0) <= lowStockThreshold);
+              const outOfStockProducts = products.filter(p => (p.stock || 0) === 0);
+
+              if (lowStockProducts.length === 0 && outOfStockProducts.length === 0) {
+                return (
+                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-4 flex items-center gap-3 text-xs font-medium">
+                    <Check className="h-5 w-5 text-emerald-600 shrink-0" />
+                    <span>Lượng hàng tồn kho của tất cả sản phẩm đều đang ở mức an toàn. Toàn bộ chuỗi cung ứng hoạt động tối ưu!</span>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="bg-gradient-to-br from-red-50/90 via-red-50/40 to-amber-50/10 border border-red-200/80 rounded-2xl p-5 space-y-4 text-xs shadow-xs relative overflow-hidden backdrop-blur-xs">
+                  {/* Decorative faint background glow */}
+                  <div className="absolute -top-12 -right-12 w-32 h-32 bg-red-400/5 rounded-full blur-2xl pointer-events-none" />
+                  
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-red-100/60 pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-red-500/10 p-2.5 rounded-xl text-red-700 animate-pulse border border-red-200/30">
+                        <ShieldAlert className="h-5 w-5 shrink-0 text-red-650" />
+                      </div>
+                      <div>
+                        <h4 className="font-serif text-sm font-black uppercase tracking-wider text-red-950 flex items-center gap-1.5">
+                          <span>Sự cố tồn kho cần xử lý khẩn cấp!</span>
+                        </h4>
+                        <p className="text-[10px] text-stone-500 font-medium">Danh mục các tác phẩm hoa cần được nhập thêm hoặc điều chỉnh số lượng tồn</p>
+                      </div>
+                    </div>
+                    
+                    <span className="self-start sm:self-center px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-widest bg-red-600 text-white rounded-full animate-pulse shadow-2xs">
+                      Khẩn cấp: {outOfStockProducts.length + lowStockProducts.length} mặt hàng
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 text-stone-700 font-medium">
+                    {outOfStockProducts.length > 0 && (
+                      <div className="bg-white/90 backdrop-blur-xs p-4 rounded-xl border border-red-100/70 shadow-3xs space-y-3">
+                        <div className="flex items-center justify-between border-b border-dashed border-red-150 pb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-red-600 shrink-0 animate-ping" />
+                            <strong className="text-red-800 font-serif text-xs font-black">HOÀN TOÀN HẾT HÀNG ({outOfStockProducts.length})</strong>
+                          </div>
+                          <span className="text-[10px] font-mono font-black text-red-600 bg-red-50/50 px-2 py-0.5 rounded border border-red-100">STOCK = 0</span>
+                        </div>
+                        <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1 divide-y divide-stone-50 scrollbar-thin">
+                          {outOfStockProducts.map(p => (
+                            <div key={p.id} className="flex items-center justify-between pt-2 first:pt-0">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <img
+                                  src={p.image}
+                                  alt={p.name}
+                                  className="h-7 w-7 rounded-md object-cover border border-stone-200/40 bg-stone-50 shrink-0"
+                                  referrerPolicy="no-referrer"
+                                />
+                                <span className="truncate text-stone-850 font-serif font-bold text-xs">{p.name}</span>
+                              </div>
+                              <span className="text-[9px] font-extrabold uppercase tracking-wide text-red-650 bg-red-50 px-2 py-0.5 rounded border border-red-200/55 shrink-0">
+                                Nhập hàng gấp
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {lowStockProducts.length > 0 && (
+                      <div className="bg-white/90 backdrop-blur-xs p-4 rounded-xl border border-amber-100/70 shadow-3xs space-y-3">
+                        <div className="flex items-center justify-between border-b border-dashed border-amber-150 pb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0 animate-pulse" />
+                            <strong className="text-amber-850 font-serif text-xs font-black font-medium">SẮP HẾT HÀNG TRÊN HỆ THỐNG ({lowStockProducts.length})</strong>
+                          </div>
+                          <span className="text-[10px] font-mono font-black text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-100">STOCK ≤ {lowStockThreshold}</span>
+                        </div>
+                        <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1 divide-y divide-stone-50 scrollbar-thin">
+                          {lowStockProducts.map(p => (
+                            <div key={p.id} className="flex items-center justify-between pt-2 first:pt-0">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <img
+                                  src={p.image}
+                                  alt={p.name}
+                                  className="h-7 w-7 rounded-md object-cover border border-stone-200/40 bg-stone-50 shrink-0"
+                                  referrerPolicy="no-referrer"
+                                />
+                                <span className="truncate text-stone-850 font-serif font-bold text-xs">{p.name}</span>
+                              </div>
+                              <span className="text-[9px] font-extrabold text-amber-850 bg-amber-50 px-2.5 py-0.5 rounded border border-amber-200/60 shrink-0">
+                                Còn {p.stock || 0} bó
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Quick Toast message */}
+            {inventoryUpdateSuccess && (
+              <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-3 flex items-center justify-between text-xs font-bold animate-fade-in">
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-emerald-600" />
+                  <span>{inventoryUpdateSuccess}</span>
+                </div>
+                <button onClick={() => setInventoryUpdateSuccess(null)} className="text-stone-400 hover:text-stone-700 font-mono text-[10px] cursor-pointer">✕</button>
+              </div>
+            )}
+          </div>
+
+          {/* Metric Summary Widgets */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {(() => {
+              const totalProducts = products.length;
+              const lowStockCount = products.filter(p => (p.stock || 0) > 0 && (p.stock || 0) <= lowStockThreshold).length;
+              const outOfStockCount = products.filter(p => (p.stock || 0) === 0).length;
+              const totalStockUnits = products.reduce((acc, curr) => acc + (curr.stock || 0), 0);
+
+              return (
+                <>
+                  <div className="bg-[#FAF7F0] border border-amber-200/50 rounded-2xl p-4 flex flex-col justify-between shadow-3xs">
+                    <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">MẪU HOA ĐANG BÁN</span>
+                    <div className="mt-2 flex items-baseline gap-1.5">
+                      <span className="text-2xl font-serif font-black text-emerald-950">{totalProducts}</span>
+                      <span className="text-[11px] text-stone-500">tác phẩm</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#FAF7F0] border border-amber-200/50 rounded-2xl p-4 flex flex-col justify-between shadow-3xs">
+                    <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">SẮP HẾT HÀNG</span>
+                    <div className="mt-2 flex items-baseline gap-1.5">
+                      <span className="text-2xl font-serif font-black text-amber-600">{lowStockCount}</span>
+                      <span className="text-[11px] text-stone-500">mã hàng</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#FAF7F0] border border-red-250/30 rounded-2xl p-4 flex flex-col justify-between shadow-3xs">
+                    <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider block">ĐÃ HẾT HỘP/HOA (0)</span>
+                    <div className="mt-2 flex items-baseline gap-1.5">
+                      <span className="text-2xl font-serif font-black text-red-650">{outOfStockCount}</span>
+                      <span className="text-[11px] text-red-600">tác phẩm</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#FAF7F0] border border-amber-200/50 rounded-2xl p-4 flex flex-col justify-between shadow-3xs">
+                    <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">TỔNG ĐƠN VỊ TỒN KHO</span>
+                    <div className="mt-2 flex items-baseline gap-1.5">
+                      <span className="text-2xl font-serif font-black text-emerald-950">{totalStockUnits}</span>
+                      <span className="text-[11px] text-stone-500">đóa/bó hoa</span>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+
+          {/* Filtering and products table */}
+          <div className="rounded-2xl border border-amber-200/60 bg-white p-6 shadow-xs space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex flex-1 items-center bg-[#FAF7F0] border border-amber-200/40 rounded-xl px-3 py-1.5 max-w-md">
+                <Search className="h-4 w-4 text-stone-400 mr-2 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm tác phẩm hoa hoặc mã ID..."
+                  value={inventorySearchQuery}
+                  onChange={(e) => setInventorySearchQuery(e.target.value)}
+                  className="bg-transparent text-xs text-stone-800 focus:outline-none w-full"
+                />
+                {inventorySearchQuery && (
+                  <button onClick={() => setInventorySearchQuery('')} className="text-[11px] font-bold text-stone-400 hover:text-stone-700 font-serif">Xóa</button>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                {/* Status Tabs */}
+                <button
+                  onClick={() => setInventoryStatusFilter('all')}
+                  className={`px-3 py-1.5 rounded-lg border transition font-serif font-semibold cursor-pointer ${
+                    inventoryStatusFilter === 'all'
+                      ? 'bg-[#1F3D2B] border-transparent text-white font-bold'
+                      : 'bg-[#FAF7F0] border-amber-100 text-stone-700 hover:bg-amber-100/30'
+                  }`}
+                >
+                  Tất cả ({products.length})
+                </button>
+                <button
+                  onClick={() => setInventoryStatusFilter('low')}
+                  className={`px-3 py-1.5 rounded-lg border transition font-serif font-semibold cursor-pointer flex items-center gap-1 ${
+                    inventoryStatusFilter === 'low'
+                      ? 'bg-amber-500 border-transparent text-emerald-955 font-bold'
+                      : 'bg-amber-50/50 border-amber-100 text-amber-850 hover:bg-amber-100/30'
+                  }`}
+                >
+                  Sắp hết ({products.filter(p => (p.stock || 0) > 0 && (p.stock || 0) <= lowStockThreshold).length})
+                </button>
+                <button
+                  onClick={() => setInventoryStatusFilter('out')}
+                  className={`px-3 py-1.5 rounded-lg border transition font-serif font-semibold cursor-pointer flex items-center gap-1 ${
+                    inventoryStatusFilter === 'out'
+                      ? 'bg-red-600 border-transparent text-white font-bold'
+                      : 'bg-red-50/55 border-red-100 text-red-600 hover:bg-red-100/45'
+                  }`}
+                >
+                  Đã hết hàng ({products.filter(p => (p.stock || 0) === 0).length})
+                </button>
+
+                {/* Category filter dropdown inside */}
+                <select
+                  value={inventoryCategoryFilter}
+                  onChange={(e) => setInventoryCategoryFilter(e.target.value)}
+                  className="px-3 py-1.5 rounded-lg border border-amber-150 bg-[#FAF7F0] text-stone-700 focus:outline-none font-bold"
+                >
+                  <option value="all">Tất cả danh mục ({categories.length})</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Product Table list */}
+            {(() => {
+              const filteredList = products.filter(p => {
+                const matchesSearch = p.name.toLowerCase().includes(inventorySearchQuery.toLowerCase()) || p.id.toLowerCase().includes(inventorySearchQuery.toLowerCase());
+                const matchesCategory = inventoryCategoryFilter === 'all' || p.categoryId === inventoryCategoryFilter;
+                
+                let matchesStatus = true;
+                if (inventoryStatusFilter === 'low') {
+                  matchesStatus = (p.stock || 0) > 0 && (p.stock || 0) <= lowStockThreshold;
+                } else if (inventoryStatusFilter === 'out') {
+                  matchesStatus = (p.stock || 0) === 0;
+                }
+
+                return matchesSearch && matchesCategory && matchesStatus;
+              });
+
+              if (filteredList.length === 0) {
+                return (
+                  <div className="text-center py-12 border border-dashed border-amber-150 rounded-2xl bg-[#FAF7F0]/30 select-none">
+                    <p className="text-sm font-medium text-stone-500 font-serif">Không tìm thấy sản phẩm nào khớp với tiêu chuẩn bộ lọc đã chọn.</p>
+                    <button
+                      onClick={() => {
+                        setInventorySearchQuery('');
+                        setInventoryStatusFilter('all');
+                        setInventoryCategoryFilter('all');
+                      }}
+                      className="text-xs text-emerald-800 font-bold hover:underline mt-2 cursor-pointer"
+                    >
+                      Xóa toàn bộ bộ lọc
+                    </button>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="overflow-x-auto rounded-xl border border-amber-100 bg-white">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-[#FAF7F0] border-b border-amber-100 text-[10px] font-bold text-stone-500 uppercase tracking-wider select-none">
+                        <th className="px-5 py-4 w-12 text-center">Hình ảnh</th>
+                        <th className="px-5 py-4">Tác phẩm hoa nghệ thuật</th>
+                        <th className="px-5 py-4 w-40">Phân loại danh mục</th>
+                        <th className="px-5 py-4 w-36 text-center">Mức an toàn</th>
+                        <th className="px-5 py-4 w-52 text-center">Số lượng tồn kho (bó/hộp)</th>
+                        <th className="px-5 py-4 w-32 text-center">Hành động</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-amber-100/50">
+                      {filteredList.map((p) => {
+                        const tempVal = tempStockValues[p.id];
+                        const currentStockInWork = tempVal !== undefined ? tempVal : (p.stock || 0);
+                        const isEdited = tempVal !== undefined && tempVal !== (p.stock || 0);
+
+                        const categoryName = categories.find(c => c.id === p.categoryId)?.name || 'Chưa phân loại';
+
+                        let badgeColor = "bg-emerald-50 text-emerald-800 border-emerald-100";
+                        let statusText = "Tồn kho an toàn";
+                        if ((p.stock || 0) === 0) {
+                          badgeColor = "bg-red-50 text-red-650 border-red-150 animate-pulse";
+                          statusText = "Đã hết hàng";
+                        } else if ((p.stock || 0) <= lowStockThreshold) {
+                          badgeColor = "bg-amber-50 text-amber-800 border-amber-150";
+                          statusText = "Sắp hết hàng";
+                        }
+
+                        return (
+                          <tr key={p.id} className="hover:bg-amber-50/15 duration-100">
+                            {/* Product Image */}
+                            <td className="px-5 py-3.5 text-center">
+                              <img
+                                src={p.image}
+                                alt={p.name}
+                                className="h-10 w-10 rounded-lg object-cover border border-amber-250/20 bg-stone-50"
+                                referrerPolicy="no-referrer"
+                              />
+                            </td>
+
+                            {/* Product Name & UUID */}
+                            <td className="px-5 py-3.5">
+                              <span className="font-serif font-bold text-stone-850 block text-xs leading-snug">{p.name}</span>
+                              <span className="text-[10px] text-stone-400 font-mono block mt-0.5">ID: {p.id}</span>
+                            </td>
+
+                            {/* Category Name */}
+                            <td className="px-5 py-3.5 whitespace-nowrap text-stone-600 font-medium">
+                              {categoryName}
+                            </td>
+
+                            {/* Status badge */}
+                            <td className="px-5 py-3.5 text-center">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold border ${badgeColor}`}>
+                                {statusText}
+                              </span>
+                            </td>
+
+                            {/* Stock Update Controls */}
+                            <td className="px-5 py-3.5">
+                              <div className="flex items-center justify-center gap-1.5">
+                                {/* Minus button */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const nextStock = Math.max(0, currentStockInWork - 1);
+                                    setTempStockValues({ ...tempStockValues, [p.id]: nextStock });
+                                  }}
+                                  className="h-7 w-7 rounded-md border border-amber-200 hover:bg-amber-50 flex items-center justify-center font-bold text-base text-stone-600 hover:text-stone-900 transition active:scale-95 cursor-pointer leading-none"
+                                >
+                                  -
+                                </button>
+
+                                {/* Direct field input */}
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={currentStockInWork}
+                                  onChange={(e) => {
+                                    const nextStock = Math.max(0, parseInt(e.target.value) || 0);
+                                    setTempStockValues({ ...tempStockValues, [p.id]: nextStock });
+                                  }}
+                                  className="w-16 h-7 text-center rounded border border-amber-200 bg-white font-mono font-bold text-xs outline-none focus:border-red-950"
+                                />
+
+                                {/* Plus button */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const nextStock = currentStockInWork + 1;
+                                    setTempStockValues({ ...tempStockValues, [p.id]: nextStock });
+                                  }}
+                                  className="h-7 w-7 rounded-md border border-amber-200 hover:bg-amber-50 flex items-center justify-center font-bold text-base text-stone-600 hover:text-stone-900 transition active:scale-95 cursor-pointer leading-none"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </td>
+
+                            {/* Action Save button */}
+                            <td className="px-5 py-3.5 text-center whitespace-nowrap">
+                              <button
+                                type="button"
+                                disabled={!isEdited}
+                                onClick={() => {
+                                  onEditProduct({
+                                    ...p,
+                                    stock: currentStockInWork
+                                  });
+                                  
+                                  // Clear editing indicator
+                                  const updatedTemp = { ...tempStockValues };
+                                  delete updatedTemp[p.id];
+                                  setTempStockValues(updatedTemp);
+                                  
+                                  setInventoryUpdateSuccess(`Cập nhật số kho sản phẩm "${p.name}" sang ${currentStockInWork} bó hoa.`);
+                                  setTimeout(() => setInventoryUpdateSuccess(null), 3500);
+                                }}
+                                className={`px-2.5 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition ${
+                                  isEdited
+                                    ? 'bg-[#1F3D2B] text-white hover:bg-emerald-900 active:scale-95 cursor-pointer shadow-1xs'
+                                    : 'bg-stone-50 border border-stone-200 text-stone-400 cursor-not-allowed'
+                                }`}
+                              >
+                                {isEdited ? 'Cập nhật ✓' : 'Đã đồng bộ'}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* --- TAB 8: UNIFIED PROMOTIONS & COUPONS MANAGEMENT (QUẢN LÝ ƯU ĐÃI) --- */}
       {activeTab === 'coupons' && (
