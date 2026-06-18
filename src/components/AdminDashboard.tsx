@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
   BarChart2, Gift, DollarSign, Package, Users, Plus, Edit2, 
-  Trash2, Layers, Check, ShoppingBag, Eye, X, RefreshCw, Star, Info, TrendingUp, Search, LogOut, Mail, Lock, ShieldAlert,
+  Trash2, Layers, Check, ShoppingBag, Eye, X, RefreshCw, Star, Info, TrendingUp, TrendingDown, Search, LogOut, Mail, Lock, ShieldAlert,
   Menu, Shield, Download, FileText, Database, MessageSquare
 } from 'lucide-react';
 import { Product, Category, Order, User, OrderStatus, ContactMessage, Coupon, Review } from '../types';
@@ -52,6 +52,7 @@ export default function AdminDashboard({
 }: AdminDashboardProps) {
   
   const [activeTab, setActiveTab ] = useState<'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts' | 'coupons' | 'reviews' | 'inventory'>('stats');
+  const [statsMode, setStatsMode] = useState<'week' | 'month'>('week');
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const setContacts = onUpdateContacts;
 
@@ -372,6 +373,11 @@ export default function AdminDashboard({
     .filter(o => o.status === 'completed' || o.paymentStatus === 'Paid')
     .reduce((acc, curr) => acc + curr.totalAmount, 0);
 
+  const completedOrPaidOrders = orders.filter(o => o.status === 'completed' || o.paymentStatus === 'Paid');
+  const averageOrderValue = completedOrPaidOrders.length > 0 
+    ? totalRevenue / completedOrPaidOrders.length 
+    : 0;
+
   const totalOrdersCount = orders.length;
   const activeCustomersCount = users.length + 3; // simulated registered + sample buyers
 
@@ -407,7 +413,84 @@ export default function AdminDashboard({
     };
   });
 
-  const maxDailyRevenue = Math.max(...last7DaysData.map(d => d.val), 100000);
+  // Calculate preceding 7 days to get actual growth comparison
+  const preceding7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (13 - i));
+    return d;
+  });
+
+  const currentWeekTotal = last7DaysData.reduce((sum, d) => sum + d.val, 0);
+
+  const previousWeekTotal = preceding7Days.map((dateObj) => {
+    return orders
+      .filter((o) => {
+        if (o.status !== 'completed' && o.status !== 'paid') {
+          return false;
+        }
+        if (!o.createdAt) return false;
+        const oDate = new Date(o.createdAt);
+        return oDate.getFullYear() === dateObj.getFullYear() &&
+               oDate.getMonth() === dateObj.getMonth() &&
+               oDate.getDate() === dateObj.getDate();
+      })
+      .reduce((sum, o) => sum + o.totalAmount, 0);
+  }).reduce((sum, val) => sum + val, 0);
+
+  // --- REAL-TIME 12 MONTH REVENUE ---
+  const last12Months = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - (11 - i));
+    return d;
+  });
+
+  const last12MonthsData = last12Months.map((dateObj) => {
+    const month = dateObj.getMonth();
+    const year = dateObj.getFullYear();
+    const label = `T${month + 1}/${String(year).slice(-2)}`;
+
+    const monthlyRevenue = orders
+      .filter((o) => {
+        if (o.status !== 'completed' && o.status !== 'paid') {
+          return false;
+        }
+        if (!o.createdAt) return false;
+        const oDate = new Date(o.createdAt);
+        return oDate.getFullYear() === year && oDate.getMonth() === month;
+      })
+      .reduce((sum, o) => sum + o.totalAmount, 0);
+
+    return {
+      label,
+      val: monthlyRevenue,
+    };
+  });
+
+  const currentMonthTotal = last12MonthsData[11]?.val || 0;
+  const previousMonthTotal = last12MonthsData[10]?.val || 0;
+
+  let growthPercentageNum = 0;
+  if (statsMode === 'week') {
+    if (previousWeekTotal > 0) {
+      growthPercentageNum = ((currentWeekTotal - previousWeekTotal) / previousWeekTotal) * 100;
+    } else if (currentWeekTotal > 0) {
+      growthPercentageNum = 100;
+    } else {
+      growthPercentageNum = 0;
+    }
+  } else {
+    if (previousMonthTotal > 0) {
+      growthPercentageNum = ((currentMonthTotal - previousMonthTotal) / previousMonthTotal) * 100;
+    } else if (currentMonthTotal > 0) {
+      growthPercentageNum = 100;
+    } else {
+      growthPercentageNum = 0;
+    }
+  }
+
+  const currentChartData = statsMode === 'week' ? last7DaysData : last12MonthsData;
+
+  const maxDailyRevenue = Math.max(...currentChartData.map(d => d.val), 100000);
   const chartMax = Math.max(maxDailyRevenue * 1.15, 1000000); // At least 1M VNĐ bounds
 
   const formatShortVND = (value: number) => {
@@ -422,8 +505,10 @@ export default function AdminDashboard({
     return `${value}đ`;
   };
 
-  const last7DaysPoints = last7DaysData.map((d, idx) => {
-    const x = 50 + idx * 100;
+  const currentChartPoints = currentChartData.map((d, idx) => {
+    const N = currentChartData.length;
+    const step = N > 1 ? 600 / (N - 1) : 600;
+    const x = 50 + idx * step;
     const y = 205 - (d.val / chartMax) * 175;
     return {
       label: d.label,
@@ -434,12 +519,15 @@ export default function AdminDashboard({
   });
 
   let linePath = '';
-  if (last7DaysPoints.length > 0) {
-    linePath = `M ${last7DaysPoints[0].x} ${last7DaysPoints[0].y}`;
-    for (let i = 1; i < last7DaysPoints.length; i++) {
-      const pPrev = last7DaysPoints[i - 1];
-      const pCurr = last7DaysPoints[i];
-      linePath += ` C ${pPrev.x + 50} ${pPrev.y}, ${pCurr.x - 50} ${pCurr.y}, ${pCurr.x} ${pCurr.y}`;
+  if (currentChartPoints.length > 0) {
+    linePath = `M ${currentChartPoints[0].x} ${currentChartPoints[0].y}`;
+    const N = currentChartData.length;
+    const step = N > 1 ? 600 / (N - 1) : 600;
+    const controlOffset = step / 2;
+    for (let i = 1; i < currentChartPoints.length; i++) {
+      const pPrev = currentChartPoints[i - 1];
+      const pCurr = currentChartPoints[i];
+      linePath += ` C ${pPrev.x + controlOffset} ${pPrev.y}, ${pCurr.x - controlOffset} ${pCurr.y}, ${pCurr.x} ${pCurr.y}`;
     }
   }
 
@@ -484,6 +572,28 @@ export default function AdminDashboard({
   const vnpayOrdersRevenue = orders.filter(o => o.paymentMethod === 'VNPAY').reduce((sum, o) => sum + o.totalAmount, 0);
 
   const totalOrdersWithPayments = orders.length || 1;
+
+  // --- COMPUTE REVENUE BY CATEGORY ---
+  const revenueByCategory = categories.map((cat) => {
+    let rev = 0;
+    orders
+      .filter(o => o.status === 'completed' || o.paymentStatus === 'Paid')
+      .forEach((ord) => {
+        ord.items.forEach((it) => {
+          if (it.product && it.product.categoryId === cat.id) {
+            rev += (it.product.price || 0) * (it.quantity || 1);
+          }
+        });
+      });
+    return {
+      categoryId: cat.id,
+      categoryName: cat.name,
+      revenue: rev,
+      image: cat.image,
+    };
+  }).sort((a, b) => b.revenue - a.revenue);
+
+  const totalCompletedOrPaidRevenue = revenueByCategory.reduce((sum, item) => sum + item.revenue, 0);
 
   const unreadContactsCount = contacts.filter(c => c.status === 'new').length;
 
@@ -981,6 +1091,19 @@ export default function AdminDashboard({
               </div>
             </div>
 
+            {/* Card 5: Giá trị đơn hàng trung bình (AOV) */}
+            <div className="rounded-2xl border border-amber-200/60 bg-white p-4 sm:p-5 shadow-xs flex items-center space-x-3 sm:space-x-4 w-fit min-w-max transition-all" id="admin-kpi-aov">
+              <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-emerald-50 text-[#C8A96B] shrink-0">
+                <BarChart2 className="h-5.5 w-5.5 sm:h-6 sm:w-6" strokeWidth={2.5} />
+              </div>
+              <div className="min-w-0 pr-1">
+                <p className="text-[10px] sm:text-[11px] uppercase font-bold tracking-wider text-stone-400 break-words whitespace-normal">Giá trị ĐH trung bình (AOV)</p>
+                <p className="text-sm sm:text-base md:text-lg lg:text-sm xl:text-lg font-black text-emerald-950 tracking-tight mt-0.5 whitespace-nowrap" title={formatVND(averageOrderValue)}>
+                  {formatVND(averageOrderValue)}
+                </p>
+              </div>
+            </div>
+
           </div>
 
           {/* Interactive Responsive SVG Charts */}
@@ -988,14 +1111,51 @@ export default function AdminDashboard({
             
             {/* Sales revenue over time */}
             <div className="lg:col-span-12 rounded-2xl border border-amber-200/60 bg-white p-6 shadow-xs">
-              <div className="flex items-center justify-between border-b border-amber-100/60 pb-3 mb-6">
-                <div>
-                  <h3 className="font-serif text-base font-bold text-emerald-950">Biểu đồ doanh thu thực tế theo tuần</h3>
-                  <p className="text-xs text-stone-400">Tổng quan thu nhập tích lũy lũy tiến</p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-amber-100/60 pb-4 mb-6">
+                <div className="flex flex-col md:flex-row md:items-center gap-4">
+                  <div>
+                    <h3 className="font-serif text-base font-bold text-emerald-950">
+                      {statsMode === 'week' ? 'Biểu đồ doanh thu thực tế theo tuần' : 'Biểu đồ doanh thu thực tế theo tháng'}
+                    </h3>
+                    <p className="text-xs text-stone-400">Tổng quan thu nhập tích lũy lũy tiến</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 self-start md:self-auto">
+                    <button
+                      onClick={() => { setStatsMode('week'); setHoveredChartIdx(null); }}
+                      className={`px-3 py-1 text-xs font-bold rounded-full transition-all border cursor-pointer ${
+                        statsMode === 'week'
+                          ? 'bg-[#1F3D2B] text-white border-[#1F3D2B]'
+                          : 'bg-[#FAF7F0] text-stone-600 border-[#C8A96B]/20 hover:bg-stone-100'
+                      }`}
+                    >
+                      Xem theo tuần
+                    </button>
+                    <button
+                      onClick={() => { setStatsMode('month'); setHoveredChartIdx(null); }}
+                      className={`px-3 py-1 text-xs font-bold rounded-full transition-all border cursor-pointer ${
+                        statsMode === 'month'
+                          ? 'bg-[#1F3D2B] text-white border-[#1F3D2B]'
+                          : 'bg-[#FAF7F0] text-stone-600 border-[#C8A96B]/20 hover:bg-stone-100'
+                      }`}
+                    >
+                      Xem theo từng tháng
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-1.5 text-xs text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full font-bold">
-                  <TrendingUp className="h-4 w-4" />
-                  <span>+18.4% tăng trưởng</span>
+                <div className={`flex items-center space-x-1.5 text-xs px-2.5 py-1 rounded-full font-bold self-start sm:self-auto ${
+                  growthPercentageNum >= 0 
+                    ? 'text-emerald-800 bg-emerald-50' 
+                    : 'text-rose-800 bg-rose-50'
+                }`}>
+                  {growthPercentageNum >= 0 ? (
+                    <TrendingUp className="h-4 w-4 text-emerald-600" />
+                  ) : (
+                    <TrendingDown className="h-4 w-4 text-rose-600" />
+                  )}
+                  <span>
+                    {growthPercentageNum >= 0 ? '+' : ''}
+                    {growthPercentageNum.toFixed(1)}% tăng trưởng
+                  </span>
                 </div>
               </div>
 
@@ -1062,11 +1222,11 @@ export default function AdminDashboard({
                   )}
 
                   {/* Hover vertical dash guiding line */}
-                  {hoveredChartIdx !== null && last7DaysPoints[hoveredChartIdx] && (
+                  {hoveredChartIdx !== null && currentChartPoints[hoveredChartIdx] && (
                     <line 
-                      x1={last7DaysPoints[hoveredChartIdx].x} 
+                      x1={currentChartPoints[hoveredChartIdx].x} 
                       y1="30" 
-                      x2={last7DaysPoints[hoveredChartIdx].x} 
+                      x2={currentChartPoints[hoveredChartIdx].x} 
                       y2="205" 
                       stroke="#C8A96B" 
                       strokeWidth="1.5" 
@@ -1075,7 +1235,7 @@ export default function AdminDashboard({
                   )}
 
                   {/* Data coordinates circles points */}
-                  {last7DaysPoints.map((pt, idx) => (
+                  {currentChartPoints.map((pt, idx) => (
                     <g key={idx}>
                       {/* Outer pulse indicator on hover */}
                       {hoveredChartIdx === idx && (
@@ -1113,9 +1273,9 @@ export default function AdminDashboard({
                       
                       {/* Virtual transparent hover catching regions */}
                       <rect 
-                        x={pt.x - 50} 
+                        x={pt.x - 20} 
                         y="15" 
-                        width="100" 
+                        width="40" 
                         height="195" 
                         fill="transparent" 
                         className="cursor-pointer" 
@@ -1127,19 +1287,19 @@ export default function AdminDashboard({
                 </svg>
 
                 {/* Highly-designed luxury floating tooltip card over coordinates */}
-                {hoveredChartIdx !== null && last7DaysPoints[hoveredChartIdx] && (
+                {hoveredChartIdx !== null && currentChartPoints[hoveredChartIdx] && (
                   <div 
                     className="absolute pointer-events-none bg-[#1F3D2B] text-[#F8F5EF] text-xs font-sans rounded-xl py-2 px-3 shadow-xl border border-[#C8A96B]/60 flex flex-col items-center -translate-x-1/2 -translate-y-[110%] transition-transform duration-200 ease-out animate-in fade-in"
                     style={{
-                      left: `${((last7DaysPoints[hoveredChartIdx].x) / 700) * 100}%`,
-                      top: `${((last7DaysPoints[hoveredChartIdx].y) / 240) * 100}%`,
+                      left: `${((currentChartPoints[hoveredChartIdx].x) / 700) * 100}%`,
+                      top: `${((currentChartPoints[hoveredChartIdx].y) / 240) * 100}%`,
                     }}
                   >
                     <span className="text-[9px] text-[#C8A96B] font-extrabold uppercase tracking-widest">
-                      Ngày {last7DaysPoints[hoveredChartIdx].label}
+                      {statsMode === 'week' ? 'Ngày' : 'Tháng'} {currentChartPoints[hoveredChartIdx].label}
                     </span>
                     <span className="font-extrabold mt-0.5 whitespace-nowrap text-[11px]">
-                      {formatVND(last7DaysPoints[hoveredChartIdx].val)}
+                      {formatVND(currentChartPoints[hoveredChartIdx].val)}
                     </span>
                     <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-[#1F3D2B] border-r border-b border-[#C8A96B]/60 rotate-45"></div>
                   </div>
@@ -1245,6 +1405,72 @@ export default function AdminDashboard({
               )}
             </div>
 
+          </div>
+
+          {/* Doanh thu theo danh mục sản phẩm */}
+          <div className="rounded-2xl border border-amber-200/60 bg-white p-6 shadow-xs mt-6" id="admin-category-revenue-chart">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-amber-100 pb-3 mb-6 gap-3">
+              <div>
+                <h3 className="font-serif text-base font-bold text-emerald-950 flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse"></span>
+                  <span>Doanh thu theo danh mục sản phẩm</span>
+                </h3>
+                <p className="text-xs text-stone-400 mt-0.5">Phân tích dòng tiền thu về theo từng nhóm danh mục hoa nghệ thuật</p>
+              </div>
+              <div className="text-xs font-bold text-emerald-950 bg-[#FAF7F0] px-3 py-1.5 rounded-lg border border-[#C8A96B]/20">
+                Tổng doanh thu tính theo danh mục: {formatVND(totalCompletedOrPaidRevenue)}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {revenueByCategory.map((catItem, idx) => {
+                const percent = totalCompletedOrPaidRevenue > 0 
+                  ? Math.round((catItem.revenue / totalCompletedOrPaidRevenue) * 105) // let's adjust or use correct mathematical percent
+                  : 0;
+                const actualPercentToShow = totalCompletedOrPaidRevenue > 0 
+                  ? Math.round((catItem.revenue / totalCompletedOrPaidRevenue) * 100) 
+                  : 0;
+
+                return (
+                  <div key={catItem.categoryId} className="border border-amber-100/50 rounded-xl bg-[#FAF7F0]/40 p-4 hover:border-[#C8A96B]/60 hover:bg-[#FAF7F0]/80 transition duration-300 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="h-10 w-10 rounded-lg overflow-hidden shrink-0 border border-[#C8A96B]/20 bg-white flex items-center justify-center">
+                          {catItem.image ? (
+                            <img 
+                              src={catItem.image} 
+                              alt={catItem.categoryName} 
+                              className="h-full w-full object-cover animate-fade-in"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center text-[10px] font-bold text-[#C8A96B] bg-amber-50">
+                              Fióre
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="font-serif text-xs font-black text-emerald-950 truncate" title={catItem.categoryName}>{catItem.categoryName}</h4>
+                          <p className="text-[10px] text-stone-400">Danh mục #{idx + 1}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between items-baseline mt-4 mb-1.5">
+                        <span className="text-sm font-black text-emerald-950">{formatVND(catItem.revenue)}</span>
+                        <span className="text-[11px] font-extrabold text-[#C8A96B]">{actualPercentToShow}%</span>
+                      </div>
+                    </div>
+
+                    <div className="w-full bg-stone-100 h-2 rounded-full overflow-hidden mt-1">
+                      <div 
+                        className="bg-[#1F3D2B] h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${actualPercentToShow}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Biểu đồ mức độ sử dụng phương thức thanh toán */}
