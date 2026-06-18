@@ -772,7 +772,7 @@ export default function AdminDashboard({
                   {activeTab === 'contacts' && 'Liên hệ'}
                   {activeTab === 'reviews' && 'Đánh giá'}
                   {activeTab === 'security' && 'Bảo mật/MK'}
-                  {activeTab === 'inventory' && 'Quản lý tồn kho'}
+                  {activeTab === 'inventory' && 'Quản lý kho'}
                 </span>
               </h2>
             </div>
@@ -812,7 +812,7 @@ export default function AdminDashboard({
                 activeTab === 'inventory' ? 'bg-emerald-100/60 text-emerald-950 font-bold' : 'text-stone-700 hover:bg-amber-100/40'
               }`}
             >
-              <Database className="mr-2.5 h-4 w-4 shrink-0" /> Quản lý tồn kho
+              <Database className="mr-2.5 h-4 w-4 shrink-0" /> Quản lý kho
             </button>
             <button
               onClick={() => { handleTabChange('categories'); setIsMobileNavOpen(false); }}
@@ -937,7 +937,7 @@ export default function AdminDashboard({
                 }`}
                 id="admin-inventory-tab"
               >
-                <Database className="mr-2 h-4 w-4 shrink-0 text-emerald-700" /> Quản lý tồn kho
+                <Database className="mr-2 h-4 w-4 shrink-0 text-emerald-700" /> Quản lý kho
               </button>
               <button
                 onClick={() => handleTabChange('categories')}
@@ -3234,7 +3234,7 @@ export default function AdminDashboard({
               <div>
                 <h3 className="font-serif text-lg font-bold text-emerald-950 flex items-center gap-2">
                   <Database className="text-emerald-800 h-5 w-5 shrink-0" />
-                  <span>Theo Dõi & Quản Lý Tồn Kho</span>
+                  <span>Theo Dõi & Quản Lý Kho</span>
                 </h3>
                 <p className="text-xs text-stone-400 mt-1">
                   Đo lường lượng tồn thực tế của các tác phẩm hoa nghệ thuật, thiết lập ngưỡng cảnh báo sắp hết hàng và cập nhật nhanh số lượng sản phẩm.
