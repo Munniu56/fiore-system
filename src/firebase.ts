@@ -17,10 +17,13 @@ import {
 import firebaseConfig from "../firebase-applet-config.json";
 import { Product, Category, Order, User, ContactMessage, Coupon, Review } from "./types";
 
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 export const db = initializeFirestore(
   app,
-  { experimentalForceLongPolling: true },
+  { 
+    experimentalForceLongPolling: true,
+    useFetchStreams: false
+  } as any,
   firebaseConfig.firestoreDatabaseId,
 ); /* CRITICAL: The app will break without this line */
 export const auth = getAuth(app);

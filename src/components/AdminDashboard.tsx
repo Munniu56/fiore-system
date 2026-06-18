@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
 import { 
   BarChart2, Gift, DollarSign, Package, Users, Plus, Edit2, 
@@ -119,6 +120,13 @@ export default function AdminDashboard({
   const [lowStockThreshold, setLowStockThreshold] = useState(5);
   const [tempStockValues, setTempStockValues] = useState<Record<string, number>>({});
   const [inventoryUpdateSuccess, setInventoryUpdateSuccess] = useState<string | null>(null);
+
+  // States for stock write-off/cancellation reporting
+  const [cancelProduct, setCancelProduct] = useState<Product | null>(null);
+  const [cancelQuantity, setCancelQuantity] = useState<number>(1);
+  const [cancelReason, setCancelReason] = useState<string>('Hoa héo');
+  const [customReason, setCustomReason] = useState<string>('');
+  const [cancelPopupPos, setCancelPopupPos] = useState<{ top: number; left: number } | null>(null);
 
   const getMockReviewsForProduct = (prod: Product): Review[] => {
     const templates = [
@@ -3605,32 +3613,69 @@ export default function AdminDashboard({
                             </td>
 
                             {/* Action Save button */}
-                            <td className="px-5 py-3.5 text-center whitespace-nowrap">
-                              <button
-                                type="button"
-                                disabled={!isEdited}
-                                onClick={() => {
-                                  onEditProduct({
-                                    ...p,
-                                    stock: currentStockInWork
-                                  });
-                                  
-                                  // Clear editing indicator
-                                  const updatedTemp = { ...tempStockValues };
-                                  delete updatedTemp[p.id];
-                                  setTempStockValues(updatedTemp);
-                                  
-                                  setInventoryUpdateSuccess(`Cập nhật số kho sản phẩm "${p.name}" sang ${currentStockInWork} bó hoa.`);
-                                  setTimeout(() => setInventoryUpdateSuccess(null), 3500);
-                                }}
-                                className={`px-2.5 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition ${
-                                  isEdited
-                                    ? 'bg-[#1F3D2B] text-white hover:bg-emerald-900 active:scale-95 cursor-pointer shadow-1xs'
-                                    : 'bg-stone-50 border border-stone-200 text-stone-400 cursor-not-allowed'
-                                }`}
-                              >
-                                {isEdited ? 'Cập nhật ✓' : 'Đã đồng bộ'}
-                              </button>
+                            <td className="px-5 py-3.5 text-center whitespace-nowrap relative">
+                              <div className="flex flex-col items-center justify-center gap-1.5">
+                                <button
+                                  type="button"
+                                  disabled={!isEdited}
+                                  onClick={() => {
+                                    onEditProduct({
+                                      ...p,
+                                      stock: currentStockInWork
+                                    });
+                                    
+                                    // Clear editing indicator
+                                    const updatedTemp = { ...tempStockValues };
+                                    delete updatedTemp[p.id];
+                                    setTempStockValues(updatedTemp);
+                                    
+                                    setInventoryUpdateSuccess(`Cập nhật số kho sản phẩm "${p.name}" sang ${currentStockInWork} bó hoa.`);
+                                    setTimeout(() => setInventoryUpdateSuccess(null), 3500);
+                                  }}
+                                  className={`px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition w-28 ${
+                                    isEdited
+                                      ? 'bg-[#1F3D2B] text-white hover:bg-emerald-900 active:scale-95 cursor-pointer shadow-1xs'
+                                      : 'bg-stone-50 border border-stone-200 text-stone-400 cursor-not-allowed'
+                                  }`}
+                                >
+                                  {isEdited ? 'Cập nhật ✓' : 'Đã đồng bộ'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    
+                                    // Calculate coordinates relative to screen viewport
+                                    const popoverWidth = 320;
+                                    let targetLeft = rect.left + rect.width / 2 - popoverWidth / 2;
+                                    
+                                    // Keep inside safe boundaries of window viewport
+                                    if (targetLeft < 16) {
+                                      targetLeft = 16;
+                                    } else if (targetLeft + popoverWidth > window.innerWidth - 16) {
+                                      targetLeft = window.innerWidth - popoverWidth - 16;
+                                    }
+                                    
+                                    let targetTop = rect.bottom + 8;
+                                    const popoverHeightEst = 330;
+                                    if (targetTop + popoverHeightEst > window.innerHeight) {
+                                      targetTop = Math.max(16, rect.top - popoverHeightEst - 8);
+                                    }
+                                    
+                                    setCancelProduct(p);
+                                    setCancelQuantity(1);
+                                    setCancelReason('Hoa héo');
+                                    setCustomReason('');
+                                    setCancelPopupPos({
+                                      top: targetTop,
+                                      left: targetLeft
+                                    });
+                                  }}
+                                  className="px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wider transition w-28 bg-[#FFF5F5] border border-red-200 text-red-650 hover:bg-red-50 hover:text-red-700 active:scale-95 cursor-pointer font-sans"
+                                >
+                                  Báo hủy
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -4011,6 +4056,158 @@ export default function AdminDashboard({
           </div>
         </div>
       )}
+
+
+      {/* FOR CANCELLATION/WRITE-OFF (BÁO HỦY) GLOBAL POPOVER - OUTSIDE OF TRANSFORM CONTAINERS TO GUARANTEE ACCURATE PIXEL COORDINATES */}
+      {cancelProduct && cancelPopupPos && createPortal(
+        <>
+          {/* Global Transparent Backdrop overlay for closing */}
+          <div 
+            className="fixed inset-0 z-[190] cursor-default bg-transparent"
+            onClick={() => {
+              setCancelProduct(null);
+              setCancelPopupPos(null);
+            }}
+          />
+          {/* Absolute styled relative to exact viewport coordinates click target */}
+          <div 
+            className="fixed z-[200] w-[320px] rounded-2xl bg-white p-5 shadow-2xl border border-red-200 text-left whitespace-normal font-sans"
+            style={{ 
+              top: `${cancelPopupPos.top}px`,
+              left: `${cancelPopupPos.left}px`,
+              filter: 'drop-shadow(0 20px 25px rgba(0,0,0,0.15))'
+            }}
+          >
+            <div className="flex items-center justify-between border-b border-red-50 pb-3 mb-3.5">
+              <h3 className="font-serif text-sm font-bold text-red-800 flex items-center gap-1.5">
+                <span className="p-1.5 rounded-lg bg-red-50 text-red-650 shrink-0">
+                  <Database className="h-4 w-4" />
+                </span>
+                <span>Báo Hủy / Hỏng Hoa</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setCancelProduct(null);
+                  setCancelPopupPos(null);
+                }}
+                className="rounded-full p-1 text-gray-400 hover:bg-neutral-150 hover:text-gray-600 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mb-3.5 bg-[#FAF7F0]/50 p-2.5 rounded-lg border border-amber-100/50 text-[11px]">
+              <p className="font-extrabold text-stone-500">Tác phẩm báo hủy:</p>
+              <div className="flex items-center gap-2 mt-1.5">
+                <img 
+                  src={cancelProduct.image} 
+                  alt={cancelProduct.name} 
+                  className="w-7 h-7 object-cover rounded border border-amber-100 bg-stone-50"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="min-w-0 pr-1">
+                  <p className="font-bold text-emerald-950 truncate max-w-[210px]">{cancelProduct.name}</p>
+                  <p className="text-stone-400 text-[10px] mt-0.5 font-medium">Số lượng tồn hiện tại: <span className="font-mono font-bold text-[#C8A96B]">{cancelProduct.stock || 0}</span> bó</p>
+                </div>
+              </div>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!cancelProduct) return;
+                const currentStock = cancelProduct.stock || 0;
+                const nextStock = Math.max(0, currentStock - cancelQuantity);
+                const finalReason = cancelReason === 'Lý do khác' ? customReason : cancelReason;
+
+                onEditProduct({
+                  ...cancelProduct,
+                  stock: nextStock
+                });
+
+                const updatedTemp = { ...tempStockValues };
+                delete updatedTemp[cancelProduct.id];
+                setTempStockValues(updatedTemp);
+
+                setInventoryUpdateSuccess(`Đã báo hủy thành công ${cancelQuantity} bó của tác phẩm "${cancelProduct.name}". Lý do: ${finalReason}.`);
+                setTimeout(() => setInventoryUpdateSuccess(null), 4000);
+
+                setCancelProduct(null);
+                setCancelPopupPos(null);
+              }}
+              className="space-y-3.5 text-xs text-stone-600 font-semibold"
+            >
+              <div>
+                <label className="block text-stone-500 uppercase font-bold text-[10px] tracking-wider mb-1.5">
+                  Nhập số lượng bó hoa bị hủy/hỏng:
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  max={cancelProduct.stock || 9999}
+                  value={cancelQuantity}
+                  onChange={(e) => setCancelQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-full rounded-lg border border-amber-200/80 p-2 outline-none focus:border-red-600 focus:ring-1 focus:ring-red-650 font-mono text-stone-800"
+                  placeholder="Nhập số lượng..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-stone-500 uppercase font-bold text-[10px] tracking-wider mb-1.5">
+                  Lý do chọn đơn giản:
+                </label>
+                <select
+                  value={cancelReason}
+                  onChange={(e) => {
+                    setCancelReason(e.target.value);
+                    if (e.target.value !== 'Lý do khác') {
+                      setCustomReason('');
+                    }
+                  }}
+                  className="w-full rounded-lg border border-amber-200/80 p-2 outline-none focus:border-red-600 focus:ring-1 focus:ring-red-650 text-stone-800 bg-white"
+                >
+                  <option value="Hoa héo">Hoa héo</option>
+                  <option value="Khách hủy đơn">Khách hủy đơn</option>
+                  <option value="Bị dập nát, hỏng trong quá trình vận chuyển">Bị dập nát, hỏng trong quá trình vận chuyển</option>
+                  <option value="Sản phẩm lỗi mẫu cắm">Sản phẩm lỗi mẫu cắm</option>
+                  <option value="Lý do khác">Lý do khác</option>
+                </select>
+              </div>
+
+              {cancelReason === 'Lý do khác' && (
+                <div className="animate-fade-in space-y-1.5">
+                  <label className="block text-stone-500 uppercase font-bold text-[10px] tracking-wider">
+                    Vui lòng ghi rõ lý do hủy hỏng: <span className="text-red-500 font-bold">*</span>
+                  </label>
+                  <textarea
+                    required
+                    value={customReason}
+                    onChange={(e) => setCustomReason(e.target.value)}
+                    rows={2}
+                    className="w-full rounded-lg border border-red-200 p-2 outline-none focus:border-red-600 focus:ring-1 focus:ring-red-650 text-stone-800 text-xs font-semibold placeholder:text-stone-300 placeholder:font-normal"
+                    placeholder="Nhập lý do chi tiết..."
+                  />
+                </div>
+              )}
+
+              <div className="pt-3.5 border-t border-amber-100/60 mt-4">
+                <button
+                  type="submit"
+                  className="w-full rounded-lg bg-red-600 py-2.5 text-white font-extrabold hover:bg-red-700 cursor-pointer flex items-center justify-center gap-1.5 transition active:scale-95 text-xs shadow-xs hover:shadow-md"
+                >
+                  <Check className="h-4 w-4" strokeWidth={3} />
+                  <span>Xác nhận để lưu</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </>,
+        document.body
+      )}
+
+
 
     </div>
   );
