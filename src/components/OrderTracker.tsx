@@ -3,9 +3,145 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
-import { Search, MapPin, Truck, CheckCircle2, Clock, Ban, AlertCircle, Calendar, Sparkles } from 'lucide-react';
-import { Order, OrderStatus } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Search, MapPin, Truck, CheckCircle2, Clock, Ban, AlertCircle, Calendar, Sparkles, Star, MessageSquare } from 'lucide-react';
+import { Order, OrderStatus, Product, Review } from '../types';
+import { subscribeReviews, saveReview } from '../firebase';
+
+interface ReviewFormItemProps {
+  product: Product;
+  order: Order;
+}
+
+function ReviewFormItem({ product, order }: ReviewFormItemProps) {
+  const [rating, setRating] = useState(5);
+  const [hoverRating, setHoverRating] = useState<number | null>(null);
+  const [author, setAuthor] = useState(order.customerName || '');
+  const [comment, setComment] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!comment.trim()) {
+      setErrorMsg('Vui lòng viết một chút nội dung nhận xét của bạn.');
+      return;
+    }
+    setErrorMsg('');
+    setIsSubmitting(true);
+    
+    try {
+      const emailLower = (order.customerEmail || 'khachhang@fiore.vn').trim().toLowerCase();
+      const newRev: Review = {
+        id: `${product.id}-order-${order.id || 'gen'}-${Date.now()}`,
+        productId: product.id,
+        productName: product.name,
+        author: author.trim() || 'Khách hàng Fióre',
+        email: emailLower,
+        rating: rating,
+        date: new Date().toLocaleDateString('vi-VN'),
+        createdAt: new Date().toISOString(),
+        comment: comment.trim(),
+        isVerified: true,
+        likes: 0
+      };
+      
+      await saveReview(newRev);
+    } catch (err) {
+      console.error("Save review error:", err);
+      setErrorMsg('Không thể lưu đánh giá của bạn. Vui lòng kiểm tra lại kết nối mạng.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-3 bg-white border border-pink-100 rounded-xl p-3.5 space-y-3 px-4 transition-all focus-within:shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-pink-50 pb-2">
+        <span className="font-semibold text-gray-800 text-xs flex items-center gap-1.5">
+          <MessageSquare className="h-3.5 w-3.5 text-rose-500" />
+          Viết nhận xét ý kiến của bạn:
+        </span>
+        
+        {/* Interactive Star Selection */}
+        <div className="flex items-center gap-1">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              key={star}
+              type="button"
+              onClick={() => setRating(star)}
+              onMouseEnter={() => setHoverRating(star)}
+              onMouseLeave={() => setHoverRating(null)}
+              className="p-0.5 focus:outline-none transition-transform hover:scale-115 cursor-pointer"
+            >
+              <Star
+                className={`h-4.5 w-4.5 ${
+                  star <= (hoverRating ?? rating)
+                    ? 'fill-amber-400 text-amber-500'
+                    : 'text-stone-200'
+                }`}
+              />
+            </button>
+          ))}
+          <span className="text-[10.5px] font-bold text-amber-600 ml-1.5 uppercase tracking-wide">
+            {rating === 5 ? 'Tuyệt vời' : rating === 4 ? 'Hài lòng' : rating === 3 ? 'Bình thường' : rating === 2 ? 'Tạm ổn' : 'Chưa tốt'}
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Tên người viết</label>
+          <input
+            type="text"
+            required
+            value={author}
+            onChange={(e) => setAuthor(e.target.value)}
+            disabled={isSubmitting}
+            placeholder="Nhập tên của bạn..."
+            className="w-full rounded-lg border border-pink-50 p-2 text-xs bg-neutral-50/50 outline-none focus:bg-white focus:border-rose-300"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Hòm thư email (Tự động theo đơn hàng)</label>
+          <input
+            type="text"
+            disabled
+            value={order.customerEmail || 'Chưa định danh'}
+            className="w-full rounded-lg border border-pink-50 p-2 text-xs bg-neutral-100/70 text-gray-400 select-none outline-none cursor-not-allowed"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Nội dung cảm nhận / góp ý</label>
+        <textarea
+          rows={2}
+          required
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          disabled={isSubmitting}
+          placeholder="Chia sẻ trải nghiệm của bạn về độ tươi, sắc sảo, tính nghệ thuật hay tác phong đóng gói hỏa tốc..."
+          className="w-full rounded-lg border border-pink-50 p-2 text-xs bg-neutral-50/50 outline-none focus:bg-white focus:border-rose-300 resize-none"
+        />
+      </div>
+
+      {errorMsg && (
+        <p className="text-[10.5px] font-semibold text-rose-600">⚠️ {errorMsg}</p>
+      )}
+
+      <div className="flex justify-end pt-1">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="inline-flex items-center gap-1.5 rounded-full bg-[#1F3D2B] hover:bg-[#2c533c] tracking-wide px-4 py-1.5 text-[10px] font-semibold text-white transition shadow-sm hover:shadow-md cursor-pointer disabled:opacity-50"
+        >
+          {isSubmitting ? 'Đang gửi...' : 'Gửi nhận xét đánh giá'}
+        </button>
+      </div>
+    </form>
+  );
+}
 
 interface OrderTrackerProps {
   orders: Order[];
@@ -16,6 +152,14 @@ export default function OrderTracker({ orders, onNavigate }: OrderTrackerProps) 
   const [searchOrderId, setSearchOrderId] = useState('');
   const [typedOrder, setTypedOrder] = useState<Order | null>(null);
   const [searched, setSearched] = useState(false);
+  const [allReviews, setAllReviews] = useState<Review[]>([]);
+
+  useEffect(() => {
+    const unsub = subscribeReviews((revs) => {
+      setAllReviews(revs);
+    });
+    return () => unsub();
+  }, []);
 
   const handleSearchOrder = (e: React.FormEvent) => {
     e.preventDefault();
@@ -361,20 +505,114 @@ export default function OrderTracker({ orders, onNavigate }: OrderTrackerProps) 
                 <h4 className="font-bold text-gray-900 text-sm mb-3">Sản phẩm trong đơn hàng</h4>
                 <div className="rounded-xl border border-pink-50 divide-y divide-pink-50 overflow-hidden bg-neutral-50/30">
                   {displayOrder.items.map((it) => (
-                    <div key={it.product.id} className="flex items-center justify-between p-3 text-xs">
-                      <div className="flex items-center space-x-3 select-none">
-                        <img src={it.product.image} className="h-10 w-10 rounded-md object-cover" referrerPolicy="no-referrer" />
-                        <div>
-                          <p className="font-bold text-gray-800">{it.product.name}</p>
-                          <p className="text-gray-400">Đơn giá: {formatVND(it.product.price)} x{it.quantity}</p>
+                    <div key={it.product.id} className="p-4 text-xs space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3 select-none">
+                          <img src={it.product.image} className="h-12 w-12 rounded-lg object-cover border border-pink-50 bg-[#1F3D2B]/5" referrerPolicy="no-referrer" />
+                          <div>
+                            <p className="font-bold text-gray-800 text-sm">{it.product.name}</p>
+                            <p className="text-gray-400">Đơn giá: {formatVND(it.product.price)} x{it.quantity}</p>
+                          </div>
                         </div>
+                        <span className="font-extrabold text-gray-800">{formatVND(it.product.price * it.quantity)}</span>
                       </div>
-                      <span className="font-extrabold text-gray-800">{formatVND(it.product.price * it.quantity)}</span>
                     </div>
                   ))}
-                  <div className="p-3 text-right bg-pink-50/10 text-xs font-semibold text-gray-700">
-                    Giao hàng hỏa tốc nội thành: <span className="font-bold text-rose-600">{formatVND(displayOrder.totalAmount)}</span>
-                  </div>
+
+                  {(() => {
+                    const subtotal = displayOrder.items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+                    const ptsDiscount = (displayOrder.redeemedPoints || 0) * 1000;
+                    const totalDiscount = displayOrder.discountAmount || 0;
+                    const couponDiscount = Math.max(0, totalDiscount - ptsDiscount);
+                    const shippingFee = 30000; // Phí hỏa tốc flat 30.000đ
+                    const recalculatedSubtotal = displayOrder.totalAmount;
+
+                    return (
+                      <div className="bg-pink-50/10 p-4 border-t border-pink-50/80 text-xs space-y-2.5">
+                        <div className="flex justify-between items-center text-gray-600 font-medium pb-2 border-b border-pink-100/30">
+                          <span>Tạm tính (Giá gốc sản phẩm):</span>
+                          <span>{formatVND(subtotal)}</span>
+                        </div>
+                        {couponDiscount > 0 && (
+                          <div className="flex justify-between items-center text-emerald-800 font-medium">
+                            <span className="flex items-center gap-1.5">
+                              <Sparkles className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                              Mã giảm giá áp dụng {displayOrder.couponCode ? `(${displayOrder.couponCode})` : ''}:
+                            </span>
+                            <span className="font-semibold text-emerald-700">-{formatVND(couponDiscount)}</span>
+                          </div>
+                        )}
+                        {ptsDiscount > 0 && (
+                          <div className="flex justify-between items-center text-emerald-800 font-medium">
+                            <span className="flex items-center gap-1.5">
+                              <Sparkles className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                              Thứ hạng Kim cương - Đổi điểm tích lũy ({displayOrder.redeemedPoints} điểm):
+                            </span>
+                            <span className="font-semibold text-emerald-700">-{formatVND(ptsDiscount)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center text-gray-600 font-medium">
+                          <span>Phí vận chuyển hỏa tốc:</span>
+                          <span>{formatVND(shippingFee)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-gray-600 font-bold border-t border-pink-100/50 pt-2">
+                          <span>Tổng tiền sản phẩm (Tạm tính):</span>
+                          <span>{formatVND(recalculatedSubtotal)}</span>
+                        </div>
+                        <div className="flex justify-between items-center font-bold text-gray-800 border-t border-dashed border-pink-100/60 pt-3 text-sm mt-1">
+                          <span>Giao hàng hỏa tốc nội thành:</span>
+                          <span className="text-rose-600 text-base">{formatVND(displayOrder.totalAmount)}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Move assessment/review section below the "Giao hàng hỏa tốc nội thành" block */}
+                  {displayOrder.status === 'completed' && (
+                    <div className="p-4 border-t border-pink-50 bg-neutral-50/10 space-y-4">
+                      <p className="font-serif font-black text-[#1F3D2B] text-xs uppercase tracking-wider flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-rose-500 animate-pulse" />
+                        ĐÁNH GIÁ SẢN PHẨM ĐÃ MUA
+                      </p>
+                      <div className="space-y-4">
+                        {displayOrder.items.map((it) => {
+                          const userEmailClean = (displayOrder.customerEmail || '').trim().toLowerCase();
+                          const existingReview = allReviews.find(
+                            r => r.productId === it.product.id && r.email.trim().toLowerCase() === userEmailClean
+                          );
+
+                          return (
+                            <div key={it.product.id} className="bg-white/95 backdrop-blur-xs border border-pink-50/65 rounded-xl p-3.5 space-y-2">
+                              {existingReview ? (
+                                <div className="space-y-1.5 bg-pink-50/10 p-3 rounded-lg border border-pink-50/35">
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-bold text-emerald-800 text-[10.5px] flex items-center gap-1.5">
+                                      <CheckCircle2 className="h-3 w-3 text-emerald-600 shrink-0" />
+                                      Cảm ơn bạn đã gửi đánh giá cho tác phẩm hoa này!
+                                    </span>
+                                    <div className="flex items-center gap-0.5">
+                                      {[1, 2, 3, 4, 5].map((s) => (
+                                        <Star
+                                          key={s}
+                                          className={`h-3 w-3 ${s <= existingReview.rating ? 'fill-amber-400 text-amber-500' : 'text-stone-200'}`}
+                                        />
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <p className="text-gray-700 italic text-xs leading-relaxed">"{existingReview.comment}"</p>
+                                </div>
+                              ) : (
+                                <ReviewFormItem 
+                                  product={it.product} 
+                                  order={displayOrder}
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

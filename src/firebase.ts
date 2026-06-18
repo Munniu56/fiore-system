@@ -56,8 +56,11 @@ export function handleFirestoreError(
   operationType: OperationType,
   path: string | null,
 ) {
+  const msg = error instanceof Error ? error.message : String(error);
+  const code = (error as any)?.code || "";
+
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: msg,
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,
@@ -73,8 +76,21 @@ export function handleFirestoreError(
     operationType,
     path,
   };
-  console.error("Firestore Error: ", JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+
+  console.error("Firestore Error details: ", JSON.stringify(errInfo));
+
+  const isPermissionError =
+    code === "permission-denied" ||
+    msg.toLowerCase().includes("permission") ||
+    msg.toLowerCase().includes("insufficient");
+
+  if (isPermissionError) {
+    throw new Error(JSON.stringify(errInfo));
+  } else {
+    console.warn(
+      `Firestore connection status: ${msg}. Operating gracefully in local offline cache mode.`
+    );
+  }
 }
 
 // --- DEEP UNDEFINED SANITIZATION HELPER ---

@@ -473,8 +473,9 @@ export default function App() {
     let cleanups: (() => void)[] = [];
 
     const initializeAndSubscribe = async () => {
-      // 1. Seed Firestore database with standard defaults if it's completely empty
-      await seedDatabaseIfNeeded(INITIAL_PRODUCTS, INITIAL_CATEGORIES, sampleOrders, sampleUsers);
+      // 1. Seed Firestore database with standard defaults in the background (non-blocking)
+      seedDatabaseIfNeeded(INITIAL_PRODUCTS, INITIAL_CATEGORIES, sampleOrders, sampleUsers)
+        .catch(err => console.error("Database seed warning:", err));
       
       if (!active) return;
 
