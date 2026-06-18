@@ -327,14 +327,14 @@ export default function ProductDetail({
       {/* Interactive Customer Reviews Section */}
       <div id="reviews-section" className="mt-16 rounded-3xl border border-pink-100 bg-white p-6 md:p-8 shadow-sm">
         <div className="flex items-center gap-2 border-b border-pink-50 pb-4 mb-6">
-          <MessageSquare className="h-5.5 w-5.5 text-rose-500" />
-          <h2 className="font-serif text-2xl font-bold text-gray-900">Nhận Xét & Đánh Giá Từ Khách Hàng</h2>
+          <MessageSquare className="h-5 w-5 text-rose-600" />
+          <h2 className="font-serif text-xl font-bold text-gray-900">Nhận Xét & Đánh Giá Từ Khách Hàng</h2>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-          {/* Rating Summary Breakdown Stats */}
-          <div className="lg:col-span-5 flex flex-col justify-center bg-stone-50/50 rounded-2xl p-6 border border-pink-50 text-center lg:text-left">
-            <div className="flex flex-col items-center lg:items-start">
+        <div className="flex justify-center">
+          {/* Rating Summary Breakdown Stats with hidden right-side submission form/notices as requested */}
+          <div className="w-full max-w-md flex flex-col justify-center bg-stone-50/50 rounded-2xl p-6 border border-pink-50 text-center">
+            <div className="flex flex-col items-center">
               <span className="text-5xl font-extrabold text-stone-800 leading-none">{averageRating}</span>
               <div className="flex items-center mt-3 text-amber-400">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -348,7 +348,7 @@ export default function ProductDetail({
             </div>
 
             {/* Visual Bars represent fidelity */}
-            <div className="mt-6 space-y-2 max-w-sm mx-auto lg:mx-0 w-full">
+            <div className="mt-6 space-y-2 max-w-sm mx-auto w-full">
               {starBars.map((bar, index) => (
                 <div key={index} className="flex items-center text-xs text-stone-600 gap-3">
                   <span className="w-10 shrink-0 text-left font-semibold text-stone-500">{bar.label}</span>
@@ -360,192 +360,6 @@ export default function ProductDetail({
               ))}
             </div>
           </div>
-
-          {/* Interactive Form to Submit Review */}
-          {userHasPaidForThisProduct && !alreadyReviewed ? (
-            <div className="lg:col-span-7 border-t border-pink-50 lg:border-t-0 lg:border-l lg:pl-8 pt-8 lg:pt-0">
-              <h3 className="font-serif text-lg font-bold text-gray-900 mb-4 flex items-center gap-1.5">
-                <span>Đóng góp ý kiến của bạn</span>
-              </h3>
-
-              {reviewSubmitted ? (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 text-center space-y-3"
-                >
-                  <div className="h-12 w-12 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto text-xl font-bold animate-bounce shadow">✓</div>
-                  <h4 className="font-bold text-emerald-800">Cảm ơn bạn đã gửi đánh giá!</h4>
-                  <p className="text-xs text-stone-600 max-w-md mx-auto">
-                    Nhận xét đóng góp chân thành của bạn đã được ghi nhận trên sản phẩm "{product.name}". Chúng tôi liên tục lắng nghe để nâng cao dịch vụ cắm hoa tươi nghệ thuật Fióre ngày càng hoàn mỹ.
-                  </p>
-                  <button
-                    onClick={() => setReviewSubmitted(false)}
-                    className="px-4 py-2 mt-2 bg-[#1F3D2B] text-white hover:bg-[#152a1d] text-xs font-bold rounded-full shadow-xs cursor-pointer inline-block"
-                  >
-                    Viết thêm đánh giá khác
-                  </button>
-                </motion.div>
-              ) : (
-                <form 
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (!newReviewAuthor.trim() || !newReviewComment.trim()) return;
-                    
-                    const emailTrimmed = newReviewEmail.trim();
-                    const emailLower = emailTrimmed.toLowerCase();
-                    if (!emailLower) {
-                      setValidationError('Vui lòng cung cấp địa chỉ email đặt hàng của bạn.');
-                      return;
-                    }
-
-                    const hasPaidOrder = orders.some(order => {
-                      const matchesEmail = order.customerEmail && order.customerEmail.trim().toLowerCase() === emailLower;
-                      if (!matchesEmail) return false;
-
-                      const isPaidOrCompleted = order.paymentStatus === 'Paid' || order.status === 'completed';
-                      if (!isPaidOrCompleted) return false;
-
-                      const hasProduct = order.items && order.items.some(item => item.product && item.product.id === product.id);
-                      return hasProduct;
-                    });
-
-                    if (!hasPaidOrder) {
-                      setValidationError(`Hệ thống không tìm thấy đơn đặt hàng nào đã Thanh toán thành công liên quan đến hòm thư "${emailTrimmed}" cho sản phẩm này. Chỉ khách hàng đã mua và thanh toán thành công mới có quyền gửi đánh giá.`);
-                      return;
-                    }
-
-                    // Check if they already reviewed this product
-                    const alreadyReviewed = allReviewsList.some(r => 
-                      r.productId === product.id && 
-                      r.email && r.email.trim().toLowerCase() === emailLower
-                    );
-
-                    if (alreadyReviewed) {
-                      setValidationError(`Hòm thư email "${emailTrimmed}" đã gửi nhận xét đánh giá cho sản phẩm này trước đó. Mỗi sản phẩm đã mua chỉ được đánh giá tối đa 1 lần duy nhất.`);
-                      return;
-                    }
-
-                    // Verification successful! Clear any errors and add review
-                    setValidationError('');
-                    const newRev: Review = {
-                      id: `${product.id}-user-${Date.now()}`,
-                      productId: product.id,
-                      productName: product.name,
-                      author: newReviewAuthor.trim(),
-                      email: emailLower,
-                      rating: newReviewRating,
-                      date: new Date().toLocaleDateString('vi-VN'),
-                      createdAt: new Date().toISOString(),
-                      comment: newReviewComment.trim(),
-                      isVerified: true,
-                      likes: 0
-                    };
-                    saveReview(newRev);
-                    setReviewSubmitted(true);
-                    // Clean up inputs
-                    setNewReviewAuthor('');
-                    setNewReviewEmail('');
-                    setNewReviewComment('');
-                    setNewReviewRating(5);
-                  }}
-                  className="space-y-4"
-                >
-                  {validationError && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="rounded-xl bg-rose-50 border border-rose-100 p-3.5 text-xs text-rose-700 leading-relaxed font-semibold"
-                    >
-                      ⚠️ {validationError}
-                    </motion.div>
-                  )}
-
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                    <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Đánh giá chung của bạn:</span>
-                    <div className="flex items-center space-x-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          type="button"
-                          onClick={() => setNewReviewRating(star)}
-                          className="p-1 focus:outline-none transition group cursor-pointer"
-                          title={`${star} sao`}
-                        >
-                          <Star 
-                            className={`h-5 w-5 transition ${
-                              star <= newReviewRating 
-                                ? 'fill-amber-400 text-amber-400 scale-105' 
-                                : 'text-stone-300 hover:text-amber-300'
-                            }`} 
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex flex-col">
-                      <label className="text-xs text-stone-500 font-bold mb-1">Họ tên của bạn *</label>
-                      <input 
-                        type="text" 
-                        required
-                        value={newReviewAuthor}
-                        onChange={(e) => setNewReviewAuthor(e.target.value)}
-                        placeholder="Ví dụ: Nguyễn Văn A" 
-                        className="rounded-xl border border-pink-100 bg-white px-3.5 py-2.5 text-xs text-stone-800 placeholder-stone-400 focus:ring-1 focus:ring-rose-500 focus:border-rose-500 outline-none"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <label className="text-xs text-stone-500 font-bold mb-1">Hòm thư Email (Bảo mật) *</label>
-                      <input 
-                        type="email" 
-                        required
-                        value={newReviewEmail}
-                        onChange={(e) => setNewReviewEmail(e.target.value)}
-                        placeholder="Ví dụ: email@domain.com" 
-                        className="rounded-xl border border-pink-100 bg-white px-3.5 py-2.5 text-xs text-stone-800 placeholder-stone-400 focus:ring-1 focus:ring-rose-500 focus:border-rose-500 outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col">
-                    <label className="text-xs text-stone-500 font-bold mb-1">Cảm nhận chi tiết về thiết kế hoa này *</label>
-                    <textarea 
-                      rows={3}
-                      required
-                      value={newReviewComment}
-                      onChange={(e) => setNewReviewComment(e.target.value)}
-                      placeholder="Mẫu hoa sếp/đối tác khen không tiếc lời, màu cắm phối cực sang, thời gian ship hoa đúng hẹn lắm tiệm ơi..." 
-                      className="rounded-xl border border-pink-100 bg-white px-3.5 py-2.5 text-xs text-stone-800 placeholder-stone-400 focus:ring-1 focus:ring-rose-500 focus:border-rose-500 outline-none resize-none leading-relaxed"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="rounded-full bg-stone-900 hover:bg-stone-800 px-6 py-2.5 text-xs font-bold text-white transition shadow-sm cursor-pointer"
-                  >
-                    Gửi nhận xét đánh giá
-                  </button>
-                </form>
-              )}
-            </div>
-          ) : (
-            <div className="lg:col-span-7 border-t border-pink-50 lg:border-t-0 lg:border-l lg:pl-8 pt-8 lg:pt-0 flex flex-col items-center justify-center p-8 bg-stone-50/20 rounded-2xl border border-dashed border-[#E8E1D6] text-center min-h-[300px]">
-              <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center text-[#C8A96B] mb-3 border border-[#E8E1D6] shadow-3xs">
-                <ShieldCheck className="h-5 w-5" />
-              </div>
-              <p className="text-xs font-bold text-gray-800 font-serif uppercase tracking-wider">Thông tin bảo mật thành viên</p>
-              <h4 className="text-sm font-bold text-stone-800 font-serif mt-1">Mục đánh giá sản phẩm bị ẩn</h4>
-              <p className="text-xs text-stone-500 mt-2 max-w-sm leading-relaxed">
-                {alreadyReviewed ? (
-                  <>Hệ thống ghi nhận bạn đã gửi nhận xét đánh giá cho sản phẩm này trước đó. Để đảm bảo tính khách quan và minh bạch, mỗi sản phẩm đã mua chỉ được phép gửi đánh giá một lần duy nhất.</>
-                ) : (
-                  <>Để bảo vệ tính minh bạch và trung thực tối đa, Fióre chỉ hiển thị phần đóng góp ý kiến cho quý khách hàng đã <strong>Đăng nhập</strong> tài khoản và từng <strong>Thanh toán thành công</strong> sản phẩm này.</>
-                )}
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Reviews List */}
