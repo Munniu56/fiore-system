@@ -3142,11 +3142,10 @@ export default function AdminDashboard({
           </div>
 
           {/* Metric Summary Widgets */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {(() => {
               const totalProducts = products.length;
               const lowStockCount = products.filter(p => (p.stock || 0) > 0 && (p.stock || 0) <= lowStockThreshold).length;
-              const outOfStockCount = products.filter(p => (p.stock || 0) === 0).length;
               const totalStockUnits = products.reduce((acc, curr) => acc + (curr.stock || 0), 0);
 
               return (
@@ -3164,14 +3163,6 @@ export default function AdminDashboard({
                     <div className="mt-2 flex items-baseline gap-1.5">
                       <span className="text-2xl font-serif font-black text-amber-600">{lowStockCount}</span>
                       <span className="text-[11px] text-stone-500">mã hàng</span>
-                    </div>
-                  </div>
-
-                  <div className="bg-[#FAF7F0] border border-red-250/30 rounded-2xl p-4 flex flex-col justify-between shadow-3xs">
-                    <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider block">ĐÃ HẾT HỘP/HOA (0)</span>
-                    <div className="mt-2 flex items-baseline gap-1.5">
-                      <span className="text-2xl font-serif font-black text-red-650">{outOfStockCount}</span>
-                      <span className="text-[11px] text-red-600">tác phẩm</span>
                     </div>
                   </div>
 
