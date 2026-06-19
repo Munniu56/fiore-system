@@ -2723,7 +2723,7 @@ export default function AdminDashboard({
                         {tierName}
                       </span>
                     </p>
-                    <p className="text-stone-400">Email: {usr.email} (SĐT: {usr.phone || 'Chưa cung cấp'})</p>
+                    <p className="text-stone-400">Email: {usr.email} (SĐT: {usr.phone || 'Chưa cung cấp'} | Giới tính: {usr.gender || 'Chưa cung cấp'})</p>
                     <p className="text-stone-500">Mặc định: {usr.address || 'Chưa thiết lập'}</p>
                     
                     <div className="flex flex-wrap gap-1.5 pt-2">

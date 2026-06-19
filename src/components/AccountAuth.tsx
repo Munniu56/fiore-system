@@ -37,6 +37,7 @@ export default function AccountAuth({
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [gender, setGender] = useState('Nam');
 
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -44,11 +45,21 @@ export default function AccountAuth({
   const [editName, setEditName] = useState(currentUser?.name || '');
   const [editPhone, setEditPhone] = useState(currentUser?.phone || '');
   const [editAddress, setEditAddress] = useState(currentUser?.address || '');
+  const [editGender, setEditGender] = useState(currentUser?.gender || 'Nam');
   const [activeTab, setActiveTab] = useState<'membership' | 'profile' | 'feedback'>(initialTab);
 
   React.useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
+
+  React.useEffect(() => {
+    if (currentUser) {
+      setEditName(currentUser.name || '');
+      setEditPhone(currentUser.phone || '');
+      setEditAddress(currentUser.address || '');
+      setEditGender(currentUser.gender || 'Nam');
+    }
+  }, [currentUser]);
 
   React.useEffect(() => {
     if (activeTab === 'feedback' && onMarkFeedbacksAsRead) {
@@ -349,6 +360,7 @@ export default function AccountAuth({
         phone: phone.trim(),
         address: address.trim(),
         isAdmin: false,
+        gender: gender,
       };
 
       savedAccounts.push({
@@ -423,6 +435,7 @@ export default function AccountAuth({
       name: editName.trim(),
       phone: editPhone.trim(),
       address: editAddress.trim(),
+      gender: editGender,
     };
 
     onUpdateProfile(updatedUser);
@@ -769,14 +782,35 @@ export default function AccountAuth({
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Địa chỉ giao hàng mặc định</label>
-                    <input
-                      type="text"
-                      value={editAddress}
-                      onChange={(e) => setEditAddress(e.target.value)}
-                      className="w-full rounded-lg border border-pink-50 bg-neutral-50/50 px-4 py-2 text-sm outline-none focus:border-rose-300 focus:bg-white"
-                    />
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Địa chỉ giao hàng mặc định</label>
+                      <input
+                        type="text"
+                        value={editAddress}
+                        onChange={(e) => setEditAddress(e.target.value)}
+                        className="w-full rounded-lg border border-pink-50 bg-neutral-50/50 px-4 py-2 text-sm outline-none focus:border-rose-300 focus:bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Giới tính</label>
+                      <div className="relative">
+                        <select
+                          value={editGender}
+                          onChange={(e) => setEditGender(e.target.value)}
+                          className="w-full appearance-none rounded-lg border border-pink-50 bg-neutral-50/50 px-4 py-2.5 text-sm outline-none focus:border-rose-300 focus:bg-white cursor-pointer"
+                        >
+                          <option value="Nam">Nam</option>
+                          <option value="Nữ">Nữ</option>
+                          <option value="Khác">Khác</option>
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-pink-300">
+                          <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="border-t border-pink-50 pt-5 flex justify-end">
@@ -1092,17 +1126,38 @@ export default function AccountAuth({
           <form onSubmit={handleAuthSubmit} className="space-y-4">
             
             {!isLoginMode && (
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Họ và tên</label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-pink-300"><User className="h-4 w-4" /></span>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Nguyễn Văn A"
-                    className="w-full rounded-lg border border-pink-50 bg-neutral-50/50 py-2 pl-10 pr-4 text-xs outline-none focus:border-rose-400 focus:bg-white"
-                  />
+              <div className="grid grid-cols-3 gap-3.5">
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Họ và tên</label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-pink-300"><User className="h-4 w-4" /></span>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Nguyễn Văn A"
+                      className="w-full rounded-lg border border-pink-50 bg-neutral-50/50 py-2 pl-10 pr-4 text-xs outline-none focus:border-rose-400 focus:bg-white"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Giới tính</label>
+                  <div className="relative">
+                    <select
+                      value={gender}
+                      onChange={(e) => setGender(e.target.value)}
+                      className="w-full appearance-none rounded-lg border border-pink-50 bg-neutral-50/50 py-2 px-3 text-xs outline-none focus:border-rose-400 focus:bg-white cursor-pointer"
+                    >
+                      <option value="Nam">Nam</option>
+                      <option value="Nữ">Nữ</option>
+                      <option value="Khác">Khác</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-pink-300">
+                      <svg className="h-3.5 w-3.5 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                      </svg>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

@@ -62,6 +62,7 @@ export interface User {
   phone: string;
   address: string;
   isAdmin: boolean;
+  gender?: string;
 }
 
 export interface DailySales {
