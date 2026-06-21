@@ -51,5 +51,25 @@ service cloud.firestore {
     match /reviews/{reviewId} {
       allow read, write: if true; // Anyone can read and write reviews, admin can manage
     }
+
+    // Subscribers Rules
+    match /subscribers/{subscriberId} {
+      allow read, write: if true;
+    }
+
+    // Marketing Campaigns Rules
+    match /marketing_campaigns/{campaignId} {
+      allow read, write: if true;
+    }
+
+    // Marketing Logs Rules
+    match /marketing_logs/{logId} {
+      allow read, write: if true;
+    }
+
+    // Unsubscribers Rules
+    match /unsubscribers/{emailId} {
+      allow read, write: if true;
+    }
   }
 }

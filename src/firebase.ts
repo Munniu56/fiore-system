@@ -645,3 +645,89 @@ export async function removeReview(reviewId: string) {
   }
 }
 
+// Marketing definitions
+export interface Subscriber {
+  id: string;
+  email: string;
+  createdAt: string;
+}
+
+export interface MarketingCampaign {
+  id: string;
+  sentAt: string;
+  successCount: number;
+  errorCount: number;
+  year: number;
+  holidayCode: string;
+}
+
+export interface MarketingLog {
+  id: string;
+  campaignName: string;
+  sentDate: string;
+  successCount: number;
+  errorCount: number;
+  status: string;
+  errorMsg?: string;
+  results?: any[];
+}
+
+// Subscribe to newsletter subscribers list
+export function subscribeSubscribers(onUpdate: (subs: Subscriber[]) => void) {
+  const q = collection(db, "subscribers");
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const subs: Subscriber[] = [];
+      snapshot.forEach((doc) => {
+        subs.push({ id: doc.id, ...doc.data() } as any);
+      });
+      subs.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      onUpdate(subs);
+    },
+    (err) => handleFirestoreError(err, OperationType.LIST, "subscribers")
+  );
+}
+
+// Add a newsletter subscriber manually
+export async function addSubscriber(email: string) {
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    const id = cleanEmail.replace(/[^a-z0-9]/g, "_");
+    await setDoc(doc(db, "subscribers", id), {
+      id,
+      email: cleanEmail,
+      createdAt: new Date().toISOString()
+    });
+  } catch (err) {
+    handleFirestoreError(err, OperationType.WRITE, "subscribers");
+  }
+}
+
+// Remove a newsletter subscriber
+export async function deleteSubscriber(id: string) {
+  try {
+    await deleteDoc(doc(db, "subscribers", id));
+  } catch (err) {
+    handleFirestoreError(err, OperationType.DELETE, "subscribers");
+  }
+}
+
+// Subscribe to marketing campaign logs
+export function subscribeMarketingLogs(onUpdate: (logs: MarketingLog[]) => void) {
+  const q = collection(db, "marketing_logs");
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const logs: MarketingLog[] = [];
+      snapshot.forEach((doc) => {
+        logs.push({ id: doc.id, ...doc.data() } as any);
+      });
+      logs.sort((a, b) => b.sentDate.localeCompare(a.sentDate));
+      onUpdate(logs);
+    },
+    (err) => handleFirestoreError(err, OperationType.LIST, "marketing_logs")
+  );
+}
+
+

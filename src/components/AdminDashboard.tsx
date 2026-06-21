@@ -9,10 +9,10 @@ import { motion } from 'motion/react';
 import { 
   BarChart2, Gift, DollarSign, Package, Users, Plus, Edit2, 
   Trash2, Layers, Check, ShoppingBag, Eye, X, RefreshCw, Star, Info, TrendingUp, TrendingDown, Search, LogOut, Mail, Lock, ShieldAlert,
-  Menu, Shield, Download, FileText, Database, MessageSquare, Award, PieChart, RotateCcw
+  Menu, Shield, Download, FileText, Database, MessageSquare, Award, PieChart, RotateCcw, Calendar
 } from 'lucide-react';
 import { Product, Category, Order, User, OrderStatus, ContactMessage, Coupon, Review } from '../types';
-import { subscribeCoupons, saveCoupon, removeCoupon, subscribeReviews, removeReview, saveReview } from '../firebase';
+import { subscribeCoupons, saveCoupon, removeCoupon, subscribeReviews, removeReview, saveReview, Subscriber, MarketingLog, subscribeSubscribers, addSubscriber, deleteSubscriber, subscribeMarketingLogs } from '../firebase';
 import { convertProductsToCSV, convertProductsToMerchantXML, downloadFile } from '../utils/productExporter';
 // Gmail manager removed specifically for isolated admin portal
 
@@ -52,12 +52,12 @@ export default function AdminDashboard({
   onAdminLogout,
 }: AdminDashboardProps) {
   
-  const [activeTab, setActiveTab ] = useState<'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts' | 'coupons' | 'reviews' | 'inventory'>('stats');
+  const [activeTab, setActiveTab ] = useState<'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts' | 'coupons' | 'reviews' | 'inventory' | 'marketing'>('stats');
   const [statsMode, setStatsMode] = useState<'week' | 'month'>('week');
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const setContacts = onUpdateContacts;
 
-  const handleTabChange = (tab: 'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts' | 'coupons' | 'reviews' | 'inventory') => {
+  const handleTabChange = (tab: 'stats' | 'products' | 'categories' | 'orders' | 'customers' | 'security' | 'contacts' | 'coupons' | 'reviews' | 'inventory' | 'marketing') => {
     setActiveTab(tab);
     if (tab === 'contacts') {
       const saved = localStorage.getItem('fiore_contacts');
@@ -106,6 +106,34 @@ export default function AdminDashboard({
     });
     return () => unsub();
   }, []);
+
+  // Email Marketing state variables
+  const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
+  const [marketingLogs, setMarketingLogs] = useState<MarketingLog[]>([]);
+  const [marketingSearchQuery, setMarketingSearchQuery] = useState('');
+  const [newSubEmail, setNewSubEmail] = useState('');
+  const [isTriggering, setIsTriggering] = useState(false);
+  const [triggerStatus, setTriggerStatus] = useState<{ success?: boolean; message?: string } | null>(null);
+
+  // Subscribe to raw newsletter subscribers in Firestore
+  useEffect(() => {
+    if (activeTab === 'marketing') {
+      const unsub = subscribeSubscribers((data) => {
+        setSubscribers(data || []);
+      });
+      return () => unsub();
+    }
+  }, [activeTab]);
+
+  // Subscribe to automatic campaign logs in Firestore
+  useEffect(() => {
+    if (activeTab === 'marketing') {
+      const unsub = subscribeMarketingLogs((data) => {
+        setMarketingLogs(data || []);
+      });
+      return () => unsub();
+    }
+  }, [activeTab]);
 
   // State and Helpers for Deleted Mock reviews, Deletion and Verification
   const [deletedMockReviewIds, setDeletedMockReviewIds] = useState<string[]>(() => {
@@ -933,6 +961,7 @@ export default function AdminDashboard({
                   {activeTab === 'reviews' && 'Đánh giá'}
                   {activeTab === 'security' && 'Bảo mật/MK'}
                   {activeTab === 'inventory' && 'Quản lý kho'}
+                  {activeTab === 'marketing' && 'Chiến dịch Email Marketing'}
                 </span>
               </h2>
             </div>
@@ -1033,6 +1062,14 @@ export default function AdminDashboard({
               }`}
             >
               <MessageSquare className="mr-2.5 h-4 w-4 shrink-0" /> Quản lý đánh giá
+            </button>
+            <button
+              onClick={() => { handleTabChange('marketing'); setIsMobileNavOpen(false); }}
+              className={`w-full rounded-xl px-4 py-3 flex items-center text-xs font-semibold transition cursor-pointer ${
+                activeTab === 'marketing' ? 'bg-emerald-100/60 text-emerald-950 font-bold' : 'text-stone-700 hover:bg-amber-100/40'
+              }`}
+            >
+              <Mail className="mr-2.5 h-4 w-4 shrink-0 text-emerald-800" /> Chiến dịch Email Marketing
             </button>
             <button
               onClick={() => { handleTabChange('security'); setIsMobileNavOpen(false); }}
@@ -1162,6 +1199,15 @@ export default function AdminDashboard({
                 id="admin-reviews-tab"
               >
                 <MessageSquare className="mr-2 h-4 w-4 shrink-0 text-amber-600" /> Quản lý đánh giá
+              </button>
+              <button
+                onClick={() => handleTabChange('marketing')}
+                className={`w-full rounded-lg px-3.5 py-2 flex items-center transition cursor-pointer ${
+                  activeTab === 'marketing' ? 'bg-emerald-100/60 text-emerald-950 font-bold shadow-xs' : 'text-stone-700 hover:bg-amber-100/40 hover:text-emerald-850'
+                }`}
+                id="admin-marketing-tab"
+              >
+                <Mail className="mr-2 h-4 w-4 shrink-0 text-emerald-700" /> Chiến dịch Email Marketing
               </button>
               <button
                 onClick={() => handleTabChange('security')}
@@ -4160,9 +4206,6 @@ export default function AdminDashboard({
         </div>
       )}
 
-        </div>
-      </div>
-
       {/* --- ADD / EDIT CATEGORY POPUP DIA LOG --- */}
       {showCategoryModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -4428,6 +4471,394 @@ export default function AdminDashboard({
           </div>
         </div>
       )}
+
+
+      {/* --- TAB 11: EMAIL MARKETING CAMPAIGNS & RESEND AUTOMATIONS --- */}
+      {activeTab === 'marketing' && (
+        <div className="space-y-8 animate-fade-in text-xs text-stone-800">
+          
+          {/* Header block with elegant description */}
+          <div className="rounded-2xl border border-amber-200/60 bg-white p-6 md:p-8 shadow-xs relative overflow-hidden" style={{ borderColor: 'rgba(82, 121, 111, 0.2)' }}>
+            <div className="absolute top-0 right-0 h-40 w-40 bg-[#84A98C]/5 rounded-bl-full pointer-events-none" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+              <div className="text-left flex flex-col items-start">
+                <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-[#52796F]">Hệ Thống Phân Phối Tiếp Thị</span>
+                <h3 className="font-serif text-2xl font-bold text-emerald-950 flex items-center gap-2.5 mt-1 text-left">
+                  <Mail className="text-[#52796F] h-6 w-6 shrink-0" />
+                  <span>Email Marketing & Tự Động Hóa</span>
+                </h3>
+                <p className="text-xs text-stone-500 mt-2 max-w-xl leading-relaxed text-left">
+                  Thiết lập các kịch bản gửi bản tin, thông báo và quảng cáo tự động dựa trên nền tảng Resend API cao cấp. Đồng bộ thời gian thực với danh sách khách hàng đã đăng ký tin hoặc có tài khoản trên trang Fióre.
+                </p>
+              </div>
+              <div className="flex justify-start md:justify-end items-center">
+                <button
+                  disabled={isTriggering}
+                  onClick={async () => {
+                    setIsTriggering(true);
+                    setTriggerStatus(null);
+                    try {
+                      const res = await fetch("/api/marketing/trigger-check", { method: "POST" });
+                      const data = await res.json();
+                      if (res.ok) {
+                        setTriggerStatus({ success: true, message: data.message || "Kiểm tra tất cả chiến dịch lễ hội đã hoàn tất thành công!" });
+                      } else {
+                        setTriggerStatus({ success: false, message: data.error || "Có lỗi xảy ra khi kiểm tra chiến dịch gửi đi." });
+                      }
+                    } catch (err) {
+                      setTriggerStatus({ success: false, message: "Không thể kết nối đến máy chủ API tiếp thị." });
+                    } finally {
+                      setIsTriggering(false);
+                    }
+                  }}
+                  className={`rounded-xl px-5 py-3 font-semibold text-white transition active:scale-95 cursor-pointer shadow-sm flex items-center gap-2 bg-[#52796F] hover:bg-[#3d5a52] disabled:opacity-50 h-fit`}
+                >
+                  <RefreshCw className={`h-4.5 w-4.5 ${isTriggering ? 'animate-spin' : ''}`} />
+                  <span>{isTriggering ? 'Đang gửi kiểm tra...' : 'Kiểm tra & Gửi Chiến Dịch Ngay'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick action feedback message */}
+            {triggerStatus && (
+              <div className={`mt-5 p-4 rounded-xl border flex items-start gap-2.5 animate-fade-in ${
+                triggerStatus.success ? 'bg-emerald-50 border-emerald-200 text-emerald-950' : 'bg-red-50/70 border-red-200 text-red-950'
+              }`}>
+                <Info className="h-4.5 w-4.5 shrink-0 mt-0.5" style={{ color: triggerStatus.success ? '#52796F' : '#b91c1c' }} />
+                <div>
+                  <h4 className="font-bold text-xs">{triggerStatus.success ? 'Kiểm tra hoàn thành' : 'Gặp lỗi trong quá trình kiểm tra'}</h4>
+                  <p className="text-[11px] text-stone-500 mt-0.5">{triggerStatus.message}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl border border-amber-200/40 bg-white p-5 shadow-xs flex items-center justify-between hover:shadow-md transition-all duration-300">
+              <div>
+                <p className="text-[10px] uppercase font-mono font-bold tracking-wider text-stone-400">Đăng ký Nhận tin</p>
+                <p className="text-2xl font-light text-[#52796F] font-serif mt-1">{subscribers.length} <span className="text-xs font-normal font-sans text-stone-500">địa chỉ</span></p>
+              </div>
+              <div className="h-10 w-10 rounded-xl bg-teal-50 flex items-center justify-center text-teal-800 border border-teal-100/40">
+                <Mail className="h-5 w-5" />
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-amber-200/40 bg-white p-5 shadow-xs flex items-center justify-between hover:shadow-md transition-all duration-300">
+              <div>
+                <p className="text-[10px] uppercase font-mono font-bold tracking-wider text-stone-400">Tài Khoản Đã Đăng Ký</p>
+                <p className="text-2xl font-light text-emerald-950 font-serif mt-1">{users.length} <span className="text-xs font-normal font-sans text-stone-500">người</span></p>
+              </div>
+              <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center text-[#52796F] border border-emerald-100/40">
+                <Users className="h-5 w-5" />
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-amber-200/40 bg-white p-5 shadow-xs flex items-center justify-between hover:shadow-md transition-all duration-300">
+              <div>
+                <p className="text-[10px] uppercase font-mono font-bold tracking-wider text-stone-400">Tổng Số Tiếp Cận</p>
+                <p className="text-2xl font-light text-stone-800 font-serif mt-1">{subscribers.length + users.length} <span className="text-xs font-normal font-sans text-stone-500">địa chỉ</span></p>
+              </div>
+              <div className="h-10 w-10 rounded-xl bg-[#84A98C]/10 flex items-center justify-center text-[#84A98C] border border-[#84A98C]/20">
+                <Award className="h-5 w-5" />
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-amber-200/40 bg-white p-5 shadow-xs flex items-center justify-between hover:shadow-md transition-all duration-300">
+              <div>
+                <p className="text-[10px] uppercase font-mono font-bold tracking-wider text-stone-400">Chiến Dịch Đã Chạy</p>
+                <p className="text-2xl font-light text-stone-850 font-serif mt-1">{marketingLogs.length} <span className="text-xs font-normal font-sans text-stone-500">lần</span></p>
+              </div>
+              <div className="h-10 w-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-700 border border-amber-100/40">
+                <Calendar className="h-5 w-5" />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+            
+            {/* Holiday Scheduler & Templates Overview */}
+            <div className="lg:col-span-2 rounded-2xl border border-amber-200/60 bg-white p-5 md:p-6 shadow-xs flex flex-col justify-between" style={{ borderColor: 'rgba(82, 121, 111, 0.2)' }}>
+              <div className="space-y-4">
+                <div className="border-b border-amber-100 pb-3 flex items-center justify-between">
+                  <div>
+                    <h4 className="font-serif text-[#52796F] text-base font-bold flex items-center gap-1.5">
+                      <Calendar className="h-5 w-5" />
+                      <span>Lịch Trình Chiến Dịch Lễ Hội Hàng Năm</span>
+                    </h4>
+                    <p className="text-[10px] text-stone-400 mt-1">Các dịp lễ trọng đại, cơ chế kích hoạt gửi trước đúng 5 ngày lúc 08:00 hàng ngày</p>
+                  </div>
+                  <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-[#52796F] border border-emerald-100 animate-pulse">Scheduler running</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  
+                  {/* Valentine's Day */}
+                  <div className="p-4 rounded-xl border border-stone-100 bg-[#FAF7F0]/30 hover:border-amber-255 hover:bg-white flex flex-col justify-between h-[180px] transition-all duration-200 relative group">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-750 border border-rose-100">14 Tháng 02</span>
+                          <h5 className="font-serif font-bold text-xs mt-1 text-stone-850">Lễ Tình Nhân (Valentine)</h5>
+                        </div>
+                        <span className="text-[9px] font-mono text-stone-400"># valentine</span>
+                      </div>
+                      <p className="text-[11px] text-stone-550 leading-relaxed max-h-[38px] overflow-hidden">
+                        “Lời bộc bạch lãng mạn tinh khôi.” Banner đỏ quyến rũ hoa hồng Ecuador quý phái.
+                      </p>
+                      <div className="flex flex-wrap gap-1 pt-1">
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-150/40">Gửi trước 5 ngày</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-150/40">Lọc khách: Chỉ gửi Nam</span>
+                      </div>
+                    </div>
+                    <div className="text-[10px] font-bold text-[#52796F] border-t border-stone-150/30 pt-2 flex justify-between items-center">
+                      <span>Màu: <strong className="font-mono text-rose-500">#E63946</strong></span>
+                      <span>Ngày gửi: <strong className="text-stone-700">09/02</strong></span>
+                    </div>
+                  </div>
+
+                  {/* International Women's day */}
+                  <div className="p-4 rounded-xl border border-stone-100 bg-[#FAF7F0]/30 hover:border-amber-255 hover:bg-white flex flex-col justify-between h-[180px] transition-all duration-200 relative group">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-750 border border-indigo-100">08 Tháng 03</span>
+                          <h5 className="font-serif font-bold text-xs mt-1 text-stone-850">Quốc Tế Phụ Nữ</h5>
+                        </div>
+                        <span className="text-[9px] font-mono text-stone-400"># women_day_intl</span>
+                      </div>
+                      <p className="text-[11px] text-stone-550 leading-relaxed max-h-[38px] overflow-hidden">
+                        “Dành tặng bông hoa rực rỡ nhất.” Hoa tulip tươi tắn, hướng dương rạng rỡ.
+                      </p>
+                      <div className="flex flex-wrap gap-1 pt-1">
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-150/40">Gửi trước 5 ngày</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-150/40">Lọc khách: Chỉ gửi Nam</span>
+                      </div>
+                    </div>
+                    <div className="text-[10px] font-bold text-[#52796F] border-t border-stone-150/30 pt-2 flex justify-between items-center">
+                      <span>Màu: <strong className="font-mono text-[#52796F]">#52796F</strong></span>
+                      <span>Ngày gửi: <strong className="text-stone-700">03/03</strong></span>
+                    </div>
+                  </div>
+
+                  {/* Vietnamese Women's day */}
+                  <div className="p-4 rounded-xl border border-stone-100 bg-[#FAF7F0]/30 hover:border-amber-255 hover:bg-white flex flex-col justify-between h-[180px] transition-all duration-200 relative group">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-pink-50 text-pink-750 border border-pink-100">20 Tháng 10</span>
+                          <h5 className="font-serif font-bold text-xs mt-1 text-stone-850">Ngày Phụ Nữ Việt Nam</h5>
+                        </div>
+                        <span className="text-[9px] font-mono text-stone-400"># women_day_vn</span>
+                      </div>
+                      <p className="text-[11px] text-stone-555 leading-relaxed max-h-[38px] overflow-hidden">
+                        “Gửi trọn tôn vinh & yêu thương.” Thiết kế thanh lịch nghệ thuật Fióre độc quyền.
+                      </p>
+                      <div className="flex flex-wrap gap-1 pt-1">
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-150/40">Gửi trước 5 ngày</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-850 border border-emerald-150/40">Lọc khách: Nam, Nữ, Chưa điền</span>
+                      </div>
+                    </div>
+                    <div className="text-[10px] font-bold text-[#52796F] border-t border-stone-150/30 pt-2 flex justify-between items-center">
+                      <span>Màu: <strong className="font-mono text-purple-600">#8E9AAF</strong></span>
+                      <span>Ngày gửi: <strong className="text-stone-700">15/10</strong></span>
+                    </div>
+                  </div>
+
+                  {/* Vietnamese Teachers' day */}
+                  <div className="p-4 rounded-xl border border-stone-100 bg-[#FAF7F0]/30 hover:border-amber-255 hover:bg-white flex flex-col justify-between h-[180px] transition-all duration-200 relative group">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-750 border border-amber-100">20 Tháng 11</span>
+                          <h5 className="font-serif font-bold text-xs mt-1 text-stone-850">Ngày Nhà Giáo Việt Nam</h5>
+                        </div>
+                        <span className="text-[9px] font-mono text-stone-400"># teachers_day</span>
+                      </div>
+                      <p className="text-[11px] text-stone-555 leading-relaxed max-h-[38px] overflow-hidden">
+                        “Tri ân mối tri ân sâu sắc.” Trọng nghĩa kính hiền, phong vị thanh cao tôn kính.
+                      </p>
+                      <div className="flex flex-wrap gap-1 pt-1">
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-150/40">Gửi trước 5 ngày</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-850 border border-emerald-150/40">Lọc khách: Nam, Nữ, Chưa điền</span>
+                      </div>
+                    </div>
+                    <div className="text-[10px] font-bold text-[#52796F] border-t border-stone-150/30 pt-2 flex justify-between items-center">
+                      <span>Màu: <strong className="font-mono text-[#84A98C]">#84A98C</strong></span>
+                      <span>Ngày gửi: <strong className="text-stone-700">15/11</strong></span>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Info helper block footer */}
+              <div className="p-3.5 bg-stone-50 rounded-xl border border-stone-100 flex items-start gap-2.5 text-[11px] text-stone-550 leading-relaxed mt-4">
+                <Info className="h-4.5 w-4.5 shrink-0 text-amber-600 mt-0.5 animate-pulse" />
+                <span>
+                  <strong>Quy trình tiếp cận tự động hóa:</strong> Toàn bộ quy trình được thực hiện an toàn trên nền tảng Cloud Firestore & Resend API. Kịch bản chạy ngầm tự động lúc 08:00 sáng mỗi ngày sẽ tiến hành kiểm tra điều kiện (5 ngày trước lễ) và lọc trùng lặp / unsubscribe / trạng thái đã nhận chiến dịch trước đó rồi tiến hành phân phối để bảo vệ uy tín thương hiệu cao cấp của Fióre.
+                </span>
+              </div>
+            </div>
+
+            {/* Custom Manual Subscriptions list */}
+            <div className="rounded-2xl border border-amber-200/60 bg-white p-5 md:p-6 shadow-xs flex flex-col justify-between" style={{ borderColor: 'rgba(82, 121, 111, 0.2)' }}>
+              <div className="space-y-4 h-full flex flex-col justify-between">
+                <div>
+                  <div className="border-b border-amber-100 pb-3">
+                    <h4 className="font-serif text-[#52796F] text-base font-bold flex items-center gap-1.5">
+                      <Users className="h-5 w-5" />
+                      <span>Sổ Liên Kết Nhận Tin</span>
+                    </h4>
+                    <p className="text-[10px] text-stone-400 mt-1">Danh sách trực tuyến subscribers theo dõi bản tin</p>
+                  </div>
+
+                  {/* Add subscriber manual input form */}
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!newSubEmail) return;
+                    await addSubscriber(newSubEmail);
+                    setNewSubEmail("");
+                  }} className="flex items-center gap-2 mt-4">
+                    <input
+                      type="email"
+                      placeholder="Thêm email nhận tin..."
+                      required
+                      value={newSubEmail}
+                      onChange={(e) => setNewSubEmail(e.target.value)}
+                      className="flex-1 rounded-lg border border-amber-200 bg-[#FAF7F0]/30 px-3 py-1.5 text-xs outline-none focus:bg-white focus:border-[#52796F] transition"
+                    />
+                    <button
+                      type="submit"
+                      className="rounded-lg px-3.5 py-1.5 bg-[#52796F] font-bold text-white uppercase text-[10px] tracking-wider hover:bg-[#3d5a52] transition cursor-pointer flex items-center justify-center gap-1 shrink-0 shadow-sm"
+                    >
+                      <Plus className="h-3 w-3" /> Thêm
+                    </button>
+                  </form>
+
+                  {/* Filter search subscribers in panel */}
+                  <div className="mt-3.5">
+                    <input
+                      type="text"
+                      placeholder="Tìm kiếm địa chỉ email..."
+                      value={marketingSearchQuery}
+                      onChange={(e) => setMarketingSearchQuery(e.target.value)}
+                      className="w-full rounded-lg border border-amber-200/50 bg-[#FAF7F0]/10 px-3 py-1.5 text-xs outline-none focus:bg-white focus:border-[#52796F] transition"
+                    />
+                  </div>
+
+                  {/* List panel */}
+                  <div className="max-h-[290px] min-h-[240px] overflow-y-auto divide-y divide-stone-100 pr-1.5 space-y-1 mt-4 scrollbar-thin">
+                    {subscribers.filter(sub => sub.email.toLowerCase().includes(marketingSearchQuery.trim().toLowerCase())).length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-12 text-stone-400 italic text-[11px] gap-2">
+                        <Mail className="h-5 w-5 text-stone-300" />
+                        <span>Không tìm thấy người nhận nào.</span>
+                      </div>
+                    ) : (
+                      subscribers.filter(sub => sub.email.toLowerCase().includes(marketingSearchQuery.trim().toLowerCase())).map((sub) => (
+                        <div key={sub.id} className="flex justify-between items-center py-2.5 border-stone-50 hover:bg-stone-50/50 px-1 rounded-lg transition">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-xs truncate text-stone-800">{sub.email}</p>
+                            <p className="text-[9px] text-stone-400 mt-0.5">Đăng ký ngày: {new Date(sub.createdAt).toLocaleDateString("vi-VN")}</p>
+                          </div>
+                          <button
+                            onClick={async () => {
+                              if (confirm(`Hủy nhận tin đối với email ${sub.email}?`)) {
+                                await deleteSubscriber(sub.id);
+                              }
+                            }}
+                            className="p-1.5 text-stone-440 hover:bg-stone-100 rounded-lg hover:text-red-700 transition"
+                            title="Xoá người nhận"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Marketing Run Logs detailed report */}
+          <div className="rounded-2xl border border-amber-200/60 bg-white p-5 md:p-6 shadow-xs space-y-4" style={{ borderColor: 'rgba(82, 121, 111, 0.2)' }}>
+            <div className="border-b border-amber-100 pb-3 flex items-center justify-between">
+              <div>
+                <h4 className="font-serif text-[#52796F] text-base font-bold flex items-center gap-1.5">
+                  <Database className="h-5 w-5" />
+                  <span>Nhật Ký Chiến Dịch Email Đã Chạy (Firestore Logs)</span>
+                </h4>
+                <p className="text-[10px] text-stone-400 mt-1">Lịch sử gửi email, số lượng thành công, lỗi chi tiết thực tế của cổng SMTP Resend</p>
+              </div>
+              <span className="text-[10px] uppercase font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 border border-emerald-200/40 rounded-full">Database Sync Live</span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[700px]">
+                <thead>
+                  <tr className="border-b border-stone-200 font-bold uppercase text-[9px] tracking-wider text-stone-400">
+                    <th className="py-3 text-left">Ngày chạy</th>
+                    <th className="py-3 text-left">Tên chiến dịch</th>
+                    <th className="py-3 text-center">Trạng thái</th>
+                    <th className="py-3 text-center">Gửi thành công</th>
+                    <th className="py-3 text-center">Bị lỗi</th>
+                    <th className="py-3 text-left">Mô tả / Chi tiết lỗi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-100 text-[11px]">
+                  {marketingLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-stone-400 italic">
+                        Chưa có lịch sử chạy chiến dịch tiếp thị nào ghi nhận trong cơ sở dữ liệu.
+                      </td>
+                    </tr>
+                  ) : (
+                    marketingLogs.map((log) => (
+                      <tr key={log.id} className="hover:bg-stone-50/50 text-stone-700 transition">
+                        <td className="py-3 font-mono text-[10px] text-stone-500">
+                          {new Date(log.sentDate).toLocaleString("vi-VN")}
+                        </td>
+                        <td className="py-3 font-bold text-[#52796F]">
+                          {log.campaignName}
+                        </td>
+                        <td className="py-3 text-center">
+                          {log.status === "SUCCESS" ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[9px] font-bold rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/50">
+                              <span className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
+                              <span>SUCCESS</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[9px] font-bold rounded-full bg-red-50 text-red-800 border border-red-200/50">
+                              <span className="h-1 w-1 rounded-full bg-red-500" />
+                              <span>{log.status}</span>
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 text-center font-mono font-bold text-emerald-800">
+                          {log.successCount}
+                        </td>
+                        <td className="py-3 text-center font-mono font-bold text-red-650">
+                          {log.errorCount}
+                        </td>
+                        <td className="py-3 text-stone-450 leading-relaxed max-w-xs truncate" title={log.errorMsg || ""}>
+                          {log.errorMsg || "Lịch chạy tự động an toàn, không có lỗi gì phát sinh."}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+        </div>
+      </div>
 
 
       {/* FOR CANCELLATION/WRITE-OFF (BÁO HỦY) GLOBAL POPOVER - OUTSIDE OF TRANSFORM CONTAINERS TO GUARANTEE ACCURATE PIXEL COORDINATES */}

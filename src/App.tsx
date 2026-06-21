@@ -1674,7 +1674,7 @@ export default function App() {
       <footer className="border-t text-[#F8F5EF]" style={{ backgroundColor: '#1F3D2B', borderColor: 'rgba(255,255,255,0.15)' }}>
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-4 border-b pb-8 mb-8 text-xs" style={{ borderColor: 'rgba(255,255,255,0.15)' }}>
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-5 border-b pb-8 mb-8 text-xs" style={{ borderColor: 'rgba(255,255,255,0.15)' }}>
             
             {/* Branding Column */}
             <div className="space-y-4">
@@ -1845,6 +1845,52 @@ export default function App() {
                 </li>
 
               </ul>
+            </div>
+
+            {/* Newsletter Column */}
+            <div className="space-y-3">
+              <h4 className="font-bold border-l-2 pl-2 mb-3 uppercase tracking-wider text-[11px]" style={{ color: '#F4E6C8', borderColor: '#C8A96B' }}>ĐĂNG KÝ NHẬN TIN</h4>
+              <p className="leading-relaxed text-[#F8F5EF]/80">
+                Nhận ngay thông tin về các bộ sưu tập hoa mới nhất và ưu đãi đặc quyền giảm giá 10% từ Fióre.
+              </p>
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.currentTarget;
+                const input = form.elements.namedItem("subscribeEmail") as HTMLInputElement;
+                const email = input.value;
+                if (!email) return;
+                try {
+                  const res = await fetch("/api/marketing/subscribe", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email })
+                  });
+                  if (res.ok) {
+                    alert("Đăng ký nhận tin thành công! Cảm ơn bạn quý.");
+                    input.value = "";
+                  } else {
+                    const data = await res.json();
+                    alert(data.error || "Có lỗi xảy ra, vui lòng thử lại.");
+                  }
+                } catch (err) {
+                  alert("Không thể kết nối đến máy chủ.");
+                }
+              }} className="space-y-2 mt-2">
+                <input
+                  type="email"
+                  name="subscribeEmail"
+                  placeholder="Email của bạn..."
+                  required
+                  className="w-full rounded-lg border px-3 py-2 text-xs bg-[#1A3324] text-white placeholder-gray-400 focus:outline-none focus:border-[#C8A96B]"
+                  style={{ borderColor: 'rgba(255,255,255,0.2)' }}
+                />
+                <button
+                  type="submit"
+                  className="w-full rounded-lg py-2 text-xs font-bold uppercase transition bg-[#C8A96B] hover:bg-[#B39359] text-white cursor-pointer"
+                >
+                  Đăng Ký Ngay
+                </button>
+              </form>
             </div>
 
             {/* Contact details */}

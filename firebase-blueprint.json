@@ -118,6 +118,57 @@
         "createdAt": { "type": "string" }
       },
       "required": ["id", "productId", "productName", "author", "email", "rating", "date", "comment", "likes", "createdAt"]
+    },
+    "Subscriber": {
+      "title": "Subscriber",
+      "description": "Newsletter email subscriber",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "email", "createdAt"]
+    },
+    "MarketingCampaign": {
+      "title": "MarketingCampaign",
+      "description": "Sent marketing holiday campaigns",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "sentAt": { "type": "string" },
+        "successCount": { "type": "number" },
+        "errorCount": { "type": "number" },
+        "year": { "type": "number" },
+        "holidayCode": { "type": "string" }
+      },
+      "required": ["id", "sentAt", "successCount", "errorCount", "year", "holidayCode"]
+    },
+    "MarketingLog": {
+      "title": "MarketingLog",
+      "description": "Dispatch run details for a campaign",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "campaignName": { "type": "string" },
+        "sentDate": { "type": "string" },
+        "successCount": { "type": "number" },
+        "errorCount": { "type": "number" },
+        "status": { "type": "string" },
+        "errorMsg": { "type": "string" },
+        "results": { "type": "array" }
+      },
+      "required": ["campaignName", "sentDate", "successCount", "errorCount", "status"]
+    },
+    "Unsubscriber": {
+      "title": "Unsubscriber",
+      "description": "Unsubscribed customer list",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "unsubscribedAt": { "type": "string" }
+      },
+      "required": ["email", "unsubscribedAt"]
     }
   },
   "firestore": {
@@ -148,6 +199,22 @@
     "reviews/{id}": {
       "schema": "Review",
       "description": "Product reviews and ratings collection"
+    },
+    "subscribers/{id}": {
+      "schema": "Subscriber",
+      "description": "Newsletter subscribers collection"
+    },
+    "marketing_campaigns/{id}": {
+      "schema": "MarketingCampaign",
+      "description": "Sent campaigns cache to prevent duplicates"
+    },
+    "marketing_logs/{id}": {
+      "schema": "MarketingLog",
+      "description": "Marketing campaign runs log"
+    },
+    "unsubscribers/{id}": {
+      "schema": "Unsubscriber",
+      "description": "Unsubscribed email list opt-out"
     }
   }
 }
