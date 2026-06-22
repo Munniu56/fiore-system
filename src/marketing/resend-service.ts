@@ -9,8 +9,8 @@ export interface ResendConfig {
 
 export function getResendConfig(): ResendConfig {
   return {
-    apiKey: process.env.RESEND_API_KEY || "",
-    emailFrom: process.env.EMAIL_FROM || "Fióre Boutique <tin-tuc@fiore.vn>",
+    apiKey: process.env.RESEND_API_KEY || "re_ZvRMcJfe_BKowJrZUNtXCxzmWVeqptbtj",
+    emailFrom: process.env.EMAIL_FROM || "Fióre Boutique <23K4300023@hce.edu.vn>",
   };
 }
 
