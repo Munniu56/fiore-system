@@ -15,6 +15,7 @@ import { Product, Category, Order, User, OrderStatus, ContactMessage, Coupon, Re
 import { subscribeCoupons, saveCoupon, removeCoupon, subscribeReviews, removeReview, saveReview, Subscriber, MarketingLog, subscribeSubscribers, addSubscriber, deleteSubscriber, subscribeMarketingLogs } from '../firebase';
 import { convertProductsToCSV, convertProductsToMerchantXML, downloadFile } from '../utils/productExporter';
 // Gmail manager removed specifically for isolated admin portal
+import { checkAndTriggerHolidayCampaigns } from '../marketing/campaign-scheduler';
 
 interface AdminDashboardProps {
   products: Product[];
@@ -4499,14 +4500,40 @@ export default function AdminDashboard({
                     setTriggerStatus(null);
                     try {
                       const res = await fetch("/api/marketing/trigger-check", { method: "POST" });
-                      const data = await res.json();
                       if (res.ok) {
+                        const data = await res.json();
                         setTriggerStatus({ success: true, message: data.message || "Kiểm tra tất cả chiến dịch lễ hội đã hoàn tất thành công!" });
                       } else {
-                        setTriggerStatus({ success: false, message: data.error || "Có lỗi xảy ra khi kiểm tra chiến dịch gửi đi." });
+                        // Attempt client-side execution if the server API failed/not-ok
+                        console.warn("Server API returned non-ok, falling back to client-side campaign execution...");
+                        try {
+                          const clientResult = await checkAndTriggerHolidayCampaigns();
+                          setTriggerStatus({ 
+                            success: true, 
+                            message: `${clientResult.message} (Chạy trực tiếp qua trình duyệt thành công)` 
+                          });
+                        } catch (clientErr: any) {
+                          setTriggerStatus({ 
+                            success: false, 
+                            message: `Lỗi máy chủ (${res.status}). Và lỗi chạy trực tiếp: ${clientErr.message || clientErr}` 
+                          });
+                        }
                       }
                     } catch (err) {
-                      setTriggerStatus({ success: false, message: "Không thể kết nối đến máy chủ API tiếp thị." });
+                      // Connection error, fallback directly to client-side
+                      console.warn("Could not connect to server API. Executing client-side campaign trigger directly...", err);
+                      try {
+                        const clientResult = await checkAndTriggerHolidayCampaigns();
+                        setTriggerStatus({ 
+                          success: true, 
+                          message: `${clientResult.message} (Chạy trực tiếp bằng API Trình duyệt do lỗi kết nối máy chủ)`
+                        });
+                      } catch (clientErr: any) {
+                        setTriggerStatus({ 
+                          success: false, 
+                          message: `Không thể kết nối đến máy chủ API tiếp thị. Chạy trực tiếp qua trình duyệt cũng gặp lỗi: ${clientErr.message || clientErr}` 
+                        });
+                      }
                     } finally {
                       setIsTriggering(false);
                     }

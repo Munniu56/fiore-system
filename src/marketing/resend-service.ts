@@ -1,17 +1,18 @@
-import dotenv from "dotenv";
-
-dotenv.config();
-
 export interface ResendConfig {
   apiKey: string;
   emailFrom: string;
 }
 
 export function getResendConfig(): ResendConfig {
-  return {
-    apiKey: process.env.RESEND_API_KEY || "re_ZvRMcJfe_BKowJrZUNtXCxzmWVeqptbtj",
-    emailFrom: process.env.EMAIL_FROM || "Fióre Boutique <23K4300023@hce.edu.vn>",
-  };
+  let apiKey = "re_ZvRMcJfe_BKowJrZUNtXCxzmWVeqptbtj";
+  let emailFrom = "Fióre Boutique <23K4300023@hce.edu.vn>";
+
+  if (typeof process !== "undefined" && process?.env) {
+    apiKey = process.env.RESEND_API_KEY || apiKey;
+    emailFrom = process.env.EMAIL_FROM || emailFrom;
+  }
+
+  return { apiKey, emailFrom };
 }
 
 export interface EmailPayload {
