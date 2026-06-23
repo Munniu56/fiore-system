@@ -271,6 +271,29 @@ export default function SupportChat({ products = [], onViewProduct }: SupportCha
       };
     }
 
+    // 8.5 Social Media channels
+    if (
+      text.includes('mạng xã hội') || 
+      text.includes('mang xa hoi') || 
+      text.includes('facebook') || 
+      text.includes('fb') ||
+      text.includes('instagram') || 
+      text.includes('ig') ||
+      text.includes('insta') ||
+      text.includes('tiktok') || 
+      text.includes('social') ||
+      text.includes('fanpage') ||
+      text.includes('đường dẫn') ||
+      text.includes('duong dan') ||
+      text.includes('đường link') ||
+      text.includes('duong link') ||
+      text.includes('link')
+    ) {
+      return {
+        text: '📱 Các trang mạng xã hội chính thức của Fióre Boutique Florist:\n\n• 👤 Facebook Page: https://www.facebook.com/fioreboutiqueflorist\nKênh cập nhật sớm nhất các mẫu hoa tươi nhập khẩu nghệ thuật tinh tế và ưu đãi hấp dẫn.\n\n• 📸 Instagram Album: https://www.instagram.com/fiore_boutiqueflorist/?hl=en\nNơi ngập tràn hình ảnh sang trọng, lãng mạn đầy tính nghệ thuật sáng tạo của nhà Fióre.\n\n• 🎵 TikTok Video: https://www.tiktok.com/@fiorefloral\nGóc nhỏ sinh động ghi lại những thước phim tỉ mẩn cắm hoa đong đầy xúc cảm.'
+      };
+    }
+
     // 9. Order Tracker Quick Option Trigger
     if (text.includes('theo dõi đơn') || text.includes('theo doi don') || text.includes('đơn hàng') || text.includes('don hang') || text.includes('tiến độ')) {
       return {
@@ -331,12 +354,38 @@ export default function SupportChat({ products = [], onViewProduct }: SupportCha
     }, 350);
   };
 
+  const renderMessageText = (text: string, isUser: boolean) => {
+    if (isUser) return text;
+    // Match URLs starting with http:// or https:// and ending with non-space characters
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+    if (parts.length === 1) return text;
+
+    return parts.map((part, index) => {
+      if (part.match(urlRegex)) {
+        return (
+          <a
+            key={index}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-emerald-700 underline font-bold hover:text-amber-800 break-all inline duration-200"
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
   const quickOptions = [
     'Hoa sinh nhật',
     'Hoa tình yêu',
     'Hoa khai trương',
     'Hoa chúc mừng',
     'Liên hệ cửa hàng',
+    'Mạng xã hội Fióre',
     'Theo dõi đơn hàng',
   ];
 
@@ -413,7 +462,7 @@ export default function SupportChat({ products = [], onViewProduct }: SupportCha
                           : 'bg-white text-gray-800 rounded-bl-none border border-pink-100/75'
                       }`}
                     >
-                      {msg.text}
+                      {renderMessageText(msg.text, msg.sender === 'user')}
                       <span
                         className={`block text-[9px] mt-1 text-right font-mono ${
                           msg.sender === 'user' ? 'text-gray-300/85' : 'text-gray-400'
