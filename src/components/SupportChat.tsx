@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageCircle, X, Send, CornerDownLeft, Sparkles, Smile } from 'lucide-react';
-import { Product } from '../types';
+import { Product, Order, User } from '../types';
 
 interface Message {
   id: string;
@@ -14,6 +14,8 @@ interface Message {
 interface SupportChatProps {
   products: Product[];
   onViewProduct?: (productId: string) => void;
+  orders?: Order[];
+  currentUser?: User | null;
 }
 
 interface BotResult {
@@ -21,7 +23,7 @@ interface BotResult {
   proposedProducts?: Product[];
 }
 
-export default function SupportChat({ products = [], onViewProduct }: SupportChatProps) {
+export default function SupportChat({ products = [], onViewProduct, orders = [], currentUser }: SupportChatProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -294,10 +296,179 @@ export default function SupportChat({ products = [], onViewProduct }: SupportCha
       };
     }
 
-    // 9. Order Tracker Quick Option Trigger
-    if (text.includes('theo dõi đơn') || text.includes('theo doi don') || text.includes('đơn hàng') || text.includes('don hang') || text.includes('tiến độ')) {
+    // 9. Order checking and tracking intelligence
+    const hasOrderKeywords =
+      text.includes('đơn hàng') ||
+      text.includes('don hang') ||
+      text.includes('theo dõi') ||
+      text.includes('theo doi') ||
+      text.includes('trạng thái') ||
+      text.includes('trang thai') ||
+      text.includes('tiến độ') ||
+      text.includes('tien do') ||
+      text.includes('tìm đơn') ||
+      text.includes('tim don') ||
+      text.includes('kiểm tra') ||
+      text.includes('kiem tra') ||
+      text.includes('ord-') ||
+      text.includes('ord') ||
+      /ord-?\d+/i.test(text) ||
+      (/\b\d{3}\b/.test(text) && text.length <= 10);
+
+    if (hasOrderKeywords) {
+      const orderCodeMatch = userText.match(/ord-?\d+/i);
+      let foundOrderCode: string | null = null;
+      if (orderCodeMatch) {
+        foundOrderCode = orderCodeMatch[0].toUpperCase();
+        if (!foundOrderCode.includes('-')) {
+          foundOrderCode = foundOrderCode.replace('ORD', 'ORD-');
+        }
+      } else {
+        const numberMatch = userText.match(/\b\d{3}\b/);
+        if (numberMatch && (text.includes('ord') || text.includes('đơn') || text.includes('don') || text.trim() === numberMatch[0])) {
+          foundOrderCode = `ORD-${numberMatch[0]}`;
+        }
+      }
+
+      // Check if they provided an email or phone number in this request
+      const emailMatch = userText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+      const phoneMatch = userText.match(/\b0\d{9,10}\b/);
+
+      const orderList = orders || [];
+
+      // Scenario A: Exact Order Code Hit
+      if (foundOrderCode) {
+        const targetOrder = orderList.find(o => o.id.toUpperCase() === foundOrderCode?.toUpperCase());
+        if (targetOrder) {
+          let statusText = '';
+          switch (targetOrder.status) {
+            case 'confirmed': statusText = 'Đã xác nhận ✔️ (Đang chuẩn bị mẫu)'; break;
+            case 'paid': statusText = 'Đã thanh toán (Chờ chuẩn bị mẫu) 💳'; break;
+            case 'preparing': statusText = 'Đang tuyển chọn & cắm hoa nghệ thuật 🌸'; break;
+            case 'shipping': statusText = 'Đang giao hoa hỏa tốc tới bạn 🚚'; break;
+            case 'completed': statusText = 'Đã hoàn thành giao nhận rực rỡ! 🎉'; break;
+            case 'cancelled': statusText = 'Đã hủy đơn hàng ❌'; break;
+            default: statusText = targetOrder.status;
+          }
+
+          const paymentStatusText = targetOrder.paymentStatus === 'Paid' ? 'Đã thanh toán' : 'Chưa thanh toán (COD)';
+          const orderDate = targetOrder.createdAt ? new Date(targetOrder.createdAt).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'Không rõ';
+
+          return {
+            text: `📦 THÔNG TIN CHI TIẾT ĐƠN HÀNG: **${targetOrder.id}**\n\n` +
+                  `• 👤 Khách đặt: ${targetOrder.customerName || 'Khách vãng lai'}\n` +
+                  `• 🌸 Người nhận: ${targetOrder.recipientName}\n` +
+                  `• 📞 ĐT nhận hàng: ${targetOrder.recipientPhone}\n` +
+                  `• 📍 Địa chỉ giao: ${targetOrder.shippingAddress}\n` +
+                  `• 💰 Tổng cộng: ${targetOrder.totalAmount.toLocaleString('vi-VN')}đ (${paymentStatusText})\n` +
+                  `• 🗓️ Thời điểm đặt: ${orderDate}\n` +
+                  `• 🎯 Trạng thái đơn: **${statusText}**\n\n` +
+                  `• 🏷️ Sản phẩm:\n` +
+                  (targetOrder.items || []).map((itm: any) => {
+                    const name = itm.product?.name || itm.name || 'Tác phẩm hoa tươi nghệ thuật';
+                    return `  - ${name} (Số lượng: ${itm.quantity})`;
+                  }).join('\n') +
+                  `\n\n📌 Tiệm hoa Fióre chân thành cảm ơn bạn! Nếu có yêu cầu thay đổi gì khác, xin vui lòng gọi hotline 0916044683 của tụi mình nhé.`
+          };
+        } else {
+          return {
+            text: `🔍 Fióre không tìm thấy đơn hàng nào có mã **${foundOrderCode}** trong hệ thống.\n\n` +
+                  `Vui lòng kiểm tra lại mã đơn hàng của bạn (Ví dụ định dạng đúng: **ORD-101**) hoặc ghi thêm Email hoặc Số điện thoại đặt hàng để tụi mình hỗ trợ tra cứu nhanh nhé! 🌷`
+          };
+        }
+      }
+
+      // Scenario B: Provided Email or Phone to search
+      if (emailMatch || phoneMatch) {
+        let matchedOrders: Order[] = [];
+        if (emailMatch) {
+          const emailVal = emailMatch[0].toLowerCase();
+          matchedOrders = orderList.filter(o => o.customerEmail && o.customerEmail.toLowerCase() === emailVal);
+        } else if (phoneMatch) {
+          const phoneVal = phoneMatch[0];
+          matchedOrders = orderList.filter(o => o.recipientPhone === phoneVal);
+        }
+
+        if (matchedOrders.length > 0) {
+          if (matchedOrders.length === 1) {
+            const targetOrder = matchedOrders[0];
+            let statusText = '';
+            switch (targetOrder.status) {
+              case 'confirmed': statusText = 'Đã xác nhận ✔️'; break;
+              case 'paid': statusText = 'Đã thanh toán 💳'; break;
+              case 'preparing': statusText = 'Đang cắm hoa 🌸'; break;
+              case 'shipping': statusText = 'Đang giao hoa 🚚'; break;
+              case 'completed': statusText = 'Đã giao thành công 🎉'; break;
+              case 'cancelled': statusText = 'Đã hủy đơn ❌'; break;
+              default: statusText = targetOrder.status;
+            }
+            return {
+              text: `📦 Tra cứu thành công! Tìm thấy 1 đơn hàng liên kết:\n\n` +
+                    `• **Mã đơn: ${targetOrder.id}**\n` +
+                    `• Người nhận: ${targetOrder.recipientName} (${targetOrder.recipientPhone})\n` +
+                    `• Tổng giá trị: ${targetOrder.totalAmount.toLocaleString('vi-VN')}đ\n` +
+                    `• Trạng thái hiện tại: **${statusText}**\n\n` +
+                    `Để xem đầy đủ chi tiết sản phẩm và lộ trình chính xác, bạn vui lòng gõ mã đơn này (ví dụ: **${targetOrder.id}**).`
+            };
+          } else {
+            const orderLines = matchedOrders.slice(0, 5).map((o, idx) => {
+              let statusText = '';
+              switch (o.status) {
+                case 'confirmed': statusText = 'Xác nhận ✔️'; break;
+                case 'paid': statusText = 'Đã thanh toán 💳'; break;
+                case 'preparing': statusText = 'Đang cắm hoa 🌸'; break;
+                case 'shipping': statusText = 'Đang giao 🚚'; break;
+                case 'completed': statusText = 'Đã giao 🎉'; break;
+                case 'cancelled': statusText = 'Đã hủy ❌'; break;
+                default: statusText = o.status;
+              }
+              return `${idx + 1}. **${o.id}** - Trạng thái: ${statusText} - Tổng: ${o.totalAmount.toLocaleString('vi-VN')}đ`;
+            }).join('\n');
+
+            return {
+              text: `🔍 Tìm thấy ${matchedOrders.length} đơn hàng liên kết với thông tin đặt hàng của bạn:\n\n${orderLines}\n\n` +
+                    `👉 Bạn vui lòng gõ mã đơn hàng cụ thể muốn kiểm tra (ví dụ: **${matchedOrders[0].id}**) để Fióre xem sâu thông tin lộ trình nhé.`
+            };
+          }
+        } else {
+          return {
+            text: `🔍 Hệ thống không tìm thấy đơn hàng nào liên kết với thông tin "${emailMatch ? emailMatch[0] : phoneMatch?.[0]}".\n\n` +
+                  `Vui lòng nhập đúng mã đơn hàng dạng **ORD-xxx** hoặc gọi trực tiếp Hotline hỗ trợ 0916044683 nhé!`
+          };
+        }
+      }
+
+      // Scenario C: Generic Order query, check if currentUser is logged in to help them find
+      if (currentUser && currentUser.email) {
+        const userOrders = orderList.filter(o => o.customerEmail && o.customerEmail.toLowerCase() === currentUser.email.toLowerCase());
+        if (userOrders.length > 0) {
+          const orderLines = userOrders.slice(0, 5).map((o, idx) => {
+            let statusText = '';
+            switch (o.status) {
+              case 'confirmed': statusText = 'Xác nhận ✔️'; break;
+              case 'paid': statusText = 'Đã thanh toán 💳'; break;
+              case 'preparing': statusText = 'Đang cắm hoa 🌸'; break;
+              case 'shipping': statusText = 'Đang giao 🚚'; break;
+              case 'completed': statusText = 'Đã giao 🎉'; break;
+              case 'cancelled': statusText = 'Đã hủy ❌'; break;
+              default: statusText = o.status;
+            }
+            return `• **${o.id}** (${new Date(o.createdAt).toLocaleDateString('vi-VN')}): ${statusText} - ${o.totalAmount.toLocaleString('vi-VN')}đ`;
+          }).join('\n');
+
+          return {
+            text: `👤 Fióre ghi nhận tài khoản của bạn có các đơn hàng gần đây:\n\n${orderLines}\n\n` +
+                  `👉 Hãy nhập mã đơn hàng cụ thể (ví dụ: **${userOrders[0].id}**) để tra cứu tiến độ vận chuyển chi tiết tức thời nha.`
+          };
+        }
+      }
+
       return {
-        text: '🚚 Để theo dõi trạng thái đơn hàng tức thời, quý khách hãy nhấp vào mục "Theo dõi tiến độ đơn hàng" dưới chân trang (Footer), nhập mã đơn hoặc đăng nhập tài khoản Fióre để được cập nhật trực quan nhất!'
+        text: '🚚 **TRA CỨU TRẠNG THÁI ĐƠN HÀNG FIÓRE**\n\n' +
+              'Để giúp bạn kiểm tra trạng thái cắm hoa và vận chuyển chuẩn xác nhất, bạn hãy nhắn:\n' +
+              '• **Mã đơn hàng** của bạn (ví dụ: **ORD-101**)\n' +
+              '• Hoặc **Số điện thoại / Email** mua hàng.\n\n' +
+              'Hệ thống Fióre sẽ lập tức tìm kiếm và báo cáo chi tiết đến bạn tức thì!'
       };
     }
 

@@ -1959,6 +1959,8 @@ export default function App() {
       {/* Global Brand Support Companion */}
       <SupportChat 
         products={products} 
+        orders={orders}
+        currentUser={currentUser}
         onViewProduct={(productId) => {
           setSelectedProductId(productId);
           setCurrentView('detail');
