@@ -4,7 +4,7 @@ import { db } from "../firebase";
 export interface Customer {
   email: string;
   name: string;
-  gender: "Nam" | "Nữ" | "Chưa điền";
+  gender: "Nam" | "Nữ" | "Chưa cung cấp";
 }
 
 /**
@@ -52,7 +52,7 @@ export async function getCustomerSegments(): Promise<{
       if (!email || unsubscribed.has(email)) return;
 
       // Map raw gender
-      let gender: "Nam" | "Nữ" | "Chưa điền" = "Chưa điền";
+      let gender: "Nam" | "Nữ" | "Chưa cung cấp" = "Chưa cung cấp";
       if (data.gender === "Nam") {
         gender = "Nam";
       } else if (data.gender === "Nữ") {
@@ -84,7 +84,7 @@ export async function getCustomerSegments(): Promise<{
       subscribersList.push({
         email,
         name: "Quý khách nhận tin",
-        gender: "Chưa điền", // Default for newsletter-only subscribers
+        gender: "Chưa cung cấp", // Default for newsletter-only subscribers
       });
     });
   } catch (error) {
@@ -145,12 +145,12 @@ export async function getCampaignRecipients(
   return uniqueCustomers.filter((customer) => {
     const gender = customer.gender;
     if (campaignCode === "valentine" || campaignCode === "women_day_intl") {
-      // Nam và Chưa điền
-      return gender === "Nam" || gender === "Chưa điền";
+      // Nam và Chưa cung cấp
+      return gender === "Nam" || gender === "Chưa cung cấp";
     }
     if (campaignCode === "women_day_vn" || campaignCode === "teachers_day") {
-      // Nam, Nữ, Chưa điền
-      return gender === "Nam" || gender === "Nữ" || gender === "Chưa điền";
+      // Nam, Nữ, Chưa cung cấp
+      return gender === "Nam" || gender === "Nữ" || gender === "Chưa cung cấp";
     }
     // Default fallback: allow all
     return true;

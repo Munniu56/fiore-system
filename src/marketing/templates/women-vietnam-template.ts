@@ -40,7 +40,7 @@ export const womenVietnamProducts: EmailProduct[] = [
 export function getWomenVietnamTemplate(
   recipientEmail: string,
   recipientName: string,
-  gender: "Nam" | "Nữ" | "Chưa điền"
+  gender: "Nam" | "Nữ" | "Chưa cung cấp"
 ): { subject: string; html: string } {
   const appUrl = process.env.APP_URL || "https://fi-o-re.vercel.app/";
   const greeting = recipientName && recipientName !== "Quý khách nhận tin" ? `Kính gửi anh/chị ${recipientName}` : "Kính chào Quý khách quý";

@@ -31,7 +31,7 @@ export function getEmailTemplate(
   campaignCode: "valentine" | "women_day_intl" | "women_day_vn" | "teachers_day" | string,
   recipientEmail: string,
   recipientName: string,
-  gender: "Nam" | "Nữ" | "Chưa điền"
+  gender: "Nam" | "Nữ" | "Chưa cung cấp"
 ): { subject: string; html: string } {
   
   switch (campaignCode) {
