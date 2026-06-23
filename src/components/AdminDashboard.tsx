@@ -640,14 +640,17 @@ export default function AdminDashboard({
     'Kỷ niệm ngày cưới / Tình cảm (Anniversary)': 0,
     'Chúc mừng / Khai trương (Congratulations)': 0,
     'Lời xin lỗi / Giảng hòa (Apology)': 0,
-    'Lời cảm ơn / Biết ơn (Gratitude)': 0
+    'Lời cảm ơn / Biết ơn (Gratitude)': 0,
+    'Khác': 0
   };
 
   orders.forEach((order) => {
     if (order.status === 'cancelled') return;
 
-    const rawNote = (order.note || '').toLowerCase();
-    if (
+    const rawNote = (order.note || '').trim().toLowerCase();
+    if (!rawNote) {
+      flowerReasonsRawCount['Khác']++;
+    } else if (
       rawNote.includes('sinh nhật') || 
       rawNote.includes('sinh nhat') || 
       rawNote.includes('sn') || 
@@ -1923,7 +1926,7 @@ export default function AdminDashboard({
                       {/* Reasons segments */}
                       {(() => {
                         let cumulativePercent = 0;
-                        const colors = ['#1F3D2B', '#C8A96B', '#2563EB', '#EF4444', '#10B981'];
+                        const colors = ['#1F3D2B', '#C8A96B', '#2563EB', '#EF4444', '#10B981', '#9333EA'];
                         return flowerReasonsList.map((item, idx) => {
                           const pct = item.percentage;
                           if (pct === 0) return null;
@@ -1963,27 +1966,28 @@ export default function AdminDashboard({
                   </div>
 
                   {/* Segment Legend item list with indicators */}
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-5 text-[10.5px] font-bold w-full">
+                  <div className="flex flex-col gap-y-2 mt-5 text-[11px] font-bold w-full bg-stone-50 p-3 rounded-xl border border-amber-100/40">
                     {flowerReasonsList.map((item, idx) => {
-                      const colors = ['#1F3D2B', '#C8A96B', '#2563EB', '#EF4444', '#10B981'];
+                      const colors = ['#1F3D2B', '#C8A96B', '#2563EB', '#EF4444', '#10B981', '#9333EA'];
                       return (
-                        <div key={item.name} className="flex items-center space-x-1.5 min-w-0">
-                          <span 
-                            className="h-2 w-2 rounded-full inline-block shrink-0" 
-                            style={{ backgroundColor: colors[idx % colors.length] }}
-                          ></span>
-                          <span className="text-stone-600 truncate" title={`${item.name} (${item.count} đơn)`}>
-                            {item.name.split(' (')[0]}: <span className="text-emerald-950 font-extrabold">{item.percentage}%</span>
+                        <div key={item.name} className="flex items-center justify-between min-w-0 py-0.5 border-b border-stone-100 last:border-none">
+                          <div className="flex items-center space-x-2 min-w-0">
+                            <span 
+                              className="h-2.5 w-2.5 rounded-full inline-block shrink-0" 
+                              style={{ backgroundColor: colors[idx % colors.length] }}
+                            ></span>
+                            <span className="text-stone-650" title={item.name}>
+                              {item.name.split(' (')[0]}
+                            </span>
+                          </div>
+                          <span className="text-emerald-950 font-extrabold shrink-0 pl-2">
+                            {item.percentage}% <span className="text-[10px] text-stone-400 font-medium">({item.count} đơn)</span>
                           </span>
                         </div>
                       );
                     })}
                   </div>
                 </div>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-amber-100/50 text-[10px] text-stone-400 italic text-center">
-                Mục đích tặng hoa được phân tích tự động từ nội dung lời chúc hoặc phân phối ngẫu nhiên nếu bỏ trống.
               </div>
             </div>
 
@@ -2102,10 +2106,7 @@ export default function AdminDashboard({
                   )}
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-stone-100 text-[10.5px] text-stone-400 font-medium flex justify-between items-center bg-[#FAF7F0]/40 px-3 py-2 rounded-xl border border-amber-100/30">
-                  <span>Hệ thống phân hạng tự động theo lũy kế doanh thu thực chi.</span>
-                  <span className="font-extrabold text-[#C8A96B] cursor-help hover:underline">Xem tiêu chí</span>
-                </div>
+
               </div>
 
             </div>
