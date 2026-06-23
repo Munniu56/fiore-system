@@ -145,8 +145,8 @@ export async function getCampaignRecipients(
   return uniqueCustomers.filter((customer) => {
     const gender = customer.gender;
     if (campaignCode === "valentine" || campaignCode === "women_day_intl") {
-      // Only Nam
-      return gender === "Nam";
+      // Nam và Chưa điền
+      return gender === "Nam" || gender === "Chưa điền";
     }
     if (campaignCode === "women_day_vn" || campaignCode === "teachers_day") {
       // Nam, Nữ, Chưa điền

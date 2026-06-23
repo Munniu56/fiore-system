@@ -4687,7 +4687,7 @@ export default function AdminDashboard({
                       </p>
                       <div className="flex flex-wrap gap-1 pt-1">
                         <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-150/40">Gửi trước 5 ngày</span>
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-150/40">Lọc khách: Chỉ gửi Nam</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-150/40">Lọc khách: Gửi Nam & Chưa cung cấp</span>
                       </div>
                     </div>
                     <div className="text-[10px] font-bold text-[#52796F] border-t border-stone-150/30 pt-2 flex justify-between items-center">
@@ -4711,7 +4711,7 @@ export default function AdminDashboard({
                       </p>
                       <div className="flex flex-wrap gap-1 pt-1">
                         <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-150/40">Gửi trước 5 ngày</span>
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-150/40">Lọc khách: Chỉ gửi Nam</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-150/40">Lọc khách: Gửi Nam & Chưa cung cấp</span>
                       </div>
                     </div>
                     <div className="text-[10px] font-bold text-[#52796F] border-t border-stone-150/30 pt-2 flex justify-between items-center">
@@ -4735,7 +4735,7 @@ export default function AdminDashboard({
                       </p>
                       <div className="flex flex-wrap gap-1 pt-1">
                         <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-150/40">Gửi trước 5 ngày</span>
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-850 border border-emerald-150/40">Lọc khách: Nam, Nữ, Chưa điền</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-850 border border-emerald-150/40">Lọc khách: Nam, Nữ, Chưa cung cấp</span>
                       </div>
                     </div>
                     <div className="text-[10px] font-bold text-[#52796F] border-t border-stone-150/30 pt-2 flex justify-between items-center">
@@ -4759,7 +4759,7 @@ export default function AdminDashboard({
                       </p>
                       <div className="flex flex-wrap gap-1 pt-1">
                         <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-150/40">Gửi trước 5 ngày</span>
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-850 border border-emerald-150/40">Lọc khách: Nam, Nữ, Chưa điền</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-850 border border-emerald-150/40">Lọc khách: Nam, Nữ, Chưa cung cấp</span>
                       </div>
                     </div>
                     <div className="text-[10px] font-bold text-[#52796F] border-t border-stone-150/30 pt-2 flex justify-between items-center">
