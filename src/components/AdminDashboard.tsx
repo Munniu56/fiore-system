@@ -4770,14 +4770,6 @@ export default function AdminDashboard({
 
                 </div>
               </div>
-
-              {/* Info helper block footer */}
-              <div className="p-3.5 bg-stone-50 rounded-xl border border-stone-100 flex items-start gap-2.5 text-[11px] text-stone-550 leading-relaxed mt-4">
-                <Info className="h-4.5 w-4.5 shrink-0 text-amber-600 mt-0.5 animate-pulse" />
-                <span>
-                  <strong>Quy trình tiếp cận tự động hóa:</strong> Toàn bộ quy trình được thực hiện an toàn trên nền tảng Cloud Firestore & Resend API. Kịch bản chạy ngầm tự động lúc 08:00 sáng mỗi ngày sẽ tiến hành kiểm tra điều kiện (5 ngày trước lễ) và lọc trùng lặp / unsubscribe / trạng thái đã nhận chiến dịch trước đó rồi tiến hành phân phối để bảo vệ uy tín thương hiệu cao cấp của Fióre.
-                </span>
-              </div>
             </div>
 
             {/* Custom Manual Subscriptions list */}
