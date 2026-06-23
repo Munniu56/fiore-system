@@ -4309,7 +4309,7 @@ export default function AdminDashboard({
                   {catImageLoadError && (
                     <div className="absolute inset-0 bg-red-50/95 flex flex-col items-center justify-center p-3 text-center">
                       <svg className="w-6 h-6 text-red-500 mb-1.5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0" />
                       </svg>
                       <span className="text-red-750 font-bold text-[11px]">Không thể tải hình ảnh từ URL này.</span>
                       <span className="text-stone-550 text-[9px] mt-0.5">Đặt lại về ảnh vườn hoa mẫu mặc định</span>
@@ -4475,8 +4475,58 @@ export default function AdminDashboard({
 
 
       {/* --- TAB 11: EMAIL MARKETING CAMPAIGNS & RESEND AUTOMATIONS --- */}
-      {activeTab === 'marketing' && (
-        <div className="space-y-8 animate-fade-in text-xs text-stone-800">
+      {activeTab === 'marketing' && (() => {
+        // Build combined recipients pool from subscribers state and users (Sổ khách hàng) to get email
+        const combinedRecipients: {
+          id: string;
+          email: string;
+          name: string;
+          createdAt?: string;
+          source: 'subscriber' | 'customer';
+        }[] = [];
+
+        const seenEmails = new Set<string>();
+
+        // 1. Add web newsletter subscribers
+        subscribers.forEach((sub) => {
+          const emailLower = (sub.email || "").trim().toLowerCase();
+          if (emailLower && !seenEmails.has(emailLower)) {
+            seenEmails.add(emailLower);
+            combinedRecipients.push({
+              id: sub.id,
+              email: sub.email.trim(),
+              name: "Khách nhận tin nhanh",
+              createdAt: sub.createdAt,
+              source: 'subscriber'
+            });
+          }
+        });
+
+        // 2. Add registered customers from Sổ khách hàng (users)
+        users.forEach((usr) => {
+          const emailLower = (usr.email || "").trim().toLowerCase();
+          if (emailLower) {
+            if (!seenEmails.has(emailLower)) {
+              seenEmails.add(emailLower);
+              combinedRecipients.push({
+                id: usr.id,
+                email: usr.email.trim(),
+                name: usr.name || "Khách hàng Fióre",
+                source: 'customer'
+              });
+            } else {
+              // If already exists as subscriber, upgrade to show customer info (name)
+              const existing = combinedRecipients.find(r => r.email.toLowerCase() === emailLower);
+              if (existing) {
+                existing.name = usr.name || "Khách hàng Fióre";
+                existing.source = 'customer';
+              }
+            }
+          }
+        });
+
+        return (
+          <div className="space-y-8 animate-fade-in text-xs text-stone-800">
           
           {/* Header block with elegant description */}
           <div className="rounded-2xl border border-amber-200/60 bg-white p-6 md:p-8 shadow-xs relative overflow-hidden" style={{ borderColor: 'rgba(82, 121, 111, 0.2)' }}>
@@ -4510,12 +4560,12 @@ export default function AdminDashboard({
                           const clientResult = await checkAndTriggerHolidayCampaigns();
                           setTriggerStatus({ 
                             success: true, 
-                            message: `${clientResult.message} (Chạy trực tiếp qua trình duyệt thành công)` 
+                            message: clientResult.message + " (Chạy trực tiếp qua trình duyệt thành công)" 
                           });
                         } catch (clientErr: any) {
                           setTriggerStatus({ 
                             success: false, 
-                            message: `Lỗi máy chủ (${res.status}). Và lỗi chạy trực tiếp: ${clientErr.message || clientErr}` 
+                            message: "Lỗi máy chủ (" + res.status + "). Và lỗi chạy trực tiếp: " + (clientErr.message || clientErr) 
                           });
                         }
                       }
@@ -4526,12 +4576,12 @@ export default function AdminDashboard({
                         const clientResult = await checkAndTriggerHolidayCampaigns();
                         setTriggerStatus({ 
                           success: true, 
-                          message: `${clientResult.message} (Chạy trực tiếp bằng API Trình duyệt do lỗi kết nối máy chủ)`
+                          message: clientResult.message + " (Chạy trực tiếp bằng API Trình duyệt do lỗi kết nối máy chủ)"
                         });
                       } catch (clientErr: any) {
                         setTriggerStatus({ 
                           success: false, 
-                          message: `Không thể kết nối đến máy chủ API tiếp thị. Chạy trực tiếp qua trình duyệt cũng gặp lỗi: ${clientErr.message || clientErr}` 
+                          message: "Không thể kết nối đến máy chủ API tiếp thị. Chạy trực tiếp qua trình duyệt cũng gặp lỗi: " + (clientErr.message || clientErr) 
                         });
                       }
                     } finally {
@@ -4584,7 +4634,7 @@ export default function AdminDashboard({
             <div className="rounded-2xl border border-amber-200/40 bg-white p-5 shadow-xs flex items-center justify-between hover:shadow-md transition-all duration-300">
               <div>
                 <p className="text-[10px] uppercase font-mono font-bold tracking-wider text-stone-400">Tổng Số Tiếp Cận</p>
-                <p className="text-2xl font-light text-stone-800 font-serif mt-1">{subscribers.length + users.length} <span className="text-xs font-normal font-sans text-stone-500">địa chỉ</span></p>
+                <p className="text-2xl font-light text-stone-800 font-serif mt-1">{combinedRecipients.length} <span className="text-xs font-normal font-sans text-stone-500">địa chỉ</span></p>
               </div>
               <div className="h-10 w-10 rounded-xl bg-[#84A98C]/10 flex items-center justify-center text-[#84A98C] border border-[#84A98C]/20">
                 <Award className="h-5 w-5" />
@@ -4601,6 +4651,8 @@ export default function AdminDashboard({
               </div>
             </div>
           </div>
+
+
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
             
@@ -4776,29 +4828,48 @@ export default function AdminDashboard({
 
                   {/* List panel */}
                   <div className="max-h-[290px] min-h-[240px] overflow-y-auto divide-y divide-stone-100 pr-1.5 space-y-1 mt-4 scrollbar-thin">
-                    {subscribers.filter(sub => sub.email.toLowerCase().includes(marketingSearchQuery.trim().toLowerCase())).length === 0 ? (
+                    {combinedRecipients.filter(rec => rec.email.toLowerCase().includes(marketingSearchQuery.trim().toLowerCase())).length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-12 text-stone-400 italic text-[11px] gap-2">
                         <Mail className="h-5 w-5 text-stone-300" />
                         <span>Không tìm thấy người nhận nào.</span>
                       </div>
                     ) : (
-                      subscribers.filter(sub => sub.email.toLowerCase().includes(marketingSearchQuery.trim().toLowerCase())).map((sub) => (
-                        <div key={sub.id} className="flex justify-between items-center py-2.5 border-stone-50 hover:bg-stone-50/50 px-1 rounded-lg transition">
+                      combinedRecipients.filter(rec => rec.email.toLowerCase().includes(marketingSearchQuery.trim().toLowerCase())).map((rec) => (
+                        <div key={rec.id + '-' + rec.source} className="flex justify-between items-center py-2.5 border-stone-50 hover:bg-stone-50/50 px-1 rounded-lg transition">
                           <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-xs truncate text-stone-800">{sub.email}</p>
-                            <p className="text-[9px] text-stone-400 mt-0.5">Đăng ký ngày: {new Date(sub.createdAt).toLocaleDateString("vi-VN")}</p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-semibold text-xs truncate text-stone-800">{rec.email}</p>
+                              {rec.source === 'customer' ? (
+                                <span className="px-1.5 py-0.5 text-[8px] font-bold rounded-full bg-emerald-50 text-emerald-850 border border-emerald-200/50 shrink-0">
+                                  Khách hàng
+                                </span>
+                              ) : (
+                                <span className="px-1.5 py-0.5 text-[8px] font-bold rounded-full bg-teal-50 text-teal-800 border border-teal-100/40 shrink-0">
+                                  Nhận tin nhanh
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[9px] text-stone-450 mt-0.5 truncate">
+                              Họ tên: {rec.name} {rec.createdAt ? `• Đăng ký: ${new Date(rec.createdAt).toLocaleDateString("vi-VN")}` : '• Tài khoản đăng ký'}
+                            </p>
                           </div>
-                          <button
-                            onClick={async () => {
-                              if (confirm(`Hủy nhận tin đối với email ${sub.email}?`)) {
-                                await deleteSubscriber(sub.id);
-                              }
-                            }}
-                            className="p-1.5 text-stone-440 hover:bg-stone-100 rounded-lg hover:text-red-700 transition"
-                            title="Xoá người nhận"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                          {rec.source === 'subscriber' ? (
+                            <button
+                              onClick={async () => {
+                                if (confirm(`Hủy nhận tin đối với email ${rec.email}?`)) {
+                                  await deleteSubscriber(rec.id);
+                                }
+                              }}
+                              className="p-1.5 text-stone-440 hover:bg-stone-100 rounded-lg hover:text-red-700 transition"
+                              title="Xoá người nhận"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          ) : (
+                            <span className="text-[10px] font-mono text-stone-400 px-1.5 py-1" title="Quản lý tại Danh sách khách hàng">
+                              Hệ thống
+                            </span>
+                          )}
                         </div>
                       ))
                     )}
@@ -4882,10 +4953,11 @@ export default function AdminDashboard({
           </div>
 
         </div>
-      )}
+      );
+    })()}
 
-        </div>
       </div>
+    </div>
 
 
       {/* FOR CANCELLATION/WRITE-OFF (BÁO HỦY) GLOBAL POPOVER - OUTSIDE OF TRANSFORM CONTAINERS TO GUARANTEE ACCURATE PIXEL COORDINATES */}
