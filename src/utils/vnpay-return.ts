@@ -115,6 +115,10 @@ async function handleVnpayReturnVerification() {
               vnp_PayDate: vnp_PayDate || undefined,
               vnp_BankCode: vnp_BankCode || undefined,
               vnp_Amount: vnp_Amount || undefined,
+              couponCode: pending.couponCode || undefined,
+              discountAmount: pending.discountAmount || undefined,
+              redeemedPoints: pending.redeemedPoints || undefined,
+              promotionDiscount: pending.promotionDiscount || undefined,
             };
 
             orders.push(order);
