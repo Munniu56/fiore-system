@@ -53,6 +53,7 @@ export interface Order {
   couponCode?: string;
   discountAmount?: number;
   redeemedPoints?: number;
+  promotionDiscount?: number;
 }
 
 export interface User {

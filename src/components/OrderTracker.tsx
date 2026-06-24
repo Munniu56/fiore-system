@@ -356,8 +356,15 @@ export default function OrderTracker({ orders, onNavigate }: OrderTrackerProps) 
                     </div>
                     <p className="text-[10px] text-gray-400 mt-1 flex items-center"><Calendar className="mr-1 h-3 w-3" />{formatDateTime(ord.createdAt)}</p>
                     <div className="mt-2 flex justify-between items-end">
-                      <span className="text-[10px] text-gray-500 line-clamp-1 max-w-[130px]">{ord.items.map(it => it.product.name).join(', ')}</span>
-                      <span className="text-xs font-extrabold text-rose-600">{formatVND(ord.totalAmount)}</span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-[10px] text-gray-500 line-clamp-1 max-w-[130px]">{ord.items.map(it => it.product.name).join(', ')}</span>
+                        {((ord.promotionDiscount && ord.promotionDiscount > 0) || (ord.discountAmount && ord.discountAmount > 0) || ord.couponCode) && (
+                          <span className="text-[8.5px] text-emerald-600 font-bold flex items-center gap-0.5 mt-0.5 select-none bg-emerald-50 px-1 py-0.5 rounded-sm w-fit">
+                            <Sparkles className="h-2.5 w-2.5 text-emerald-500 shrink-0 animate-pulse" /> Đã áp dụng ưu đãi
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs font-extrabold text-rose-600 shrink-0">{formatVND(ord.totalAmount)}</span>
                     </div>
                   </div>
                 ))}
@@ -537,16 +544,25 @@ export default function OrderTracker({ orders, onNavigate }: OrderTrackerProps) 
                           <div className="flex justify-between items-center text-emerald-800 font-medium">
                             <span className="flex items-center gap-1.5">
                               <Sparkles className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                              Mã giảm giá áp dụng {displayOrder.couponCode ? `(${displayOrder.couponCode})` : ''}:
+                              Mã Giảm Giá / Ưu Đãi {displayOrder.couponCode ? `(${displayOrder.couponCode})` : ''}:
                             </span>
                             <span className="font-semibold text-emerald-700">-{formatVND(couponDiscount)}</span>
+                          </div>
+                        )}
+                        {((displayOrder.promotionDiscount && displayOrder.promotionDiscount > 0) || (subtotal > 1000000)) && (
+                          <div className="flex justify-between items-center text-rose-600 font-medium">
+                            <span className="flex items-center gap-1.5">
+                              <Sparkles className="h-3.5 w-3.5 text-rose-500 shrink-0" />
+                              Ưu đãi đơn hàng &gt; 1 triệu:
+                            </span>
+                            <span className="font-semibold text-rose-600">-{formatVND(displayOrder.promotionDiscount || 50000)}</span>
                           </div>
                         )}
                         {ptsDiscount > 0 && (
                           <div className="flex justify-between items-center text-emerald-800 font-medium">
                             <span className="flex items-center gap-1.5">
                               <Sparkles className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                              Thứ hạng Kim cương - Đổi điểm tích lũy ({displayOrder.redeemedPoints} điểm):
+                              Giá trị quy đổi của thẻ thành viên ({displayOrder.redeemedPoints} điểm):
                             </span>
                             <span className="font-semibold text-emerald-700">-{formatVND(ptsDiscount)}</span>
                           </div>
@@ -555,12 +571,8 @@ export default function OrderTracker({ orders, onNavigate }: OrderTrackerProps) 
                           <span>Phí vận chuyển hỏa tốc:</span>
                           <span>{formatVND(shippingFee)}</span>
                         </div>
-                        <div className="flex justify-between items-center text-gray-600 font-bold border-t border-pink-100/50 pt-2">
-                          <span>Tổng tiền sản phẩm (Tạm tính):</span>
-                          <span>{formatVND(recalculatedSubtotal)}</span>
-                        </div>
                         <div className="flex justify-between items-center font-bold text-gray-800 border-t border-dashed border-pink-100/60 pt-3 text-sm mt-1">
-                          <span>Giao hàng hỏa tốc nội thành:</span>
+                          <span>Tổng cộng thanh toán:</span>
                           <span className="text-rose-600 text-base">{formatVND(displayOrder.totalAmount)}</span>
                         </div>
                       </div>

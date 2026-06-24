@@ -24,6 +24,7 @@ interface CheckoutViewProps {
     couponCode?: string;
     discountAmount?: number;
     redeemedPoints?: number;
+    promotionDiscount?: number;
     cardDetails?: {
       cardNumber: string;
       cardName: string;
@@ -331,7 +332,8 @@ export default function CheckoutView({
         recipientEmail: recipientEmail || 'guest@fiore.vn',
         couponCode: appliedCoupon?.code || null,
         discountAmount: (currentDiscount || 0) + (pointsDiscount || 0) || null,
-        redeemedPoints: appliedRedeemedPoints || null
+        redeemedPoints: appliedRedeemedPoints || null,
+        promotionDiscount: PROMOTION_DISCOUNT || null
       };
       localStorage.setItem('fiore_pending_vnpay_order', JSON.stringify(pendingOrder));
       
@@ -355,6 +357,7 @@ export default function CheckoutView({
         couponCode: appliedCoupon?.code || undefined,
         discountAmount: (currentDiscount || 0) + (pointsDiscount || 0) || undefined,
         redeemedPoints: appliedRedeemedPoints || undefined,
+        promotionDiscount: PROMOTION_DISCOUNT || undefined,
         cardDetails: paymentMethod === 'VISA' ? { cardNumber, cardName, expiry, cvv } : undefined,
       });
       setIsSubmitting(false);

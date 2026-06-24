@@ -642,6 +642,7 @@ export default function App() {
                   couponCode: pending.couponCode || null,
                   discountAmount: pending.discountAmount || null,
                   redeemedPoints: pending.redeemedPoints || null,
+                  promotionDiscount: pending.promotionDiscount || null,
                 };
 
                 // Deduct inventory stocks and synchronize to Firestore
@@ -859,6 +860,7 @@ export default function App() {
     couponCode?: string;
     discountAmount?: number;
     redeemedPoints?: number;
+    promotionDiscount?: number;
   }) => {
     const sub = cartItems.reduce((acc, curr) => acc + curr.product.price * curr.quantity, 0);
     const shipping = 30000;
@@ -881,7 +883,8 @@ export default function App() {
       createdAt: new Date().toISOString(),
       couponCode: recipientData.couponCode,
       discountAmount: recipientData.discountAmount,
-      redeemedPoints: recipientData.redeemedPoints
+      redeemedPoints: recipientData.redeemedPoints,
+      promotionDiscount: recipientData.promotionDiscount || (sub > 1000000 ? 50000 : undefined)
     };
 
     // Deduct actual products inventory stocks in Firestore
