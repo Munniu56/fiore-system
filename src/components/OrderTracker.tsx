@@ -530,7 +530,7 @@ export default function OrderTracker({ orders, onNavigate }: OrderTrackerProps) 
                     const subtotal = displayOrder.items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
                     const ptsDiscount = (displayOrder.redeemedPoints || 0) * 1000;
                     const totalDiscount = displayOrder.discountAmount || 0;
-                    const couponDiscount = Math.max(0, totalDiscount - ptsDiscount);
+                    const couponDiscount = displayOrder.couponCode ? Math.max(0, totalDiscount - ptsDiscount) : 0;
                     const shippingFee = 30000; // Phí hỏa tốc flat 30.000đ
 
                     return (
@@ -539,21 +539,21 @@ export default function OrderTracker({ orders, onNavigate }: OrderTrackerProps) 
                           <span>Tạm tính (Giá gốc sản phẩm):</span>
                           <span>{formatVND(subtotal)}</span>
                         </div>
-                        <div className="flex justify-between items-center text-gray-600 font-medium">
+                        <div className="flex justify-between items-center text-gray-600 font-medium pb-2 border-b border-pink-100/30">
                           <span>Phí vận chuyển hỏa tốc:</span>
                           <span>{formatVND(shippingFee)}</span>
                         </div>
-                        {couponDiscount > 0 && (
-                          <div className="flex justify-between items-center text-emerald-800 font-medium">
+                        {displayOrder.couponCode && (
+                          <div className="flex justify-between items-center text-emerald-800 font-medium pb-2 border-b border-pink-100/30">
                             <span className="flex items-center gap-1.5">
                               <Sparkles className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                              Mã Giảm Giá / Ưu Đãi {displayOrder.couponCode ? `(${displayOrder.couponCode})` : ''}:
+                              Mã Giảm Giá / Ưu Đãi ({displayOrder.couponCode}):
                             </span>
                             <span className="font-semibold text-emerald-700">-{formatVND(couponDiscount)}</span>
                           </div>
                         )}
                         {((displayOrder.promotionDiscount && displayOrder.promotionDiscount > 0) || (subtotal > 1000000)) && (
-                          <div className="flex justify-between items-center text-rose-600 font-medium">
+                          <div className="flex justify-between items-center text-rose-600 font-medium pb-2 border-b border-pink-100/30">
                             <span className="flex items-center gap-1.5">
                               <Sparkles className="h-3.5 w-3.5 text-rose-500 shrink-0" />
                               Ưu đãi đơn hàng &gt; 1 triệu:
@@ -562,7 +562,7 @@ export default function OrderTracker({ orders, onNavigate }: OrderTrackerProps) 
                           </div>
                         )}
                         {ptsDiscount > 0 && (
-                          <div className="flex justify-between items-center text-emerald-800 font-medium">
+                          <div className="flex justify-between items-center text-emerald-800 font-medium pb-2 border-b border-pink-100/30">
                             <span className="flex items-center gap-1.5">
                               <Sparkles className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                               Giá trị quy đổi của thẻ thành viên ({displayOrder.redeemedPoints} điểm):
