@@ -162,7 +162,8 @@ export default function CheckoutView({
 
   const pointsDiscount = appliedRedeemedPoints * 1000;
   const currentDiscount = calculateDiscount();
-  const totalBeforePoints = calculateSubtotal() + SHIPPING_FEE - currentDiscount;
+  const PROMOTION_DISCOUNT = calculateSubtotal() > 1000000 ? 50000 : 0;
+  const totalBeforePoints = calculateSubtotal() + SHIPPING_FEE - currentDiscount - PROMOTION_DISCOUNT;
   const totalAmount = Math.max(0, totalBeforePoints - pointsDiscount);
 
   // Ensure safe boundaries if cart changes or coupon is modified
@@ -1007,6 +1008,12 @@ export default function CheckoutView({
                   <div className="flex justify-between text-emerald-600">
                     <span>Mã ưu đãi {appliedCoupon ? `(${appliedCoupon.code})` : ''}</span>
                     <span className="font-bold">-{formatVND(currentDiscount)}</span>
+                  </div>
+                )}
+                {PROMOTION_DISCOUNT > 0 && (
+                  <div className="flex justify-between text-rose-600">
+                    <span className="flex items-center gap-1 font-medium">✨ Ưu đãi đơn hàng &gt; 1 triệu</span>
+                    <span className="font-bold">-{formatVND(PROMOTION_DISCOUNT)}</span>
                   </div>
                 )}
                 {pointsDiscount > 0 && (
