@@ -416,7 +416,7 @@ export default function AdminDashboard({
     : 0;
 
   const totalOrdersCount = orders.length;
-  const activeCustomersCount = users.length + 3; // simulated registered + sample buyers
+  const activeCustomersCount = users.filter(usr => !usr.isAdmin).length; // only show registered non-admin customers
 
   // --- REAL-TIME 7 DAYS REVENUE ---
   const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -2739,7 +2739,7 @@ export default function AdminDashboard({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* Display registered users dynamically */}
-            {users.map((usr) => {
+            {users.filter(usr => !usr.isAdmin).map((usr) => {
               const userOrders = orders.filter((o) => o.customerEmail && o.customerEmail.toLowerCase() === usr.email.toLowerCase());
               const validOrders = userOrders.filter(
                 (o) => o.status !== 'cancelled' && (o.paymentStatus === 'Paid' || o.status === 'completed' || o.paymentMethod === 'COD')
@@ -2794,51 +2794,6 @@ export default function AdminDashboard({
                 </div>
               );
             })}
-
-            {/* Static high-fidelity sample buyers representing system stats */}
-            <div className="rounded-xl border border-amber-200/55 p-4 bg-white flex items-start space-x-4 opacity-80 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)]">
-              <div className="h-10 w-10 rounded-full bg-emerald-50 text-emerald-800 flex items-center justify-center font-serif text-lg font-bold shrink-0">
-                T
-              </div>
-              <div className="space-y-1 text-xs flex-1">
-                <p className="font-bold text-[#0F2C11] text-sm flex items-center gap-2">
-                  Thùy Vân (Hà Nội)
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold border bg-stone-50 border-stone-200 text-stone-700">
-                    Thẻ Bạc
-                  </span>
-                </p>
-                <p className="text-stone-400">Email: thuyvanngo35@gmail.com (SĐT: 0987654321)</p>
-                <p className="text-stone-500">Mặc định: 12 Hàng Khay, Quận Hoàn Kiếm, Hà Nội</p>
-                
-                <div className="flex flex-wrap gap-1.5 pt-2">
-                  <span className="px-2 py-1 rounded bg-amber-50 border border-amber-100 font-bold text-amber-900 text-[10px]">Đã mua: 4 Đơn</span>
-                  <span className="px-2 py-1 rounded bg-emerald-50 border border-emerald-100 font-bold text-emerald-800 text-[10px]">Tích lũy: {formatVND(1850000)}</span>
-                  <span className="px-2 py-1 rounded bg-rose-50 border border-rose-100 font-bold text-rose-700 text-[10px]">Điểm tích lũy: 37 điểm</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-amber-200/55 p-4 bg-white flex items-start space-x-4 opacity-80 shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)]">
-              <div className="h-10 w-10 rounded-full bg-emerald-50 text-emerald-800 flex items-center justify-center font-serif text-lg font-bold shrink-0">
-                A
-              </div>
-              <div className="space-y-1 text-xs flex-1">
-                <p className="font-bold text-[#0F2C11] text-sm flex items-center gap-2">
-                  An Bình (Gia Định)
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold border bg-stone-50 border-stone-200 text-stone-700">
-                    Thẻ Bạc
-                  </span>
-                </p>
-                <p className="text-stone-400">Email: anbinh@gmail.com (SĐT: 0914253648)</p>
-                <p className="text-stone-500">Mặc định: 34 Nguyễn Bỉnh Khiêm, Quận 1, TP. HCM</p>
-                
-                <div className="flex flex-wrap gap-1.5 pt-2">
-                  <span className="px-2 py-1 rounded bg-amber-50 border border-amber-100 font-bold text-amber-900 text-[10px]">Đã mua: 2 Đơn</span>
-                  <span className="px-2 py-1 rounded bg-emerald-50 border border-emerald-100 font-bold text-emerald-800 text-[10px]">Tích lũy: {formatVND(890000)}</span>
-                  <span className="px-2 py-1 rounded bg-rose-50 border border-rose-100 font-bold text-rose-700 text-[10px]">Điểm tích lũy: 17 điểm</span>
-                </div>
-              </div>
-            </div>
 
           </div>
         </div>
@@ -4504,7 +4459,7 @@ export default function AdminDashboard({
         });
 
         // 2. Add registered customers from Sổ khách hàng (users)
-        users.forEach((usr) => {
+        users.filter(usr => !usr.isAdmin).forEach((usr) => {
           const emailLower = (usr.email || "").trim().toLowerCase();
           if (emailLower) {
             if (!seenEmails.has(emailLower)) {
@@ -4625,7 +4580,7 @@ export default function AdminDashboard({
             <div className="rounded-2xl border border-amber-200/40 bg-white p-5 shadow-xs flex items-center justify-between hover:shadow-md transition-all duration-300">
               <div>
                 <p className="text-[10px] uppercase font-mono font-bold tracking-wider text-stone-400">Tài Khoản Đã Đăng Ký</p>
-                <p className="text-2xl font-light text-emerald-950 font-serif mt-1">{users.length} <span className="text-xs font-normal font-sans text-stone-500">người</span></p>
+                <p className="text-2xl font-light text-emerald-950 font-serif mt-1">{users.filter(usr => !usr.isAdmin).length} <span className="text-xs font-normal font-sans text-stone-500">người</span></p>
               </div>
               <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center text-[#52796F] border border-emerald-100/40">
                 <Users className="h-5 w-5" />
