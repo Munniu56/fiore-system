@@ -532,13 +532,16 @@ export default function OrderTracker({ orders, onNavigate }: OrderTrackerProps) 
                     const totalDiscount = displayOrder.discountAmount || 0;
                     const couponDiscount = Math.max(0, totalDiscount - ptsDiscount);
                     const shippingFee = 30000; // Phí hỏa tốc flat 30.000đ
-                    const recalculatedSubtotal = displayOrder.totalAmount;
 
                     return (
                       <div className="bg-pink-50/10 p-4 border-t border-pink-50/80 text-xs space-y-2.5">
                         <div className="flex justify-between items-center text-gray-600 font-medium pb-2 border-b border-pink-100/30">
                           <span>Tạm tính (Giá gốc sản phẩm):</span>
                           <span>{formatVND(subtotal)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-gray-600 font-medium">
+                          <span>Phí vận chuyển hỏa tốc:</span>
+                          <span>{formatVND(shippingFee)}</span>
                         </div>
                         {couponDiscount > 0 && (
                           <div className="flex justify-between items-center text-emerald-800 font-medium">
@@ -567,10 +570,6 @@ export default function OrderTracker({ orders, onNavigate }: OrderTrackerProps) 
                             <span className="font-semibold text-emerald-700">-{formatVND(ptsDiscount)}</span>
                           </div>
                         )}
-                        <div className="flex justify-between items-center text-gray-600 font-medium">
-                          <span>Phí vận chuyển hỏa tốc:</span>
-                          <span>{formatVND(shippingFee)}</span>
-                        </div>
                         <div className="flex justify-between items-center font-bold text-gray-800 border-t border-dashed border-pink-100/60 pt-3 text-sm mt-1">
                           <span>Tổng cộng thanh toán:</span>
                           <span className="text-rose-600 text-base">{formatVND(displayOrder.totalAmount)}</span>
